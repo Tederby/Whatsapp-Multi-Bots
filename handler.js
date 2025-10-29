@@ -130,6 +130,10 @@ let msgHandler = async (upsert, sock, message) => {
     case prefix + "ping": case prefix + "test": case prefix + "tes":
       await message.reply(`Pong! 🏓\n\nSpeed: ${Date.now() - t * 1000} ms`);
       break;
+      case prefix + "say":
+    if (!q) return message.reply("Masukkan teks!");
+    await message.reply(q);
+    break;
         case prefix + "resend": // contoh fitur download video atau gambar
         if ((isImage || isQuotedImage) || (isVideo || isQuotedVideo)) {
           const type = Object.keys(quotedMsg.message || quotedMsg)[0];
