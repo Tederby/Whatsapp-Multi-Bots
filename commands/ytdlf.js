@@ -233,19 +233,14 @@ async function handleFormatReply({ message, sock, state }) {
 function buildFormatTable(formats) {
     // Header
     const rows = [
-        ["ID", "Ext", "Type", "Size", "Info"],
+        ["ID", "Res", "Size"],
     ];
 
     for (const f of formats) {
-        const info = [f.vcodec, f.acodec, f.fps ? `${f.fps}fps` : null]
-            .filter(Boolean)
-            .join(", ");
         rows.push([
             f.id,
-            f.ext,
             f.resolution,
             formatSize(f.size),
-            (info.length > 25 ? info.substring(0, 22) + "..." : info) || f.note,
         ]);
     }
 
