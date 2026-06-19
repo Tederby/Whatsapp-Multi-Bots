@@ -1,4 +1,5 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+import fs from "fs";
 import {
   makeWASocket,
   fetchLatestBaileysVersion,
@@ -18,6 +19,10 @@ import "./handler.js";
 moment.tz.setDefault("Asia/Jakarta").locale("id");
 import chokidar from "chokidar";
 import { Messages } from "./lib/Messages.js";
+import { initCleanup } from "./services/cleanup.js";
+
+// Start cleanup service (temp files, expired states, cache)
+initCleanup();
 
 // Baileys
 const logger = Pino({
@@ -87,7 +92,7 @@ if (upsert) {
   if (upsert.type !== "notify") return;
     const message = Messages(upsert, sock);
     if (message.key && message.key.remoteJid === "status@broadcast") return;
-    if (message.key.fromMe) return
+    // fromMe diizinkan agar pemilik bot bisa memproses command
         if (!message) return;
             msgHandler(upsert, sock, message);
  }
