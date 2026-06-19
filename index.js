@@ -89,12 +89,22 @@ async function connectToWhatsApp() {
     
     const upsert = ev["messages.upsert"];
 if (upsert) {
-  if (upsert.type !== "notify") return;
     const message = Messages(upsert, sock);
+    if (!message) return;
+
+    if (upsert.type !== "notify") {
+        if (!(upsert.type === "append" && message.key && message.key.fromMe)) {
+            return;
+        }
+        // Jangan proses pesan append yang sudah terlalu lama (history sync)
+        const messageTimestamp = message.messageTimestamp;
+        const now = Math.floor(Date.now() / 1000);
+        if (now - messageTimestamp > 60) return;
+    }
+
     if (message.key && message.key.remoteJid === "status@broadcast") return;
     // fromMe diizinkan agar pemilik bot bisa memproses command
-        if (!message) return;
-            msgHandler(upsert, sock, message);
+    msgHandler(upsert, sock, message);
  }
  
  if (ev["call"]) {

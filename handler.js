@@ -17,13 +17,13 @@ let msgHandler = async (upsert, sock, message) => {
     const groupMetadata = isGroup
       ? await sock.groupMetadata(message.chat)
       : {};
-    let sender = message.key.addressingMode === "pn" ? message.sender : message.key.remoteJidAlt;
+    let sender = (!message.key.addressingMode || message.key.addressingMode === "pn") ? message.sender : (message.key.remoteJidAlt || message.sender);
 
     // LID
     let isGroupAdmins;
     let isBotGroupAdmins;
     if (isGroup) {
-      if (message.key.addressingMode === "pn") {
+      if (!message.key.addressingMode || message.key.addressingMode === "pn") {
         sender = message.sender;
         isGroupAdmins = groupMetadata.participants
           .filter((participant) => participant.admin)
@@ -34,14 +34,14 @@ let msgHandler = async (upsert, sock, message) => {
           .map((participant) => participant.id)
           .includes(sock.user.id);
       } else {
-        sender = message.key.participantAlt;
+        sender = message.key.participantAlt || message.sender;
         isGroupAdmins = groupMetadata.participants
           .filter((participant) => participant.admin)
-          .map((participant) => participant.phoneNumber)
+          .map((participant) => participant.phoneNumber || participant.id)
           .includes(sender);
         isBotGroupAdmins = groupMetadata.participants
           .filter((participant) => participant.admin)
-          .map((participant) => participant.phoneNumber)
+          .map((participant) => participant.phoneNumber || participant.id)
           .includes(sock.user.id);
       }
     }
