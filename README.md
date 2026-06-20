@@ -21,8 +21,8 @@ Sebuah base bot WhatsApp yang sederhana namun scalable, dibangun menggunakan pus
 
 1. **Clone repositori ini** (jika menggunakan Git) atau unduh dan ekstrak source code.
    ```bash
-   git clone <url-repo-kamu>
-   cd simple-whatsapp-bot
+   git clone https://github.com/Tederby/wa-bot.git
+   cd wa-bot
    ```
 
 2. **Instal dependensi**
