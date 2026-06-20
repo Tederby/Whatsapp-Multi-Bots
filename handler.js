@@ -86,9 +86,10 @@ let msgHandler = async (upsert, sock, message) => {
     }
 
     // ── 1.5 Auto-Detect Danbooru Link ─────────────────────────────────
+    const isBotDanbooruResponse = text.includes("🖼️ *Danbooru Post:*") || text.includes("❌ Gambar NSFW (Explicit) diblokir.");
     const danbooruRegex = /(?:https?:\/\/)?(?:www\.)?danbooru\.donmai\.us\/posts\/(\d+)(?:\?.*)?/i;
     const danbooruMatch = text.match(danbooruRegex);
-    if (danbooruMatch) {
+    if (danbooruMatch && !isBotDanbooruResponse) {
       console.log(
         color("[AUTO-DETECT]"),
         color(moment(t * 1000).format("DD/MM/YY HH:mm:ss"), "yellow"),
