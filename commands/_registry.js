@@ -11,6 +11,8 @@ import say from "./say.js";
 import resend from "./resend.js";
 import ytdl from "./ytdl.js";
 import ytdlf from "./ytdlf.js";
+import danbooru from "./danbooru.js";
+import tag from "./tag.js";
 
 // ── Command Registry ────────────────────────────────────────────────────────
 
@@ -25,7 +27,7 @@ function register(cmd) {
     }
 }
 
-[ping, say, resend, ytdl, ytdlf].forEach(register);
+[ping, say, resend, ytdl, ytdlf, danbooru, tag].forEach(register);
 
 /**
  * Look up a command by its exact name or alias.

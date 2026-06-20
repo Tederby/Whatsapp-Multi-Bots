@@ -3,6 +3,7 @@ import moment from "moment-timezone";
 import { msgFilter, color } from "./lib/utils.js";
 import { parseCommand } from "./lib/commandParser.js";
 import { getCommand, getReplyHandler } from "./commands/_registry.js";
+import { handleDanbooruRequest } from "./lib/danbooru.js";
 import setting from "./setting.js";
 
 moment.tz.setDefault("Asia/Jakarta").locale("id");
@@ -82,6 +83,22 @@ let msgHandler = async (upsert, sock, message) => {
         await entry.handler({ message, sock, state: entry.state });
         return;
       }
+    }
+
+    // ── 1.5 Auto-Detect Danbooru Link ─────────────────────────────────
+    const danbooruRegex = /(?:https?:\/\/)?(?:www\.)?danbooru\.donmai\.us\/posts\/(\d+)(?:\?.*)?/i;
+    const danbooruMatch = text.match(danbooruRegex);
+    if (danbooruMatch) {
+      console.log(
+        color("[AUTO-DETECT]"),
+        color(moment(t * 1000).format("DD/MM/YY HH:mm:ss"), "yellow"),
+        color(`danbooru:${danbooruMatch[1]}`),
+        "from", color(pushname),
+        ...(isGroup ? ["in", color(groupName)] : [])
+      );
+      await sock.readMessages([message.key]);
+      await handleDanbooruRequest({ input: danbooruMatch[1], sock, message, isAutoDetect: true });
+      return;
     }
 
     // ── 2. Command Parsing (exact-match only) ─────────────────────────
