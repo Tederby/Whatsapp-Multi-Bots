@@ -20,9 +20,11 @@ export default {
                 return message.reply("Harap kutip pesan yang ingin dihapus!");
             }
 
-            const botId = sock.user.id.split(':')[0] + '@s.whatsapp.net';
             // Pengecekan apakah pesan yang direply adalah dari bot itu sendiri
-            const isQuotedFromBot = quotedSender === botId;
+            // Pastikan mengambil base ID saja agar tidak terganggu oleh device ID (misal: :12)
+            const botBaseId = sock.user.id.split(':')[0].split('@')[0];
+            const senderBaseId = quotedSender.split(':')[0].split('@')[0];
+            const isQuotedFromBot = botBaseId === senderBaseId;
 
             // Jika bukan pesan bot dan pengirim perintah bukan admin, tolak
             if (!isQuotedFromBot && !isGroupAdmins) {
