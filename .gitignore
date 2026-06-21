@@ -4,3 +4,4 @@ package-lock.json
 /temp/*
 !/temp/.gitkeep
 .env
+database.json
