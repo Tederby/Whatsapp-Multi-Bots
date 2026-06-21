@@ -57,7 +57,11 @@ export default {
 
         try {
             const response = await axios.get(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(query)}&limit=20`, {
-                timeout: 15000 // Timeout 15 detik agar bot tidak menggantung lama
+                timeout: 15000, // Timeout 15 detik agar bot tidak menggantung lama
+                headers: {
+                    // Menyamarkan request axios seperti browser asli untuk mencoba melewati blokir Cloudflare
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                }
             });
             
             if (!response.data || !response.data.data || response.data.data.length === 0) {
