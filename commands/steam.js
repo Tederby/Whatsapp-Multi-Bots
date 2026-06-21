@@ -39,7 +39,7 @@ function generateListText(results, page, query) {
     text += `🔍 *Query:* ${query}\n`;
     text += `📄 *Page:* ${page + 1}/${totalPages}\n`;
     text += `──────────────────────────\n\n`;
-    
+
     currentItems.forEach((game, index) => {
         let priceText = "Gratis / Tidak Tersedia";
         if (game.price) {
@@ -49,7 +49,7 @@ function generateListText(results, page, query) {
                 priceText = `*${formatRupiah(game.price.final)}*`;
             }
         }
-        
+
         text += `*[${start + index + 1}]. ${game.name}*\n`;
         text += `↳ 💰 ${priceText}\n\n`;
     });
@@ -76,7 +76,7 @@ export default {
         let isDirect = false;
         const cleanArgs = [];
         const directFlags = ["--top", "-t", "-1", "--direct", "top"];
-        
+
         for (const arg of args) {
             if (directFlags.includes(arg.toLowerCase())) {
                 isDirect = true;
@@ -95,7 +95,7 @@ export default {
         try {
             const searchUrl = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(query)}&l=indonesian&cc=ID`;
             const response = await axios.get(searchUrl, { timeout: 15000 });
-            
+
             if (!response.data || !response.data.items || response.data.items.length === 0) {
                 await message.reply(`❌ Game dengan kata kunci *${query}* tidak ditemukan di Steam.`);
                 return;
@@ -115,7 +115,7 @@ export default {
 
             const text = generateListText(results, 0, query);
             const sentMsg = await sock.sendMessage(message.chat, { text }, { quoted: message });
-            
+
             registerReplyHandler(sentMsg.key.id, replyHandler, {
                 results,
                 page: 0,
@@ -158,9 +158,9 @@ async function replyHandler({ message, sock, state }) {
     const num = parseInt(text, 10);
     if (!isNaN(num) && num >= 1 && num <= results.length) {
         const app = results[num - 1];
-        
+
         deleteReplyHandler(messageKey.id);
-        await sock.sendMessage(message.chat, { text: `> 🖱️ Memilih: *${app.name}*`, edit: messageKey });
+        await sock.sendMessage(message.chat, { text: `>> *${app.name}*`, edit: messageKey });
 
         await sendSteamDetail(app.id, message, sock);
         return;
@@ -171,7 +171,7 @@ async function sendSteamDetail(appId, message, sock) {
     try {
         const detailUrl = `https://store.steampowered.com/api/appdetails?appids=${appId}&cc=ID&l=indonesian`;
         const response = await axios.get(detailUrl, { timeout: 15000 });
-        
+
         const data = response.data[appId];
         if (!data || !data.success) {
             await message.reply(`❌ Gagal mengambil detail untuk game tersebut.`);
@@ -185,7 +185,7 @@ async function sendSteamDetail(appId, message, sock) {
         const developers = game.developers ? game.developers.join(", ") : "N/A";
         const publishers = game.publishers ? game.publishers.join(", ") : "N/A";
         const metacritic = game.metacritic ? game.metacritic.score : "N/A";
-        
+
         let priceText = "Gratis";
         if (game.is_free) {
             priceText = "Gratis (Free to Play)";
