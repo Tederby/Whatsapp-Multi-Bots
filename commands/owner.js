@@ -17,7 +17,7 @@ export default {
             text += ` ➭ Mention: @${num}\n`;
         });
 
-        text += `\n✨ ━━━━━━━━━━━━━━━━━━━━ ✨`;
+        text += `\n✨ ━━━━━━━━━━━━━━━━━ ✨`;
 
         const imageUrl = "https://cdn.donmai.us/sample/3a/78/__hatsune_miku_mii_and_mikudayo_vocaloid_and_2_more_drawn_by_yunkkker__sample-3a782c2a60fa7c871f6edad47fd88dc1.jpg"; // Ganti URL ini dengan link gambar Anda
 
