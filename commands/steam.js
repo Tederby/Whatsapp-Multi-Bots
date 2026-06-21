@@ -10,22 +10,19 @@ function formatRupiah(cents) {
 }
 
 function generatePaginator(page, totalPages) {
-    if (totalPages <= 1) return `──────────────────────────`;
+    if (totalPages <= 1) return `━━━━━━━━━━━━━━━━`;
     let items = [];
-    if (page > 0) items.push("<< [b]");
+    if (page > 0) items.push("«");
     let startP = Math.max(0, page - 2);
     let endP = Math.min(totalPages - 1, page + 2);
     for (let i = startP; i <= endP; i++) {
         let pNum = i + 1;
-        if (i === page) items.push(`*(${pNum})*`);
-        else if (i === page + 1 || i === page - 1) items.push(`_(${pNum})_`);
-        else items.push(`(${pNum})`);
+        if (i === page) items.push(`*${pNum}*`);
+        else items.push(`${pNum}`);
     }
-    if (page < totalPages - 1) items.push("[n] >>");
-    let bar = items.join("─");
-    let prefix = page === 0 ? "─────────" : "─────";
-    let suffix = page === totalPages - 1 ? "──────────" : "─────";
-    return `${prefix}${bar}${suffix}`;
+    if (page < totalPages - 1) items.push("»");
+    let bar = items.join(" ─ ");
+    return `━━ ${bar} ━━`;
 }
 
 function generateListText(results, page, query) {
@@ -34,11 +31,11 @@ function generateListText(results, page, query) {
     const end = start + ITEMS_PER_PAGE;
     const currentItems = results.slice(start, end);
 
-    let text = `🎮 *S T E A M  S E A R C H*\n`;
-    text += `──────────────────────────\n`;
+    let text = `🎮 *STEAM SEARCH*\n`;
+    text += `━━━━━━━━━━━━━━━━\n`;
     text += `🔍 *Query:* ${query}\n`;
     text += `📄 *Page:* ${page + 1}/${totalPages}\n`;
-    text += `──────────────────────────\n\n`;
+    text += `━━━━━━━━━━━━━━━━\n\n`;
 
     currentItems.forEach((game, index) => {
         let priceText = "Gratis / Tidak Tersedia";
