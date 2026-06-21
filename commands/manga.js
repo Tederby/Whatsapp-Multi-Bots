@@ -1,8 +1,27 @@
 import axios from "axios";
 import https from "https";
-import { registerReplyHandler } from "./_registry.js";
+import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 
 const ITEMS_PER_PAGE = 5;
+
+function generatePaginator(page, totalPages) {
+    if (totalPages <= 1) return `──────────────────────────`;
+    let items = [];
+    if (page > 0) items.push("<< [b]");
+    let startP = Math.max(0, page - 2);
+    let endP = Math.min(totalPages - 1, page + 2);
+    for (let i = startP; i <= endP; i++) {
+        let pNum = i + 1;
+        if (i === page) items.push(`*(${pNum})*`);
+        else if (i === page + 1 || i === page - 1) items.push(`_(${pNum})_`);
+        else items.push(`(${pNum})`);
+    }
+    if (page < totalPages - 1) items.push("[n] >>");
+    let bar = items.join("─");
+    let prefix = page === 0 ? "─────────" : "─────";
+    let suffix = page === totalPages - 1 ? "──────────" : "─────";
+    return `${prefix}${bar}${suffix}`;
+}
 
 function generateListText(results, page, query) {
     const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
@@ -11,21 +30,19 @@ function generateListText(results, page, query) {
     const currentItems = results.slice(start, end);
 
     let text = `📚 *M A N G A  S E A R C H*\n`;
-    text += `──────────────────\n`;
+    text += `──────────────────────────\n`;
     text += `🔍 *Query:* ${query}\n`;
     text += `📄 *Page:* ${page + 1}/${totalPages}\n`;
-    text += `──────────────────\n\n`;
-    
+    text += `──────────────────────────\n\n`;
+
     currentItems.forEach((manga, index) => {
-        text += `*${start + index + 1}. ${manga.title}*\n`;
+        text += `*[${start + index + 1}]. ${manga.title}*\n`;
         text += `↳ 📖 Type: ${manga.type || "N/A"} | ⭐ ${manga.score || "N/A"} | 📝 Ch: ${manga.chapters || "N/A"}\n\n`;
     });
 
-    text += `──────────────────\n`;
-    text += `💡 *Navigasi:*\n`;
-    text += `└ Reply angka *1-${results.length}* untuk detail.\n`;
-    if (page < totalPages - 1) text += `└ Reply *'n'* untuk lanjut (next).\n`;
-    if (page > 0) text += `└ Reply *'b'* untuk kembali (back).\n`;
+    text += generatePaginator(page, totalPages) + "\n\n";
+    text += `_Reply angka atau huruf untuk "memilih"._\n`;
+    text += `_Contoh: "n" untuk page berikutnya_`;
 
     return text.trim();
 }
@@ -45,7 +62,7 @@ export default {
         let isDirect = false;
         const cleanArgs = [];
         const directFlags = ["--top", "-t", "-1", "--direct", "top"];
-        
+
         for (const arg of args) {
             if (directFlags.includes(arg.toLowerCase())) {
                 isDirect = true;
@@ -69,7 +86,7 @@ export default {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 }
             });
-            
+
             if (!response.data || !response.data.data || response.data.data.length === 0) {
                 await message.reply(`❌ Manga/Light Novel dengan kata kunci *${query}* tidak ditemukan di database.`);
                 return;
@@ -77,7 +94,7 @@ export default {
 
             const results = response.data.data;
 
-            if (isDirect) {
+            if (isDirect || results.length === 1) {
                 await sendMangaDetail(results[0], message, sock);
                 return;
             }
@@ -85,7 +102,7 @@ export default {
             const text = generateListText(results, 0, query);
 
             const sentMsg = await sock.sendMessage(message.chat, { text }, { quoted: message });
-            
+
             // Register reply handler
             registerReplyHandler(sentMsg.key.id, replyHandler, {
                 results,
@@ -148,6 +165,10 @@ async function replyHandler({ message, sock, state }) {
     const num = parseInt(text, 10);
     if (!isNaN(num) && num >= 1 && num <= results.length) {
         const manga = results[num - 1];
+
+        deleteReplyHandler(messageKey.id);
+        await sock.sendMessage(message.chat, { text: `>> *${manga.title}*`, edit: messageKey });
+
         await sendMangaDetail(manga, message, sock);
         return;
     }
@@ -167,12 +188,12 @@ async function sendMangaDetail(manga, message, sock) {
 
     const url = manga.url;
     const genres = manga.genres && manga.genres.length > 0 ? manga.genres.map(g => g.name).join(", ") : "N/A";
-    
+
     let synopsis = "Tidak ada sinopsis.";
     if (manga.synopsis) {
         synopsis = manga.synopsis.replace(/\[Written by MAL Rewrite\]/i, "").trim();
     }
-    
+
     let imageUrl = null;
     if (manga.images?.jpg?.large_image_url) {
         imageUrl = manga.images.jpg.large_image_url;

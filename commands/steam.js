@@ -1,5 +1,5 @@
 import axios from "axios";
-import { registerReplyHandler } from "./_registry.js";
+import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -9,6 +9,25 @@ function formatRupiah(cents) {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(price);
 }
 
+function generatePaginator(page, totalPages) {
+    if (totalPages <= 1) return `──────────────────────────`;
+    let items = [];
+    if (page > 0) items.push("<< [b]");
+    let startP = Math.max(0, page - 2);
+    let endP = Math.min(totalPages - 1, page + 2);
+    for (let i = startP; i <= endP; i++) {
+        let pNum = i + 1;
+        if (i === page) items.push(`*(${pNum})*`);
+        else if (i === page + 1 || i === page - 1) items.push(`_(${pNum})_`);
+        else items.push(`(${pNum})`);
+    }
+    if (page < totalPages - 1) items.push("[n] >>");
+    let bar = items.join("─");
+    let prefix = page === 0 ? "─────────" : "─────";
+    let suffix = page === totalPages - 1 ? "──────────" : "─────";
+    return `${prefix}${bar}${suffix}`;
+}
+
 function generateListText(results, page, query) {
     const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
     const start = page * ITEMS_PER_PAGE;
@@ -16,10 +35,10 @@ function generateListText(results, page, query) {
     const currentItems = results.slice(start, end);
 
     let text = `🎮 *S T E A M  S E A R C H*\n`;
-    text += `──────────────────\n`;
+    text += `──────────────────────────\n`;
     text += `🔍 *Query:* ${query}\n`;
     text += `📄 *Page:* ${page + 1}/${totalPages}\n`;
-    text += `──────────────────\n\n`;
+    text += `──────────────────────────\n\n`;
     
     currentItems.forEach((game, index) => {
         let priceText = "Gratis / Tidak Tersedia";
@@ -31,15 +50,13 @@ function generateListText(results, page, query) {
             }
         }
         
-        text += `*${start + index + 1}. ${game.name}*\n`;
+        text += `*[${start + index + 1}]. ${game.name}*\n`;
         text += `↳ 💰 ${priceText}\n\n`;
     });
 
-    text += `──────────────────\n`;
-    text += `💡 *Navigasi:*\n`;
-    text += `└ Reply angka *1-${results.length}* untuk detail.\n`;
-    if (page < totalPages - 1) text += `└ Reply *'n'* untuk lanjut (next).\n`;
-    if (page > 0) text += `└ Reply *'b'* untuk kembali (back).\n`;
+    text += generatePaginator(page, totalPages) + "\n\n";
+    text += `_Reply angka atau huruf untuk "memilih"._\n`;
+    text += `_Contoh: "n" untuk page berikutnya_`;
 
     return text.trim();
 }
@@ -91,7 +108,7 @@ export default {
                 return;
             }
 
-            if (isDirect) {
+            if (isDirect || results.length === 1) {
                 await sendSteamDetail(results[0].id, message, sock);
                 return;
             }
@@ -141,6 +158,10 @@ async function replyHandler({ message, sock, state }) {
     const num = parseInt(text, 10);
     if (!isNaN(num) && num >= 1 && num <= results.length) {
         const app = results[num - 1];
+        
+        deleteReplyHandler(messageKey.id);
+        await sock.sendMessage(message.chat, { text: `> 🖱️ Memilih: *${app.name}*`, edit: messageKey });
+
         await sendSteamDetail(app.id, message, sock);
         return;
     }
