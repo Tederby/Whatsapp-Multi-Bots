@@ -34,7 +34,7 @@ export default {
 
             const botBaseId = sock.user.id.split(':')[0].split('@')[0];
             const targetBaseId = target.split(':')[0].split('@')[0];
-            
+
             // Reconstruct canonical jid
             const targetJid = targetBaseId + "@s.whatsapp.net";
 
@@ -70,9 +70,9 @@ export default {
             // Mengirim pesan konfirmasi
             const sentMsg = await sock.sendMessage(
                 message.chat,
-                { 
-                    text: `Apakah Anda yakin ingin kick @${targetBaseId}?\n\nBalas pesan ini dengan mengetik *confirm* untuk melanjutkan.`,
-                    mentions: [targetJid] 
+                {
+                    text: `Apakah Anda yakin ingin kick @${targetBaseId}?\n\nBalas pesan ini dengan mengetik *confirm* untuk melanjutkan.\nAtau ketik *cancel* untuk membatalkan.`,
+                    mentions: [targetJid]
                 },
                 { quoted: message }
             );
@@ -80,16 +80,16 @@ export default {
             // Mendaftarkan reply handler
             registerReplyHandler(sentMsg.key.id, async ({ message: replyMessage, sock: replySock, state }) => {
                 const replyText = replyMessage.text?.toLowerCase()?.trim();
-                
+
                 if (replyText === 'confirm') {
                     try {
                         await replySock.groupParticipantsUpdate(replyMessage.chat, [state.targetJid], 'remove');
                         await replySock.sendMessage(
-                            replyMessage.chat, 
-                            { 
+                            replyMessage.chat,
+                            {
                                 text: `Berhasil mengeluarkan @${state.targetBaseId} dari grup.`,
                                 mentions: [state.targetJid]
-                            }, 
+                            },
                             { quoted: replyMessage }
                         );
                     } catch (error) {
