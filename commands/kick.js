@@ -42,10 +42,15 @@ export default {
                 return message.reply("Bot tidak bisa kick diri sendiri.");
             }
 
+            let actualTargetJid = null;
             // Memeriksa apakah target masih ada di grup
             const isTargetInGroup = groupMetadata.participants.some(p => {
                 const participantBaseId = p.id.split(':')[0].split('@')[0];
-                return participantBaseId === targetBaseId;
+                if (participantBaseId === targetBaseId) {
+                    actualTargetJid = p.id;
+                    return true;
+                }
+                return false;
             });
 
             if (!isTargetInGroup) {
@@ -98,7 +103,7 @@ export default {
                 } else {
                     await replyMessage.reply("Instruksi tidak dikenali. Ketik *confirm* untuk melanjutkan, atau *cancel* untuk membatalkan.");
                 }
-            }, { targetJid, targetBaseId, commandName: "kick", userId: sender });
+            }, { targetJid: actualTargetJid, targetBaseId, commandName: "kick", userId: sender });
 
         } catch (error) {
             console.error('Kick command error:', error);
