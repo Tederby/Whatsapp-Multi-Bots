@@ -19,7 +19,7 @@ export default {
 
         text += `\n✨ ━━━━━━━━━━━━━━━━━ ✨`;
 
-        const imageUrl = "https://cdn.donmai.us/sample/3a/78/__hatsune_miku_mii_and_mikudayo_vocaloid_and_2_more_drawn_by_yunkkker__sample-3a782c2a60fa7c871f6edad47fd88dc1.jpg"; // Ganti URL ini dengan link gambar Anda
+        const imageUrl = "https://i.pximg.net/img-master/img/2025/10/31/09/46/39/136901879_p0_master1200.jpg"; // Ganti URL ini dengan link gambar Anda
 
         // Kirim gambar beserta teks dan mention
         await sock.sendMessage(
