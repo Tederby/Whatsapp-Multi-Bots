@@ -132,7 +132,9 @@ async function listReplyHandler({ message, sock, state }) {
 
         registerReplyHandler(detailMsg.key.id, downloadReplyHandler, {
             video,
-            messageKey: detailMsg.key
+            messageKey: detailMsg.key,
+            userId: state.userId,
+            commandName: "ytsearch-download"
         });
 
         return;
