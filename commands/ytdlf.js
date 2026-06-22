@@ -25,7 +25,7 @@ import setting from "../setting.js";
 
 export default {
     name: "ytdlf",
-    aliases: [],
+    aliases: ["ytf", "videof", "ytvf", "ytaf", "dlf"],
     category: "download",
     description: "Download with manual format selection",
     usage: "!ytdlf <url>",
