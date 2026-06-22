@@ -50,6 +50,7 @@ export default {
         let menuText = `╭━━━〔 👾 ${setting.name || "Bot Menu"} 👾 〕━━━\n`;
         menuText += `┃ 💻 Prefix : [ ${setting.prefixes.join(" / ")} ]\n`;
         menuText += `┃ ⏱️ Uptime : ${uptimeStr}\n`;
+        menuText += `┃ ⚠️ Menu akan timeout dalam 20 detik\n`;
         menuText += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
         // Sort categories by CATEGORY_LABELS order, unknowns at end
