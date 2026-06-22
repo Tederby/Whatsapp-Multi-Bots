@@ -8,7 +8,7 @@ export default {
     description: "Melihat profil, status admin, dan owner pengguna.",
     usage: "!profile [@user/reply]",
 
-    async handler({ message, sock, sender, pushname, isGroup, groupMetadata, ownerNumbers }) {
+    async handler({ message, sock, sender, pushname, isGroup, isGroupAdmins, groupMetadata, ownerNumbers }) {
         try {
             let target = null;
             let targetName = "Tidak diketahui";
@@ -44,11 +44,17 @@ export default {
 
             // 3. Cek Status Admin (jika dieksekusi di grup)
             let isTargetAdmin = false;
-            if (isGroup && groupMetadata && groupMetadata.participants) {
-                isTargetAdmin = groupMetadata.participants.some(p => {
-                    const participantBaseId = p.id.split(':')[0].split('@')[0];
-                    return participantBaseId === targetBaseId && p.admin;
-                });
+            if (isGroup) {
+                // Jika mengecek diri sendiri, kita bisa mengandalkan isGroupAdmins bawaan dari context (LID-proof)
+                if (target === sender) {
+                    isTargetAdmin = isGroupAdmins;
+                } else if (groupMetadata && groupMetadata.participants) {
+                    // Jika mengecek orang lain (lewat mention/quote), ID mereka sudah sinkron dengan groupMetadata
+                    isTargetAdmin = groupMetadata.participants.some(p => {
+                        const participantBaseId = p.id.split(':')[0].split('@')[0];
+                        return participantBaseId === targetBaseId && p.admin;
+                    });
+                }
             }
 
             // 4. URL Gambar Profil Placeholder (Bisa diganti link gambar bot/logo lain nantinya)
