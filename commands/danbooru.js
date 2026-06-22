@@ -21,12 +21,12 @@ export default {
             while (attempts < maxAttempts) {
                 attempts++;
                 // Generate ID from 1 to 11642728
-                const randomId = Math.floor(Math.random() * 11642728) + 1;
+                const randomId = Math.floor(Math.random() * 12000000) + 1;
                 try {
                     const postData = await fetchDanbooruPost(randomId);
                     // Jika post eksplisit, skip dan coba cari lagi (jangan dihitung valid)
                     if (postData.rating === 'e') continue;
-                    
+
                     validId = randomId;
                     break;
                 } catch (err) {
