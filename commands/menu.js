@@ -22,7 +22,7 @@ export default {
     category: "utility",
     description: "Menampilkan semua daftar perintah bot",
     usage: "!menu",
-    async handler({ message, prefix }) {
+    async handler({ message, prefix, sock }) {
         const commands = getAllCommands();
 
         // Group commands by category
@@ -82,6 +82,14 @@ export default {
 
         menuText += `⚙️ _Powered by Baileys & Node.js_`;
 
-        await message.reply(menuText.trim());
+        const sentMsg = await sock.sendMessage(message.chat, { text: menuText.trim() }, { quoted: message });
+
+        setTimeout(async () => {
+            try {
+                await sock.sendMessage(message.chat, { text: "❌ *Command timeout*", edit: sentMsg.key });
+            } catch (err) {
+                console.error("[MENU] Gagal edit timeout:", err.message);
+            }
+        }, 20000);
     }
 };
