@@ -11,7 +11,14 @@ export default {
             const contextInfo = message.contextInfo;
             const quotedMessage = contextInfo?.quotedMessage;
             const quotedKey = contextInfo?.stanzaId;
-            const quotedSender = contextInfo?.participant;
+            let quotedSender = contextInfo?.participant;
+
+            // Di Baileys, jika kita mereply pesan dari bot itu sendiri, properti participant
+            // pada contextInfo seringkali bernilai undefined. Kita fallback ke ID bot
+            // agar pengecekan isQuotedFromBot di bawah bisa berjalan dengan benar.
+            if (quotedMessage && !quotedSender) {
+                quotedSender = sock.user.id;
+            }
 
             if (!quotedMessage || !quotedKey || !quotedSender) {
                 return message.reply("Harap kutip pesan yang ingin dihapus!");
