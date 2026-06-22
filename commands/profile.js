@@ -69,48 +69,55 @@ export default {
                 : null;
 
             // ── 5. Build profile display ────────────────────────────
-            let caption = `╔══ *PROFILE INFO* ══╗\n\n`;
+            let caption = `╭━━━〔 👤 Profile Info 〕━━━\n`;
 
-            // Name (only available if target is the sender)
             if (targetName) {
-                caption += `👤 *Nama:* ${targetName}\n`;
+                caption += `┃ 📛 Nama  : ${targetName}\n`;
             } else if (userData.name) {
-                caption += `👤 *Nama:* ${userData.name}\n`;
+                caption += `┃ 📛 Nama  : ${userData.name}\n`;
+            } else {
+                caption += `┃ 📛 Nama  : -\n`;
             }
 
-            caption += `🏷️ *User:* @${targetBaseId}\n`;
-            caption += `👑 *Owner:* ${isTargetOwner ? "Ya" : "Tidak"}\n`;
+            caption += `┃ 🏷️ User  : @${targetBaseId}\n`;
+            caption += `┃ 👑 Owner : ${isTargetOwner ? "Ya" : "Tidak"}\n`;
 
             if (isGroup) {
-                caption += `🛡️ *Admin Grup:* ${isTargetAdmin ? "Ya" : "Tidak"}\n`;
+                caption += `┃ 🛡️ Admin : ${isTargetAdmin ? "Ya" : "Tidak"}\n`;
             }
+            caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
             // Registration status
-            caption += `\n━━ Status ━━\n`;
+            caption += `╭───「 📝 Registrasi 」\n`;
 
             if (userData.registered) {
-                caption += `📋 *Registrasi:* ✅ Terdaftar\n`;
-                if (regDate) caption += `📅 *Sejak:* ${regDate}\n`;
+                caption += `│ ⋄ Status : ✅ Terdaftar\n`;
+                if (regDate) caption += `│ ⋄ Sejak  : ${regDate}\n`;
             } else {
-                caption += `📋 *Registrasi:* ❌ Belum terdaftar\n`;
+                caption += `│ ⋄ Status : ❌ Belum terdaftar\n`;
                 if (target === sender) {
-                    caption += `_Ketik ${prefix}register untuk mendaftar._\n`;
+                    caption += `│   └ _Ketik ${prefix}register untuk mendaftar_\n`;
                 }
             }
+            caption += `╰──────────────\n\n`;
 
             // Ban status
+            caption += `╭───「 🚫 Status Ban 」\n`;
             if (isTargetBanned) {
-                caption += `🚫 *Global Ban:* ⛔ Ya\n`;
-                if (userData.banReason) caption += `📝 *Alasan:* _${userData.banReason}_\n`;
+                caption += `│ ⋄ Global : ⛔ Ya\n`;
+                if (userData.banReason) caption += `│   └ Alasan: _${userData.banReason}_\n`;
             } else {
-                caption += `🚫 *Global Ban:* Tidak\n`;
+                caption += `│ ⋄ Global : Tidak\n`;
             }
 
-            if (isGroup && isTargetGroupBanned) {
-                caption += `🚫 *Ban Grup:* ⛔ Ya\n`;
+            if (isGroup) {
+                if (isTargetGroupBanned) {
+                    caption += `│ ⋄ Grup   : ⛔ Ya\n`;
+                } else {
+                    caption += `│ ⋄ Grup   : Tidak\n`;
+                }
             }
-
-            caption += `\n╚═══════════════════╝`;
+            caption += `╰──────────────`;
 
             // ── 6. Send ─────────────────────────────────────────────
             const placeholderImageUrl = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";

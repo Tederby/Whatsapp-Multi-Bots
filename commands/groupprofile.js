@@ -33,33 +33,34 @@ export default {
             const regByBaseId = config.registeredBy ? config.registeredBy.split("@")[0] : null;
 
             // Build display
-            let caption = `╔══ *GROUP INFO* ══╗\n\n`;
+            let caption = `╭━━━〔 👥 Group Info 〕━━━\n`;
+            caption += `┃ 📛 Nama   : ${groupName}\n`;
+            caption += `┃ 👥 Member : ${totalMembers}\n`;
+            caption += `┃ 🛡️ Admin  : ${totalAdmins}\n`;
+            caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-            caption += `📛 *Nama:* ${groupName}\n`;
-            caption += `👥 *Member:* ${totalMembers}\n`;
-            caption += `🛡️ *Admin:* ${totalAdmins}\n\n`;
-
-            caption += `━━ Registrasi ━━\n`;
+            caption += `╭───「 📝 Registrasi 」\n`;
             if (isRegistered) {
-                caption += `📋 *Status:* ✅ Terdaftar\n`;
-                if (regDate) caption += `📅 *Sejak:* ${regDate}\n`;
-                if (regByBaseId) caption += `📝 *Oleh:* @${regByBaseId}\n`;
+                caption += `│ ⋄ Status : ✅ Terdaftar\n`;
+                if (regDate) caption += `│ ⋄ Sejak  : ${regDate}\n`;
+                if (regByBaseId) caption += `│ ⋄ Oleh   : @${regByBaseId}\n`;
             } else {
-                caption += `📋 *Status:* ❌ Belum terdaftar\n`;
-                caption += `_Ketik ${prefix}gregister untuk mendaftarkan grup._\n`;
+                caption += `│ ⋄ Status : ❌ Belum terdaftar\n`;
+                caption += `│   └ _Ketik ${prefix}gregister untuk mendaftar_\n`;
             }
+            caption += `╰──────────────\n\n`;
 
-            caption += `\n━━ Fitur ━━\n`;
-            caption += `👋 *Welcome:* ${config.welcome ? "✅ Aktif" : "❌ Nonaktif"}\n`;
-            caption += `👋 *Goodbye:* ${config.goodbye ? "✅ Aktif" : "❌ Nonaktif"}\n`;
-            caption += `🚫 *Banned Users:* ${bannedUsers.length}\n`;
+            caption += `╭───「 ⚙️ Fitur 」\n`;
+            caption += `│ ⋄ Welcome : ${config.welcome ? "✅ Aktif" : "❌ Nonaktif"}\n`;
+            caption += `│ ⋄ Goodbye : ${config.goodbye ? "✅ Aktif" : "❌ Nonaktif"}\n`;
+            caption += `│ ⋄ Banned  : ${bannedUsers.length} Users\n`;
 
             if (config.banned) {
-                caption += `\n⚠️ *GRUP INI DI-BAN SECARA GLOBAL*\n`;
-                if (config.banReason) caption += `📝 Alasan: _${config.banReason}_\n`;
+                caption += `│ \n`;
+                caption += `│ ⚠️ *GRUP INI DI-BAN SECARA GLOBAL*\n`;
+                if (config.banReason) caption += `│ └ Alasan: _${config.banReason}_\n`;
             }
-
-            caption += `\n╚══════════════════╝`;
+            caption += `╰──────────────`;
 
             // Collect mentions
             const mentions = [];

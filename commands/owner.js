@@ -7,17 +7,19 @@ export default {
     description: "Menampilkan informasi kontak owner/pembuat bot",
     usage: "!owner",
     async handler({ message, sock, ownerNumbers }) {
-        let text = `✨ ━━━ *INFORMASI OWNER* ━━━ ✨\n\n`;
-        text += `Kontak pembuat/pemilik dari *${setting.name}*.\nJika kamu menemukan bug, memiliki saran fitur baru, atau sekadar ingin bertanya, jangan ragu untuk menghubungi nomor di bawah ini!\n\n`;
-        text += `🎗️ *Daftar Kontak Owner:*\n`;
+        let text = `╭━━━〔 👑 Owner Info 〕━━━\n`;
+        text += `┃ Kontak pembuat/pemilik bot ini.\n`;
+        text += `┃ Hubungi untuk bug/saran fitur!\n`;
+        text += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
         setting.owner.forEach((num, index) => {
-            text += `\n👤 *Owner ${index + 1}*\n`;
-            text += ` ➭ WhatsApp: https://wa.me/${num}\n`;
-            text += ` ➭ Mention: @${num}\n`;
+            text += `╭───「 👤 Owner ${index + 1} 」\n`;
+            text += `│ ⋄ WhatsApp : wa.me/${num}\n`;
+            text += `│ ⋄ Mention  : @${num}\n`;
+            text += `╰──────────────\n\n`;
         });
 
-        text += `\n✨ ━━━━━━━━━━━━━━━━━ ✨`;
+        text = text.trim();
 
         const imageUrl = "https://i.pximg.net/img-master/img/2025/10/31/09/46/39/136901879_p0_master1200.jpg"; // Ganti URL ini dengan link gambar Anda
 

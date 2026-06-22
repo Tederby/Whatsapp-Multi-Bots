@@ -66,43 +66,36 @@ export default {
             const systemUptime = os.uptime();
 
             // ── Build display ────────────────────────────────────────
-            let text = `╔══ *${setting.name} — INFO* ══╗\n\n`;
+            let text = `╭━━━〔 ℹ️ System Info 〕━━━\n`;
+            text += `┃ 📛 Nama   : ${setting.name}\n`;
+            text += `┃ ⏱️ Uptime : ${formatUptime(processUptime)}\n`;
+            text += `┃ 📦 Node   : ${nodeVersion}\n`;
+            text += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-            // Bot section
-            text += `━━ 🤖 Bot ━━\n`;
-            text += `📛 *Nama:* ${setting.name}\n`;
-            text += `📊 *Commands:* ${commands.length} (${categories.size} kategori)\n`;
-            text += `🔧 *Prefix:* ${setting.prefixes.join(" ")}\n`;
-            text += `⏱️ *Bot Uptime:* ${formatUptime(processUptime)}\n`;
-            text += `👑 *Owner:* ${setting.owner.length} orang\n\n`;
+            text += `╭───「 🤖 Bot Stats 」\n`;
+            text += `│ ⋄ Commands : ${commands.length} (${categories.size} kategori)\n`;
+            text += `│ ⋄ Prefix   : ${setting.prefixes.join(" ")}\n`;
+            text += `│ ⋄ Owner    : ${setting.owner.length} orang\n`;
+            text += `╰──────────────\n\n`;
 
-            // Database section
-            text += `━━ 💾 Database ━━\n`;
-            text += `👤 *Users:* ${totalUsers} total`;
+            text += `╭───「 💾 Database 」\n`;
+            text += `│ ⋄ Users  : ${totalUsers} total`;
             if (registeredUsers > 0) text += ` (${registeredUsers} terdaftar)`;
             text += `\n`;
-            if (bannedUsers > 0) text += `🚫 *Banned Users:* ${bannedUsers}\n`;
-            text += `👥 *Groups:* ${totalGroups} total`;
+            if (bannedUsers > 0) text += `│   └ 🚫 Banned : ${bannedUsers}\n`;
+            text += `│ ⋄ Groups : ${totalGroups} total`;
             if (registeredGroups > 0) text += ` (${registeredGroups} terdaftar)`;
             text += `\n`;
-            if (bannedGroups > 0) text += `🚫 *Banned Groups:* ${bannedGroups}\n`;
-            text += `\n`;
+            if (bannedGroups > 0) text += `│   └ 🚫 Banned : ${bannedGroups}\n`;
+            text += `╰──────────────\n\n`;
 
-            // System section
-            text += `━━ 🖥️ Server ━━\n`;
-            text += `🏷️ *Hostname:* ${hostname}\n`;
-            text += `💻 *Platform:* ${platform} (${arch})\n`;
-            text += `🧮 *CPU:* ${cpus[0]?.model || "Unknown"} (${cpus.length} core)\n`;
-            text += `📦 *Node.js:* ${nodeVersion}\n`;
-            text += `⏱️ *System Uptime:* ${formatUptime(systemUptime)}\n\n`;
-
-            // Memory section
-            text += `━━ 📊 Memory ━━\n`;
-            text += `🖥️ *System:* ${formatBytes(usedMem)} / ${formatBytes(totalMem)} (${((usedMem / totalMem) * 100).toFixed(1)}%)\n`;
-            text += `🤖 *Bot RSS:* ${formatBytes(memUsage.rss)}\n`;
-            text += `📦 *Heap:* ${formatBytes(memUsage.heapUsed)} / ${formatBytes(memUsage.heapTotal)}\n`;
-
-            text += `\n╚══════════════════════╝`;
+            text += `╭───「 🖥️ Server & RAM 」\n`;
+            text += `│ ⋄ Host   : ${hostname}\n`;
+            text += `│ ⋄ OS     : ${platform} (${arch})\n`;
+            text += `│ ⋄ CPU    : ${cpus[0]?.model || "Unknown"}\n`;
+            text += `│ ⋄ System : ${formatBytes(usedMem)} / ${formatBytes(totalMem)} (${((usedMem / totalMem) * 100).toFixed(1)}%)\n`;
+            text += `│ ⋄ Bot    : ${formatBytes(memUsage.rss)} (RSS) | ${formatBytes(memUsage.heapUsed)} (Heap)\n`;
+            text += `╰──────────────`;
 
             await message.reply(text);
 
