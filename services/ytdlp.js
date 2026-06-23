@@ -234,4 +234,84 @@ export function detectStreams(formatStr, formats) {
     return { hasVideo, hasAudio };
 }
 
+/**
+ * Find the best video + audio combination under the size limit, excluding webm/vp9.
+ * @param {object[]} formats - Raw formats array from yt-dlp JSON
+ * @param {number} maxSize - Maximum file size in bytes
+ * @returns {{ formatStr: string, estSize: number|null, label: string } | null}
+ */
+export function getBestFormatUnderLimit(formats, maxSize) {
+    if (!formats || !formats.length) return null;
+
+    // Filter out webm container and vp9/vp8 codecs
+    const safeFormats = formats.filter(f => {
+        if (f.ext === "webm") return false;
+        if (f.vcodec && (f.vcodec.includes("vp9") || f.vcodec.includes("vp8"))) return false;
+        return true;
+    });
+
+    const videos = safeFormats
+        .filter((f) => f.vcodec && f.vcodec !== "none")
+        .sort((a, b) => {
+            const hA = a.height || 0;
+            const hB = b.height || 0;
+            if (hA !== hB) return hB - hA; // Sort by height descending
+            const tbrA = a.tbr || a.abr || 0;
+            const tbrB = b.tbr || b.abr || 0;
+            return tbrB - tbrA;
+        });
+
+    const audios = safeFormats
+        .filter((f) => f.acodec && f.acodec !== "none" && (!f.vcodec || f.vcodec === "none"))
+        .sort((a, b) => (b.abr || 0) - (a.abr || 0));
+
+    const bestAudio = audios[0];
+    const bestAudioSize = bestAudio ? (bestAudio.filesize || bestAudio.filesize_approx || 0) : 0;
+
+    for (const vid of videos) {
+        const vSize = vid.filesize || vid.filesize_approx || 0;
+        
+        let isCombined = vid.acodec && vid.acodec !== "none";
+        let formatStr = vid.format_id;
+        let estSize = vSize;
+
+        if (!isCombined && bestAudio) {
+            formatStr = `${vid.format_id}+${bestAudio.format_id}`;
+            estSize += bestAudioSize;
+        }
+
+        // We accept it if size is 0 (unknown) or within limit.
+        // Wait, if it's 0 we don't know the size, so it might be large.
+        // It's safer to only skip if it's explicitly > maxSize.
+        if (estSize === 0 || estSize <= maxSize) {
+            return {
+                formatStr,
+                estSize: estSize > 0 ? estSize : null,
+                label: `${vid.height}p`
+            };
+        }
+    }
+
+    // Fallback: If no video is under the limit, return best audio
+    if (bestAudio && (bestAudioSize === 0 || bestAudioSize <= maxSize)) {
+         return {
+             formatStr: bestAudio.format_id,
+             estSize: bestAudioSize > 0 ? bestAudioSize : null,
+             label: "audio"
+         };
+    }
+
+    // Ultimate fallback: smallest video
+    const smallestVid = videos[videos.length - 1];
+    if (smallestVid) {
+         let isCombined = smallestVid.acodec && smallestVid.acodec !== "none";
+         return {
+             formatStr: isCombined || !bestAudio ? smallestVid.format_id : `${smallestVid.format_id}+${bestAudio.format_id}`,
+             estSize: null,
+             label: `${smallestVid.height || "?"}p (Large)`
+         };
+    }
+
+    return null;
+}
 

@@ -1,6 +1,7 @@
 import { searchYouTube } from "../services/youtube.js";
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
-import { download } from "../services/ytdlp.js";
+import { download, getBestFormatUnderLimit } from "../services/ytdlp.js";
+import { getCachedInfo } from "../services/infoCache.js";
 import fs from "fs";
 import { tryDelete } from "../services/cleanup.js";
 import { downloadQueue } from "../services/downloadQueue.js";
@@ -157,7 +158,17 @@ async function downloadReplyHandler({ message, sock, state }) {
     deleteReplyHandler(messageKey.id);
 
     try {
-        const formatStr = format === "mp4" ? "bv*[height<=720]+ba/b" : "ba";
+        let formatStr = "ba";
+        if (format === "mp4") {
+            const maxSize = setting.ytdlp.maxFileSize;
+            try {
+                const info = await getCachedInfo(video.url);
+                const bestFormatInfo = getBestFormatUnderLimit(info.formats, maxSize);
+                formatStr = bestFormatInfo ? bestFormatInfo.formatStr : "bv*[height<=720]+ba/b";
+            } catch (e) {
+                formatStr = "bv*[height<=720]+ba/b";
+            }
+        }
         
         await downloadQueue.acquire();
         let filePath;
@@ -169,6 +180,7 @@ async function downloadReplyHandler({ message, sock, state }) {
 
         const stat = fs.statSync(filePath);
         const maxSize = setting.ytdlp.maxFileSize;
+        const captionStr = `🎬 *${video.title}*\n🔗 ${video.url}`;
 
         // Jika resolusi tinggi membuat file terlalu besar, akan di fallback sebagai dokumen
         if (stat.size > maxSize) {
@@ -177,7 +189,7 @@ async function downloadReplyHandler({ message, sock, state }) {
                 document: fs.readFileSync(filePath),
                 mimetype: format === "mp4" ? "video/mp4" : "audio/mpeg",
                 fileName: `${sanitizeFilename(video.title)}.${format}`,
-                caption: `🎬 *${video.title}*`
+                caption: captionStr
             }, { quoted: message });
         } else {
             if (isDocs) {
@@ -185,13 +197,13 @@ async function downloadReplyHandler({ message, sock, state }) {
                     document: fs.readFileSync(filePath),
                     mimetype: format === "mp4" ? "video/mp4" : "audio/mpeg",
                     fileName: `${sanitizeFilename(video.title)}.${format}`,
-                    caption: `🎬 *${video.title}*`
+                    caption: captionStr
                 }, { quoted: message });
             } else {
                 if (format === "mp4") {
                     await sock.sendMessage(message.chat, {
                         video: fs.readFileSync(filePath),
-                        caption: `🎬 *${video.title}*`
+                        caption: captionStr
                     }, { quoted: message });
                 } else {
                     await sock.sendMessage(message.chat, {
@@ -202,13 +214,73 @@ async function downloadReplyHandler({ message, sock, state }) {
             }
         }
 
-        await sock.sendMessage(message.chat, { text: `✅ Berhasil dikirim!`, edit: messageKey });
+        await sock.sendMessage(message.chat, { 
+            text: `✅ Berhasil dikirim!\n💡 Reply pesan ini dalam 60 detik dengan \`-docs\` untuk meminta file ini sebagai dokumen, atau \`-resend\` untuk media.`, 
+            edit: messageKey 
+        });
         
-        // Membersihkan file
-        tryDelete(filePath);
+        // Timeout logic untuk menghapus file dari cache sementara
+        const timeoutId = setTimeout(async () => {
+            deleteReplyHandler(messageKey.id);
+            tryDelete(filePath);
+            await sock.sendMessage(message.chat, { text: `✅ Berhasil dikirim!`, edit: messageKey }).catch(() => {});
+        }, 60000);
+
+        registerReplyHandler(messageKey.id, resendReplyHandler, {
+            filePath,
+            video,
+            format,
+            messageKey,
+            timeoutId
+        });
 
     } catch (err) {
         console.error("[YTSearch Download]", err);
         await sock.sendMessage(message.chat, { text: `❌ Gagal mengunduh: ${err.message || "Coba lagi nanti."}`, edit: messageKey });
+    }
+}
+
+async function resendReplyHandler({ message, sock, state }) {
+    const text = message.text.toLowerCase().trim();
+    if (text !== "-docs" && text !== "-resend") return;
+
+    const { filePath, video, format, messageKey, timeoutId } = state;
+    
+    // Clear the timeout so it doesn't delete our file while we send
+    clearTimeout(timeoutId);
+    // Remove handler immediately
+    deleteReplyHandler(messageKey.id);
+
+    try {
+        await sock.sendMessage(message.chat, { text: `⏳ Mengirim ulang...`, edit: messageKey });
+        const isDocs = text === "-docs";
+        const captionStr = `🎬 *${video.title}*\n🔗 ${video.url}`;
+
+        if (isDocs) {
+            await sock.sendMessage(message.chat, {
+                document: fs.readFileSync(filePath),
+                mimetype: format === "mp4" ? "video/mp4" : "audio/mpeg",
+                fileName: `${sanitizeFilename(video.title)}.${format}`,
+                caption: captionStr
+            }, { quoted: message });
+        } else {
+            if (format === "mp4") {
+                await sock.sendMessage(message.chat, {
+                    video: fs.readFileSync(filePath),
+                    caption: captionStr
+                }, { quoted: message });
+            } else {
+                await sock.sendMessage(message.chat, {
+                    audio: fs.readFileSync(filePath),
+                    mimetype: "audio/mp4"
+                }, { quoted: message });
+            }
+        }
+        await sock.sendMessage(message.chat, { text: `✅ Berhasil dikirim!`, edit: messageKey });
+    } catch (err) {
+        console.error("[YTSearch Resend]", err);
+        await sock.sendMessage(message.chat, { text: `❌ Gagal mengirim ulang.`, edit: messageKey });
+    } finally {
+        tryDelete(filePath);
     }
 }

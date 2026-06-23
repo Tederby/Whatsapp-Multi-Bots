@@ -9,7 +9,7 @@
 
 import fs from "fs";
 import { getCachedInfo } from "../services/infoCache.js";
-import { download, formatDuration, getPlatformName, formatSize, estimateSize } from "../services/ytdlp.js";
+import { download, formatDuration, getPlatformName, formatSize, getBestFormatUnderLimit } from "../services/ytdlp.js";
 import { downloadQueue } from "../services/downloadQueue.js";
 import { tryDelete } from "../services/cleanup.js";
 import { isUrl, sanitizeFilename } from "../lib/utils.js";
@@ -29,7 +29,7 @@ export default {
         }
 
         // ── 1. Fetch info ───────────────────────────────────────────
-        const update = await message.replyUpdate("⏳ Mengambil info video...");
+        const update = await message.replyUpdate("⏳ Mengambil info video & memilih format terbaik...");
         let info;
         try {
             info = await getCachedInfo(url);
@@ -43,28 +43,12 @@ export default {
 
         // ── 2. Find best format that fits under the video size limit ─
         const maxSize = setting.ytdlp.maxFileSize;
-        const cascadeFormats = setting.ytdlp.defaultFormats;
-        let chosenFormat = null;
-        let chosenLabel = "";
-
-        for (const fmt of cascadeFormats) {
-            // Try to estimate size for this format selector
-            // We can't easily estimate for yt-dlp selectors like "bv*[height<=720]+ba/b"
-            // so we pick the best matching formats from the info and sum their sizes
-            const est = estimateFromSelector(fmt, info.formats);
-            if (est !== null && est <= maxSize) {
-                chosenFormat = fmt;
-                chosenLabel = est.label || "";
-                break;
-            }
-            // If we can't estimate, try it anyway (last resort)
-            if (est === null) {
-                chosenFormat = fmt;
-                break;
-            }
+        const bestFormatInfo = getBestFormatUnderLimit(info.formats, maxSize);
+        
+        let chosenFormat = "bv*[height<=720]+ba/b"; // fallback
+        if (bestFormatInfo) {
+            chosenFormat = bestFormatInfo.formatStr;
         }
-
-        if (!chosenFormat) chosenFormat = cascadeFormats[cascadeFormats.length - 1];
 
         // ── 3. Acquire queue slot ───────────────────────────────────
         const queuePos = downloadQueue.pending;
@@ -123,53 +107,5 @@ export default {
 };
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-
-/**
- * Try to estimate the total download size for a yt-dlp format selector
- * by picking the best-matching format IDs from the available formats list.
- *
- * @param {string} selector - e.g. "bv*[height<=720]+ba/b"
- * @param {object[]} formats
- * @returns {{ bytes: number|null, label: string } | null}
- */
-function estimateFromSelector(selector, formats) {
-    if (!formats || !formats.length) return null;
-
-    // Parse height constraint from selector (e.g. "bv*[height<=720]+ba/b")
-    const heightMatch = selector.match(/height<=(\d+)/);
-
-    if (heightMatch) {
-        const maxH = parseInt(heightMatch[1]);
-        // Find best video at or below this height
-        const videos = formats
-            .filter((f) => f.vcodec && f.vcodec !== "none" && f.height && f.height <= maxH)
-            .sort((a, b) => (b.height || 0) - (a.height || 0));
-        // Find best audio
-        const audios = formats
-            .filter((f) => f.acodec && f.acodec !== "none" && (!f.vcodec || f.vcodec === "none"))
-            .sort((a, b) => (b.abr || 0) - (a.abr || 0));
-
-        const vid = videos[0];
-        const aud = audios[0];
-        if (!vid) return null;
-
-        const vSize = vid.filesize || vid.filesize_approx || 0;
-        const aSize = aud ? (aud.filesize || aud.filesize_approx || 0) : 0;
-        const total = vSize + aSize;
-        return total > 0 ? { bytes: total, label: `${vid.height}p` } : null;
-    }
-
-    // Fallback selector like "b" — just pick the best single format
-    if (selector === "b") {
-        const best = formats
-            .filter((f) => f.vcodec && f.vcodec !== "none" && f.acodec && f.acodec !== "none")
-            .sort((a, b) => (b.height || 0) - (a.height || 0))[0];
-        if (!best) return null;
-        const size = best.filesize || best.filesize_approx;
-        return size ? { bytes: size, label: `${best.height || "?"}p` } : null;
-    }
-
-    return null;
-}
 
 
