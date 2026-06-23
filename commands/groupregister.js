@@ -43,7 +43,7 @@ export default {
                     `⚠️ Grup ini sudah terdaftar!\n\n` +
                     `📅 Terdaftar sejak: ${regDate}\n` +
                     `📝 Didaftarkan oleh: @${senderBaseId}\n\n` +
-                    `_Gunakan ${prefix}gunregister untuk menghapus registrasi._`
+                    `_Gunakan \`${prefix}gunregister\` untuk menghapus registrasi._`
                 );
             }
 
@@ -52,7 +52,7 @@ export default {
             return message.reply(
                 `✅ *REGISTRASI GRUP BERHASIL*\n\n` +
                 `Grup ini sekarang terdaftar di database bot.\n` +
-                `Ketik *${prefix}groupprofile* untuk melihat info grup.`
+                `Ketik \`${prefix}groupprofile\` untuk melihat info grup.`
             );
 
         } catch (error) {

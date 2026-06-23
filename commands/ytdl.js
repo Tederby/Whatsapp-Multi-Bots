@@ -95,7 +95,7 @@ export default {
                         `🌐 Platform: ${platform}`,
                         `📦 Ukuran: ${formatSize(stat.size)}`,
                         ``,
-                        `💡 Gunakan *${prefix}ytdlf* untuk format kustom`,
+                        `💡 Gunakan \`${prefix}ytdlf\` untuk format kustom`,
                     ].join("\n"),
                 }, { quoted: message, ephemeralExpiration: message.contextInfo?.expiration });
             } else {
@@ -108,7 +108,7 @@ export default {
                         `📏 Durasi: ${duration}`,
                         `🌐 Platform: ${platform}`,
                         ``,
-                        `💡 Gunakan *${prefix}ytdlf* untuk format kustom`,
+                        `💡 Gunakan \`${prefix}ytdlf\` untuk format kustom`,
                     ].join("\n"),
                 }, { quoted: message, ephemeralExpiration: message.contextInfo?.expiration });
             }

@@ -28,9 +28,9 @@ export default {
             } else if (sub === "set") {
                 // rawArgs removes the prefix and command name
                 const welcomeText = rawArgs.replace(/^set\s*/i, "").trim();
-                
+
                 if (!welcomeText) {
-                    return message.reply(`Gunakan perintah:\n${prefix}welcome set <teks selamat datang>\n\nContoh:\n${prefix}welcome set Selamat datang @user di grup @group!`);
+                    return message.reply(`Gunakan perintah:\n\`${prefix}welcome set <teks selamat datang>\`\n\nContoh:\n${prefix}welcome set Selamat datang @user di grup @group!`);
                 }
 
                 config.welcome = true;
@@ -40,7 +40,7 @@ export default {
                 return message.reply(`Pesan selamat datang diperbarui dan fitur diaktifkan:\n\n${welcomeText}`);
 
             } else {
-                return message.reply(`Penggunaan:\n${prefix}welcome on → Aktifkan welcome\n${prefix}welcome off → Nonaktifkan welcome\n${prefix}welcome set <teks> → Atur teks welcome\n\nKamu bisa menggunakan @user untuk tag member baru dan @group untuk nama grup.`);
+                return message.reply(`Penggunaan:\n\`${prefix}welcome on\` → Aktifkan welcome\n\`${prefix}welcome off\` → Nonaktifkan welcome\n\`${prefix}welcome set <teks>\` → Atur teks welcome\n\nKamu bisa menggunakan @user untuk tag member baru dan @group untuk nama grup.`);
             }
 
         } catch (error) {

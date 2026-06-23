@@ -46,7 +46,7 @@ export default {
                 if (regByBaseId) caption += `│ ⋄ Oleh   : @${regByBaseId}\n`;
             } else {
                 caption += `│ ⋄ Status : ❌ Belum terdaftar\n`;
-                caption += `│   └ _Ketik ${prefix}gregister untuk mendaftar_\n`;
+                caption += `│   └ _Ketik \`${prefix}gregister\` untuk mendaftar_\n`;
             }
             caption += `╰──────────────\n\n`;
 

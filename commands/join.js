@@ -1,10 +1,10 @@
 export default {
     name: "join",
     aliases: ["joingc"],
-    category: "owner",
+    category: "tools",
     description: "Menggabungkan bot ke dalam grup menggunakan link invite.",
     usage: "!join <link grup>",
-    ownerOnly: true,
+    privateOnly: true,
 
     async handler({ message, sock, args }) {
         try {
