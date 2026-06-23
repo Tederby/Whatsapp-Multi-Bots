@@ -11,7 +11,7 @@ import { banUserInGroup, unbanUserInGroup, getGroupBannedUsers } from "../lib/da
 export default {
     name: "ban",
     aliases: ["gban-user"],
-    category: "admin",
+    category: "group",
     description: "Ban/unban user dari menggunakan bot di grup ini.",
     usage: "!ban @user [alasan] | !unban @user | !banlist",
     groupOnly: true,

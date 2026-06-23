@@ -3,7 +3,7 @@ import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
 export default {
     name: "kick",
     aliases: ["k", "tendang"],
-    category: "admin",
+    category: "group",
     description: "Mengeluarkan member dari grup.",
     usage: "!kick @user (atau reply pesan)",
     groupOnly: true,

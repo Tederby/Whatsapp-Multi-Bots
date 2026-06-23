@@ -33,7 +33,7 @@ function formatUptime(seconds) {
 export default {
     name: "info",
     aliases: ["botinfo", "status", "stats"],
-    category: "utility",
+    category: "general",
     description: "Menampilkan informasi sistem dan statistik bot",
     usage: "!info",
 

@@ -7,7 +7,7 @@ import { registerGroup, unregisterGroup, getGroupConfig } from "../lib/database.
 export default {
     name: "gregister",
     aliases: ["groupregister", "gregreg", "gdaftar"],
-    category: "admin",
+    category: "group",
     description: "Mendaftarkan grup ke database bot.",
     usage: "!gregister | !gunregister",
     groupOnly: true,

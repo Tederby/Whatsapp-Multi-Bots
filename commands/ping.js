@@ -1,7 +1,7 @@
 export default {
     name: "ping",
     aliases: ["test", "tes"],
-    category: "utility",
+    category: "general",
     description: "Check bot response time",
     usage: "!ping",
     async handler({ message }) {

@@ -3,7 +3,7 @@ import { getGroupConfig, saveGroupConfig } from "../lib/database.js";
 export default {
     name: 'goodbye',
     aliases: ['bye', 'leavemsg'],
-    category: 'admin',
+    category: 'group',
     description: 'Mengatur fitur pesan perpisahan di grup',
     usage: '!goodbye [on|off|set] [teks]',
     groupOnly: true,

@@ -1,7 +1,7 @@
 export default {
     name: "say",
     aliases: [],
-    category: "utility",
+    category: "tools",
     description: "Echo text back to the sender",
     usage: "!say <text>",
     async handler({ message, rawArgs }) {

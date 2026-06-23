@@ -3,7 +3,7 @@ import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
 export default {
     name: "add",
     aliases: ["tambah"],
-    category: "admin",
+    category: "group",
     description: "Menambahkan member ke dalam grup berdasarkan nomor WA.",
     usage: "!add 628xxx",
     groupOnly: true,

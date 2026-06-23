@@ -4,7 +4,7 @@ import path from 'path';
 export default {
     name: 'download',
     aliases: ['dl', 'fetch'],
-    category: 'utility',
+    category: 'download',
     description: 'Download file dari URL dan mengirimkannya ke WhatsApp',
     usage: '!download <url>',
     async handler({ message, sock, args }) {

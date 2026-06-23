@@ -1,7 +1,7 @@
 export default {
     name: "delete",
     aliases: ["del"],
-    category: "admin",
+    category: "group",
     description: "Menghapus pesan pengguna di group",
     usage: "!delete (reply to a message)",
     groupOnly: true,

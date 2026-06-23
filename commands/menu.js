@@ -3,13 +3,13 @@ import setting from "../setting.js";
 
 /** Display name for each category. */
 const CATEGORY_LABELS = {
-    general: "👤 General",
-    utility: "🔧 Utility",
-    media: "🖼️ Media",
-    download: "📥 Download",
-    search: "🔎 Search",
-    anime: "🎌 Anime",
-    admin: "🔑 Admin",
+    general: "🌟 General",
+    group: "🛡️ Group",
+    download: "📥 Downloader",
+    media: "🎨 Media",
+    anime: "🌸 Anime",
+    search: "🔍 Search",
+    tools: "🛠️ Tools",
     owner: "👑 Owner"
 };
 
@@ -19,7 +19,7 @@ const DEFAULT_CATEGORY = "📦 Lainnya";
 export default {
     name: "menu",
     aliases: ["help", "list"],
-    category: "utility",
+    category: "general",
     description: "Menampilkan semua daftar perintah bot",
     usage: "!menu",
     async handler({ message, prefix, sock }) {

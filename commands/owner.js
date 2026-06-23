@@ -3,7 +3,7 @@ import setting from "../setting.js";
 export default {
     name: "owner",
     aliases: ["owners", "creator", "developer"],
-    category: "utility",
+    category: "general",
     description: "Menampilkan informasi kontak owner/pembuat bot",
     usage: "!owner",
     async handler({ message, sock, ownerNumbers }) {

@@ -3,7 +3,7 @@ import { getGroupConfig, saveGroupConfig } from "../lib/database.js";
 export default {
     name: 'welcome',
     aliases: [],
-    category: 'admin',
+    category: 'group',
     description: 'Mengatur fitur welcome di grup',
     usage: '!welcome [on|off|set] [teks]',
     groupOnly: true,

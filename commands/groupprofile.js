@@ -7,7 +7,7 @@ import { getGroupConfig, getGroupBannedUsers } from "../lib/database.js";
 export default {
     name: "groupprofile",
     aliases: ["gprofile", "grupinfo", "ginfo"],
-    category: "admin",
+    category: "group",
     description: "Menampilkan informasi grup dari database bot.",
     usage: "!groupprofile",
     groupOnly: true,
