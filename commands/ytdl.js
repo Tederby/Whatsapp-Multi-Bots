@@ -9,7 +9,7 @@
 
 import fs from "fs";
 import { getCachedInfo } from "../services/infoCache.js";
-import { download, formatDuration, getPlatformName, formatSize, getBestFormatUnderLimit } from "../services/ytdlp.js";
+import { download, formatDuration, getPlatformName, formatSize } from "../services/ytdlp.js";
 import { downloadQueue } from "../services/downloadQueue.js";
 import { tryDelete } from "../services/cleanup.js";
 import { isUrl, sanitizeFilename } from "../lib/utils.js";
@@ -29,7 +29,7 @@ export default {
         }
 
         // ── 1. Fetch info ───────────────────────────────────────────
-        const update = await message.replyUpdate("⏳ Mengambil info video & memilih format terbaik...");
+        const update = await message.replyUpdate("⏳ Mengambil info video...");
         let info;
         try {
             info = await getCachedInfo(url);
@@ -41,14 +41,11 @@ export default {
         const duration = formatDuration(info.duration);
         const platform = getPlatformName(info.extractor_key);
 
-        // ── 2. Find best format that fits under the video size limit ─
+        // ── 2. Format (Simple yt-dlp execution) ─────────────────────
         const maxSize = setting.ytdlp.maxFileSize;
-        const bestFormatInfo = getBestFormatUnderLimit(info.formats, maxSize);
-
-        let chosenFormat = "bv*[height<=720]+ba/b"; // fallback
-        if (bestFormatInfo) {
-            chosenFormat = bestFormatInfo.formatStr;
-        }
+        // Gunakan format selector bawaan yang universal (misal: membatasi hingga 720p)
+        // Ini lebih aman untuk link non-youtube (TikTok, IG, dll) daripada filter JSON.
+        const chosenFormat = setting.ytdlp.defaultFormats ? setting.ytdlp.defaultFormats[0] : "bv*[height<=720]+ba/b";
 
         // ── 3. Acquire queue slot ───────────────────────────────────
         const queuePos = downloadQueue.pending;
