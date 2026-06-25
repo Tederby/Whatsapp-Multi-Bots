@@ -246,7 +246,7 @@ export function getBestFormatUnderLimit(formats, maxSize) {
     // Filter out webm container and vp9/vp8 codecs
     const safeFormats = formats.filter(f => {
         if (f.ext === "webm") return false;
-        if (f.vcodec && (f.vcodec.includes("vp9") || f.vcodec.includes("vp8"))) return false;
+        if (f.vcodec && (f.vcodec.includes("vp9") || f.vcodec.includes("vp8") || f.vcodec.includes("av01"))) return false;
         return true;
     });
 
@@ -269,7 +269,13 @@ export function getBestFormatUnderLimit(formats, maxSize) {
 
     const audios = safeFormats
         .filter((f) => f.acodec && f.acodec !== "none" && (!f.vcodec || f.vcodec === "none"))
-        .sort((a, b) => (b.abr || 0) - (a.abr || 0));
+        .sort((a, b) => {
+            const aIsM4a = a.ext === "m4a" || (a.acodec && a.acodec.includes("mp4a"));
+            const bIsM4a = b.ext === "m4a" || (b.acodec && b.acodec.includes("mp4a"));
+            if (aIsM4a && !bIsM4a) return -1;
+            if (!aIsM4a && bIsM4a) return 1;
+            return (b.abr || 0) - (a.abr || 0);
+        });
 
     const bestAudio = audios[0];
     const bestAudioSize = bestAudio ? (bestAudio.filesize || bestAudio.filesize_approx || 0) : 0;

@@ -17,7 +17,7 @@ const setting = {
         cacheExpiry: 10 * 60 * 1000,              // 10 menit
         maxConcurrent: 4,                          // Max downloads global
         defaultFormats: [
-            "bv*[height<=720]+ba/b",
+            "bv*[vcodec^=avc][height<=720]+ba[ext=m4a]/bv*[ext=mp4][height<=720]+ba[ext=m4a]/bv*[height<=720]+ba/b",
             "bv*[height<=480]+ba/b",
             "bv*[height<=360]+ba/b",
             "b"                                    // Fallback: best single file
