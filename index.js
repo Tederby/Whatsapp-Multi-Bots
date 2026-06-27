@@ -46,6 +46,25 @@ const logger = Pino({ level: "silent" });
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
+const CYCLE_FILE = "./cycle_count.json";
+let cycleCount = 0;
+
+try {
+  if (fs.existsSync(CYCLE_FILE)) {
+    cycleCount = JSON.parse(fs.readFileSync(CYCLE_FILE, "utf-8")).count || 0;
+  }
+} catch (e) {
+  cycleCount = 0;
+}
+
+function saveCycleCount(count) {
+  try {
+    fs.writeFileSync(CYCLE_FILE, JSON.stringify({ count }));
+  } catch (e) {}
+}
+
+const MAX_CYCLES = 3;
+
 async function connectToWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState("./session");
   const { version } = await fetchLatestBaileysVersion();
@@ -126,19 +145,29 @@ function handleConnectionUpdate(update, sock) {
     if (isUnrecoverable) {
       reconnectAttempts++;
       if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-        console.log(`session | Sesi gagal setelah ${MAX_RECONNECT_ATTEMPTS} percobaan (${reason || status}). Menghapus folder session...`);
-        try {
-          if (fs.existsSync("./session")) {
-            fs.rmSync("./session", { recursive: true, force: true });
-            console.log("session | Folder session berhasil dihapus.");
+        cycleCount++;
+        saveCycleCount(cycleCount);
+
+        if (cycleCount >= MAX_CYCLES) {
+          console.log(`session | Gagal total 15 kali (${MAX_CYCLES} siklus). Menghapus folder session dan mereset siklus...`);
+          try {
+            if (fs.existsSync("./session")) {
+              fs.rmSync("./session", { recursive: true, force: true });
+              console.log("session | Folder session berhasil dihapus.");
+            }
+          } catch (err) {
+            console.error("session | Gagal menghapus folder session:", err.message);
           }
-        } catch (err) {
-          console.error("session | Gagal menghapus folder session:", err.message);
+          saveCycleCount(0);
+          cycleCount = 0;
+          reconnectAttempts = 0;
+          console.log("session | Memulai ulang untuk generate QR Code baru...");
+        } else {
+          console.log(`session | Sesi gagal setelah ${MAX_RECONNECT_ATTEMPTS} percobaan pada siklus ${cycleCount}/${MAX_CYCLES}. Mematikan program (silakan start ulang)...`);
+          process.exit(1);
         }
-        console.log("session | Memulai ulang untuk generate QR Code baru...");
-        reconnectAttempts = 0;
       } else {
-        console.log(`session | Sesi terputus (${reason || status}). Mencoba reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+        console.log(`session | Sesi terputus (${reason || status}). Mencoba reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) pada siklus ke-${cycleCount + 1}...`);
       }
     } else {
       console.log("session | Mencoba reconnect dalam 5 detik...");
@@ -148,6 +177,10 @@ function handleConnectionUpdate(update, sock) {
     setTimeout(connectToWhatsApp, 5000);
   } else if (connection === "open") {
     reconnectAttempts = 0;
+    if (cycleCount > 0) {
+      cycleCount = 0;
+      saveCycleCount(0);
+    }
     console.log(`session Connected: ${jidDecode(sock?.user?.id)?.user}`);
   }
 }
