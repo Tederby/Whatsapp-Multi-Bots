@@ -163,8 +163,10 @@ function handleConnectionUpdate(update, sock) {
           reconnectAttempts = 0;
           console.log("session | Memulai ulang untuk generate QR Code baru...");
         } else {
-          console.log(`session | Sesi gagal setelah ${MAX_RECONNECT_ATTEMPTS} percobaan pada siklus ${cycleCount}/${MAX_CYCLES}. Mematikan program (silakan start ulang)...`);
-          process.exit(1);
+          console.log(`session | Sesi gagal setelah ${MAX_RECONNECT_ATTEMPTS} percobaan pada siklus ${cycleCount}/${MAX_CYCLES}. Program di-suspend agar PM2 tidak auto-restart. Silakan jalankan 'pm2 restart <nama_app>' secara manual untuk melanjutkan...`);
+          // Tahan event loop agar tidak exit (karena jika exit, pm2 akan langsung restart)
+          setInterval(() => {}, 1000 * 60 * 60);
+          return;
         }
       } else {
         console.log(`session | Sesi terputus (${reason || status}). Mencoba reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) pada siklus ke-${cycleCount + 1}...`);
