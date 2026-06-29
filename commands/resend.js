@@ -5,40 +5,60 @@ export default {
     name: "resend",
     aliases: [],
     category: "media",
-    description: "Resend a quoted image or video",
-    usage: "!resend (reply to an image/video)",
+    description: "Mengirim ulang media yang di-reply",
+    usage: "!resend (reply to a media message)",
     async handler({ message, sock }) {
-        const quotedMsg = message.quoted ? message.quoted : message;
-        const isImage = message.mtype === "image/jpeg" || message.mtype === "image/png";
-        const isVideo = message.mtype === "video/mp4" || message.mtype === "image/gif";
-        const isQuotedImage = quotedMsg && (quotedMsg.mtype === "image/jpeg" || quotedMsg.mtype === "image/png");
-        const isQuotedVideo = quotedMsg && (quotedMsg.mtype === "video/mp4" || quotedMsg.mtype === "image/gif");
+        const targetMsg = message.quoted ? message.quoted : message;
+        
+        const mediaTypes = ['imageMessage', 'videoMessage', 'audioMessage', 'documentMessage', 'stickerMessage'];
+        const messageObj = targetMsg.message || targetMsg;
+        const msgKeys = Object.keys(messageObj || {});
+        const type = msgKeys.find(key => mediaTypes.includes(key));
 
-        if ((isImage || isQuotedImage) || (isVideo || isQuotedVideo)) {
+        if (type) {
             const verifquoted = !!message.quoted;
             const msg = verifquoted
                 ? { message: message.quoted.message }
                 : { message: message.message };
-            const type = Object.keys(quotedMsg.message || quotedMsg)[0];
+            
             try {
                 const buffer = await downloadMediaMessage(
                     msg, "buffer", {},
                     { Pino, reuploadRequest: sock.updateMediaMessage }
                 );
+                
+                let sendKey = "document";
+                if (type === "imageMessage") sendKey = "image";
+                else if (type === "videoMessage") sendKey = "video";
+                else if (type === "audioMessage") sendKey = "audio";
+                else if (type === "stickerMessage") sendKey = "sticker";
+                
+                const sendOptions = { [sendKey]: buffer };
+                const originalMediaMessage = messageObj[type];
+
+                if (type === "audioMessage") {
+                    sendOptions.mimetype = originalMediaMessage.mimetype || "audio/mp4";
+                    if (originalMediaMessage.ptt) sendOptions.ptt = true;
+                } else if (type === "documentMessage") {
+                    sendOptions.mimetype = originalMediaMessage.mimetype || "application/octet-stream";
+                    sendOptions.fileName = originalMediaMessage.fileName || "document";
+                }
+                
+                if (type === "imageMessage" || type === "videoMessage" || type === "documentMessage") {
+                    sendOptions.caption = originalMediaMessage.caption || "*Success Resend*";
+                }
+                
                 await sock.sendMessage(
                     message.chat,
-                    {
-                        [type.includes("image") ? "image" : "video"]: buffer,
-                        caption: "*Success Resend*"
-                    },
-                    { quoted: message, ephemeralExpiration: message.contextInfo.expiration }
+                    sendOptions,
+                    { quoted: message, ephemeralExpiration: message.contextInfo?.expiration }
                 );
             } catch (err) {
-                console.log(err);
-                message.reply("ada yang error!");
+                console.log("[ERROR RESEND]", err);
+                await message.reply("❌ Terjadi kesalahan saat mendownload atau mengirim ulang media.");
             }
         } else {
-            message.reply("Reply gambar atau video yang ingin diresend");
+            await message.reply("❌ Reply pesan media (gambar, video, audio, dokumen, atau stiker) yang ingin diresend!");
         }
     }
 };
