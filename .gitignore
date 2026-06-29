@@ -9,3 +9,4 @@ database_reminders.json
 database_feedbacks.json
 database_reports.json
 .agents/*
+cycle_count.json
