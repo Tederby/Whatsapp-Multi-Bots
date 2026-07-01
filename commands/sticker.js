@@ -7,8 +7,8 @@ export default {
     aliases: ['s', 'stiker'],
     category: 'media',
     description: 'Membuat stiker dari gambar atau video pendek',
-    usage: '!s (send/reply to an image or short video)',
-    async handler({ message, sock }) {
+    usage: '!s (send/reply to an image or short video) atau !s Pack|Author',
+    async handler({ message, sock, rawArgs, prefix }) {
         try {
             // Check original message media
             let isMedia = false;
@@ -24,7 +24,7 @@ export default {
             const targetMsg = isQuotedMedia ? message.quoted : (isMedia ? message : null);
 
             if (!targetMsg) {
-                return await message.reply('❌ Kirim gambar/video dengan caption *!s* atau balas (reply) media yang sudah ada.');
+                return await message.reply(`❌ Kirim gambar/video dengan caption *${prefix}s* atau balas (reply) media yang sudah ada.`);
             }
 
             const isVideo = !!targetMsg.message?.videoMessage;
@@ -39,7 +39,25 @@ export default {
                 return await message.reply('❌ Video terlalu panjang. Maksimal 10 detik.');
             }
 
-            await message.reply('⏳ Sedang membuat stiker...');
+            const textArgs = (rawArgs || '').trim();
+            let packName = setting.name || 'Bot Stiker';
+            let authorName = 'WhatsApp Bot';
+
+            let replyMsg = '⏳ Sedang membuat stiker...';
+
+            if (textArgs) {
+                const splitArgs = textArgs.split('|');
+                packName = splitArgs[0].trim();
+                if (splitArgs.length > 1) {
+                    authorName = splitArgs[1].trim();
+                } else {
+                    authorName = 'WhatsApp Bot';
+                }
+            } else {
+                replyMsg += `\n\n💡 *Tips*: Kamu bisa menambahkan watermark dengan perintah \`${prefix}s NamaPack|NamaAuthor\` (contoh: \`${prefix}s Tederby|Anime\`)`;
+            }
+
+            await message.reply(replyMsg);
 
             // Download media natively using baileys
             const stream = await downloadContentFromMessage(mediaMessage, isVideo ? 'video' : 'image');
@@ -50,8 +68,8 @@ export default {
 
             // Build sticker
             const sticker = new Sticker(buffer, {
-                pack: setting.name || 'Bot Stiker',
-                author: 'WhatsApp Bot',
+                pack: packName,
+                author: authorName,
                 type: StickerTypes.FULL,
                 quality: 70
             });
