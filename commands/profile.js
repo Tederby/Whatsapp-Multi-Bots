@@ -5,6 +5,8 @@
 import { jidNormalizedUser } from "baileys";
 import { getUser, isBanned, isUserGroupBanned } from "../lib/database.js";
 import setting from "../setting.js";
+import fs from "fs";
+import path from "path";
 
 export default {
     name: "profile",
@@ -130,11 +132,40 @@ export default {
 
             // ── 6. Send ─────────────────────────────────────────────
             const placeholderImageUrl = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+            let pfpSource = { url: placeholderImageUrl };
+            let isDefault = true;
+
+            if (userData.meta?.pfp) {
+                const pfpPath = path.resolve(process.cwd(), "database", "pfp", userData.meta.pfp);
+                if (fs.existsSync(pfpPath)) {
+                    pfpSource = { url: pfpPath };
+                    isDefault = false;
+                }
+            }
+
+            if (isDefault) {
+                try {
+                    // Try to fetch from WhatsApp with a timeout to prevent hanging
+                    const waPfpPromise = sock.profilePictureUrl(normalizedTarget, 'image');
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000));
+                    const waPfp = await Promise.race([waPfpPromise, timeoutPromise]);
+                    if (waPfp) {
+                        pfpSource = { url: waPfp };
+                        isDefault = false; // We got a real PFP from WA
+                    }
+                } catch (err) {
+                    // Silent catch, fallback to placeholder
+                }
+            }
+
+            if (isDefault) {
+                caption += `\n\n💡 *Tips*: Gunakan perintah \`${prefix}setpfp\` untuk memasang foto profil kustom milikmu.`;
+            }
 
             await sock.sendMessage(
                 message.chat,
                 {
-                    image: { url: placeholderImageUrl },
+                    image: pfpSource,
                     caption: caption,
                     mentions: [normalizedTarget],
                 },
