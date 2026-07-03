@@ -23,7 +23,7 @@ module.exports = {
       node_args: "--experimental-vm-modules",
       env: {
         BOT_ID: "bot1",
-        BOT_NAME: "Tederby18",
+        BOT_NAME: "Kazuhiko",
         OWNER_NUMBER: "6287825136146",
         PREFIXES: "!.#/-",
         SPAM_DELAY: "5000",
@@ -31,14 +31,26 @@ module.exports = {
         STEAM_API_KEY: "7E8E49CEB8E075DA9366ED4C698018CD",
       },
     },
-    // ── Contoh bot kedua (uncomment untuk mengaktifkan) ──────────────
+    {
+      name: "bot2",
+      script: "./index.js",
+      node_args: "--experimental-vm-modules",
+      env: {
+        BOT_ID: "bot2",
+        BOT_NAME: "Chisuga",
+        OWNER_NUMBER: "6287825136146",
+        PREFIXES: "!.#/-",
+        SPAM_DELAY: "5000",
+      },
+    },
+    // ── Template (uncomment untuk mengaktifkan) ──────────────
     // {
     //   name: "bot2",
     //   script: "./index.js",
     //   node_args: "--experimental-vm-modules",
     //   env: {
     //     BOT_ID: "bot2",
-    //     BOT_NAME: "Bot Kedua",
+    //     BOT_NAME: "Chisuga",
     //     OWNER_NUMBER: "6287825136146",
     //     PREFIXES: "!.#/-",
     //     SPAM_DELAY: "5000",
