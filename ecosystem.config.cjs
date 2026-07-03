@@ -29,7 +29,7 @@ module.exports = {
         SPAM_DELAY: "5000",
         // YOUTUBE_API_KEY: " ",  If use different API
         // STEAM_API_KEY: " ",
-        // PAIRING_NUMBER: "628xxxxxxxxx", // Opsional: Isi dengan nomor bot untuk login via Pairing Code (tanpa scan QR)
+        // PAIRING_NUMBER: " ", // Opsional: Isi dengan nomor bot untuk login via Pairing Code (tanpa scan QR)
       },
     },
     {
@@ -42,7 +42,7 @@ module.exports = {
         OWNER_NUMBER: "6287825136146",
         PREFIXES: "!.#/-",
         SPAM_DELAY: "5000",
-        // PAIRING_NUMBER: "628xxxxxxxxx",
+        // PAIRING_NUMBER: " ",
       },
     },
     // ── Template (uncomment untuk mengaktifkan) ──────────────
