@@ -300,7 +300,7 @@ function formatOutput({ command, output, code, elapsed, cwd, user, killed }) {
 export default {
     name: "bash",
     aliases: ["sh", "exec", "terminal", "shell"],
-    category: "owner",
+    category: "system",
     description: "Eksekusi command bash di VPS — stateful (owner only)",
     usage: "!bash <command>  |  $ <command>  |  $ reset",
     ownerOnly: true,

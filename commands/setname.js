@@ -1,10 +1,10 @@
 export default {
     name: "setname",
     aliases: ["botname", "setbotname"],
-    category: "owner",
+    category: "botadmin",
     description: "Mengganti nama profil (username) bot.",
     usage: "!setname <nama baru>",
-    ownerOnly: true,
+    botAdminOnly: true,
 
     async handler({ message, sock, args }) {
         try {

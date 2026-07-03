@@ -79,12 +79,18 @@ export default {
                 caption += `┃ 📛 Nama  : -\n`;
             }
 
-            caption += `┃ 🏷️ User  : @${targetBaseId}\n`;
-            caption += `┃ 👑 Owner : ${isTargetOwner ? "Ya" : "Tidak"}\n`;
+            const isTargetBotAdmin = userData.meta?.isBotAdmin === true;
 
-            if (isGroup) {
-                caption += `┃ 🛡️ Admin : ${isTargetAdmin ? "Ya" : "Tidak"}\n`;
-            }
+            const roles = [];
+            if (isTargetOwner) roles.push("👑 System Owner");
+            else if (isTargetBotAdmin) roles.push("🛡️ Bot Admin");
+            
+            if (isTargetAdmin) roles.push("👮 Group Admin");
+            
+            if (roles.length === 0) roles.push("👤 Member");
+
+            caption += `┃ 🏷️ User  : @${targetBaseId}\n`;
+            caption += `┃ 🎖️ Role  : ${roles.join(", ")}\n`;
             caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
             // Registration status

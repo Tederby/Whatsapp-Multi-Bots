@@ -15,10 +15,10 @@ import {
 export default {
     name: "gban",
     aliases: ["gunban", "gbanlist", "bangrup", "unbangrup", "bangruplist"],
-    category: "owner",
-    description: "Ban/unban user secara global atau ban grup. (Owner only)",
+    category: "botadmin",
+    description: "Ban/unban user secara global atau ban grup. (Bot Admin only)",
     usage: "!gban @user | !gunban @user | !gbanlist | !bangrup <groupId> | !unbangrup <groupId> | !bangruplist",
-    ownerOnly: true,
+    botAdminOnly: true,
 
     async handler({ message, sock, args, sender, prefix }) {
         try {
