@@ -1,5 +1,5 @@
+import { jidNormalizedUser } from "baileys";
 import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
-
 export default {
     name: "kick",
     aliases: ["k", "tendang"],
@@ -15,6 +15,8 @@ export default {
             let target = null;
             if (message.mentionedJid && message.mentionedJid.length > 0) {
                 target = message.mentionedJid[0];
+            } else if (message.quoted) {
+                target = message.quoted.sender || message.quoted.participant;
             } else if (message.contextInfo?.participant) {
                 target = message.contextInfo.participant;
             }
@@ -23,11 +25,9 @@ export default {
                 return message.reply("Harap tag member atau reply pesan member yang ingin di-kick!");
             }
 
-            const botBaseId = sock.user.id.split(':')[0].split('@')[0];
-            const targetBaseId = target.split(':')[0].split('@')[0];
-
-            // Reconstruct canonical jid
-            const targetJid = targetBaseId + "@s.whatsapp.net";
+            const targetJid = jidNormalizedUser(target);
+            const targetBaseId = targetJid.split('@')[0];
+            const botBaseId = jidNormalizedUser(sock.user.id).split('@')[0];
 
             if (botBaseId === targetBaseId) {
                 return message.reply("Bot tidak bisa kick diri sendiri.");

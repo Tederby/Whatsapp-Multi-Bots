@@ -42,14 +42,18 @@ let msgHandler = async (upsert, sock, message) => {
             if (listBlocked.includes(ctx.sender)) return;
         }
 
-        // ── 1. Reply Handler Interception ───────────────────────────
+        // ── 1. Command Parsing ──────────────────────────────────────
+        const parsed = parseCommand(text);
+        const cmd = parsed ? getCommand(parsed.commandName) : null;
+
+        // ── 2. Reply Handler Interception ───────────────────────────
         // Catches replies to multi-step commands (e.g. ytdlf format selection)
-        // before the command parser runs, because these replies have no prefix.
-        if (message.quoted && message.contextInfo?.stanzaId) {
+        // If it's a valid command, we bypass the reply handler and execute the command.
+        if (message.quoted && message.contextInfo?.stanzaId && !cmd) {
             const entry = getReplyHandler(message.contextInfo.stanzaId);
             if (entry) {
                 if (entry.state.userId !== ctx.sender) {
-                    await message.reply("❌ Hanya pengirim asli yang bisa memilih format");
+                    await message.reply("❌ Hanya pengirim asli yang bisa memproses interaksi ini");
                     return;
                 }
                 logger.exec(t, `reply:${entry.state.commandName || "unknown"}`, ctx.pushname, ctx.isGroup, ctx.groupName);
@@ -59,7 +63,7 @@ let msgHandler = async (upsert, sock, message) => {
             }
         }
 
-        // ── 2. Auto-Detect (modular pattern matching) ───────────────
+        // ── 3. Auto-Detect (modular pattern matching) ───────────────
         const detection = await runAutoDetects(text, message, sock);
         if (detection.matched) {
             logger.autoDetect(t, detection.name, ctx.pushname, ctx.isGroup, ctx.groupName);
@@ -67,13 +71,11 @@ let msgHandler = async (upsert, sock, message) => {
             return;
         }
 
-        // ── 3. Command Parsing ──────────────────────────────────────
-        const parsed = parseCommand(text);
+        // ── 4. Process Command ──────────────────────────────────────
         if (!parsed) return;
+        if (!cmd) return;
 
         const { prefix, commandName, args, rawArgs } = parsed;
-        const cmd = getCommand(commandName);
-        if (!cmd) return;
 
         const cmdLabel = `${prefix}${commandName} [${args.length}]`;
 

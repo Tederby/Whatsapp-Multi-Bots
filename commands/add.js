@@ -1,5 +1,5 @@
+import { jidNormalizedUser } from "baileys";
 import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
-
 export default {
     name: "add",
     aliases: ["tambah"],
@@ -12,28 +12,28 @@ export default {
 
     async handler({ message, sock, groupMetadata, sender, args }) {
         try {
-            if (args.length === 0) {
-                return message.reply("Harap masukkan nomor WhatsApp yang ingin ditambahkan!\nContoh: *!add 6281234567890*");
-            }
+            let number = "";
+            let targetJid = "";
 
-            // Gabungkan argumen kalau ada spasi (misal !add 62812 3456 7890)
-            let rawNumber = args.join("");
-            
-            // Bersihkan dari karakter non-angka
-            let number = rawNumber.replace(/[^0-9]/g, '');
-
-            // Sesuaikan awalan nomor dengan kode negara (Indonesia '62')
-            if (number.startsWith('0')) {
-                number = '62' + number.slice(1);
-            } else if (number.startsWith('8')) {
-                number = '62' + number;
+            if (message.mentionedJid && message.mentionedJid.length > 0) {
+                targetJid = jidNormalizedUser(message.mentionedJid[0]);
+                number = targetJid.split('@')[0];
+            } else if (message.quoted) {
+                targetJid = jidNormalizedUser(message.quoted.sender || message.quoted.participant);
+                number = targetJid.split('@')[0];
+            } else if (args.length > 0) {
+                let rawNumber = args.join("");
+                number = rawNumber.replace(/[^0-9]/g, '');
+                if (number.startsWith('0')) number = '62' + number.slice(1);
+                else if (number.startsWith('8')) number = '62' + number;
+                targetJid = number + "@s.whatsapp.net";
+            } else {
+                return message.reply("Harap masukkan nomor WhatsApp, tag, atau reply pesan yang ingin ditambahkan!\nContoh: *!add 6281234567890*");
             }
 
             if (number.length < 10) {
                 return message.reply("Nomor WhatsApp tidak valid. Pastikan nomor dimasukkan dengan benar.");
             }
-
-            const targetJid = number + "@s.whatsapp.net";
 
             // Memeriksa apakah target sudah ada di grup
             const isTargetInGroup = groupMetadata.participants.some(p => {
