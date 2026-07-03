@@ -1,5 +1,5 @@
 import { downloadContentFromMessage, jidNormalizedUser } from "baileys";
-import Jimp from "jimp";
+import { Jimp } from "jimp";
 import path from "path";
 import fs from "fs";
 import axios from "axios";
@@ -71,9 +71,8 @@ export default {
             const x = (w - size) / 2;
             const y = (h - size) / 2;
             
-            image.crop(x, y, size, size);
-            image.resize(500, 500);
-            image.quality(80);
+            image.crop({ x, y, w: size, h: size });
+            image.resize({ w: 500, h: 500 });
 
             // Ensure directory exists
             const pfpDir = path.resolve(process.cwd(), "database", "pfp");
@@ -84,7 +83,7 @@ export default {
             const filename = `${senderBaseId}.jpg`;
             const filepath = path.join(pfpDir, filename);
 
-            await image.writeAsync(filepath);
+            await image.write(filepath);
 
             // Update database
             setPfp(normalizedSender, filename);
