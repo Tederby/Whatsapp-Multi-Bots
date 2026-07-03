@@ -1,134 +1,130 @@
-# Simple WhatsApp Bot 🤖
+# WhatsApp Bot 🤖
 
-A fast, modular, and lightweight WhatsApp bot built with Node.js and the powerful [@whiskeysockets/baileys](https://github.com/WhiskeySockets/Baileys) library.
+A scalable, multi-instance WhatsApp bot built with [Baileys](https://github.com/WhiskeySockets/Baileys) and Node.js. Designed to run multiple bot numbers simultaneously from a single codebase using PM2.
 
-This project has evolved from a barebone base into a feature-rich, highly scalable bot using a **middleware pipeline architecture** and an **automated dynamic command loader**. It is intended for both personal utility and group management, providing a robust base to build custom WhatsApp automation.
+## ✨ Highlights
 
----
-
-## ✨ Features
-
-### 🧩 Modular Command System
-Commands are automatically loaded from the `commands/` directory via `_registry.js`. You don't need to manually import new commands! Current built-in features include:
-
-*   **🛡️ Group Moderation & Management**
-    *   `add` / `kick`: Add or remove members from a group.
-    *   `ban` / `gban`: Ban a user from a group or globally restrict them from using the bot.
-    *   `welcome` / `goodbye`: Toggle automated welcome and farewell messages for group events.
-    *   `groupprofile` / `setname`: Manage group metadata (profile picture, subject).
-    *   `groupregister`: Register a group into the bot's database.
-    *   `join`: Make the bot join a group via an invite link.
-
-*   **👥 User & Profile System**
-    *   `register`: Register a user profile into the bot's database.
-    *   `profile`: Check user profile and stats.
-    *   `owner`: View owner information.
-
-*   **📥 Media Downloaders**
-    *   `ytdl` / `ytdlf`: Robust YouTube and general media downloading via `yt-dlp` integration.
-    *   `download`: Universal downloader for various platforms.
-
-*   **🌸 Anime & Image Boards**
-    *   `anime` / `manga` / `mal`: Search for anime and manga details via MyAnimeList.
-    *   `danbooru` / `tag`: Fetch high-quality images and tags from Danbooru.
-
-*   **🎨 Media Creation**
-    *   `sticker` (`s`, `stiker`): Convert images/videos into WhatsApp stickers.
-    *   `toimg`: Convert static stickers back into images.
-
-*   **⚙️ Core & Utilities**
-    *   `menu` (`help`, `list`): Dynamically displays all available bot commands.
-    *   `ping`: Checks bot response time and server status.
-    *   `say`: Makes the bot repeat your message.
-    *   `del`: Delete the bot's or other user's messages (if admin).
-    *   `resend`: Extracts and resends "View Once" media or messages.
-    *   `info`: View bot statistics and system information.
-    *   `steam`: Search for Steam games and info.
-
-### 🕵️ Auto-Detect System
-The bot features a modular background auto-detect registry (`lib/autoDetect.js` / middleware) that automatically responds to specific patterns in messages without needing explicit commands (e.g., Danbooru URL Detection).
+- **Multi-Bot** — Run dozens of bot numbers from one project via PM2. Each instance gets its own session, temp files, and config.
+- **SQLite Database** — Concurrent-safe database with WAL mode. No more JSON corruption when multiple bots write simultaneously.
+- **Hot-Reload** — Edit commands or the handler while the bot is running. Changes apply instantly without restart.
+- **Middleware Pipeline** — Clean architecture: `guard → ban-check → context → auto-detect → parse → spam-filter → permissions → execute`.
+- **Auto-Detect** — Background pattern matching that responds to specific URLs or text patterns without needing an explicit command prefix.
 
 ---
 
-## 💻 Tech Stack & Requirements
+## 🧩 Command Categories
 
-*   **Runtime:** Node.js (v18+ recommended)
-*   **Library:** [@whiskeysockets/baileys](https://github.com/WhiskeySockets/Baileys)
-*   **Key Dependencies:** `axios`, `wa-sticker-formatter`, `dotenv`, `chokidar` (for hot-reloading).
-*   **External Requirements:**
-    *   [FFmpeg](https://ffmpeg.org/) (Required for sticker creation and media conversion).
-    *   [yt-dlp](https://github.com/yt-dlp/yt-dlp) (Required for downloading media via `ytdl` commands).
+Commands are auto-loaded from the `commands/` directory — just drop a `.js` file and it works. No manual imports needed.
+
+| Category | Description |
+|----------|-------------|
+| 🌟 **General** | Bot info, menu, ping, system stats |
+| 🛡️ **Group** | Moderation tools — add/kick members, ban users, welcome/goodbye messages, group registration |
+| 📥 **Downloader** | YouTube and general media downloads via `yt-dlp` |
+| 🎨 **Media** | Sticker creation, image conversion, media resending |
+| 🌸 **Anime** | Anime/manga search via MyAnimeList, Danbooru image boards |
+| 🔍 **Search** | Steam game search, Steam profile lookup, YouTube search |
+| 🛠️ **Tools** | User registration, profiles, reminders, reports, feedback |
+| 👑 **Owner** | Bot management, remote bash terminal, global bans |
+
+> Commands are actively maintained and expanded over time. Use `!menu` to see the full list of currently available commands.
 
 ---
 
-## 🚀 Installation & Setup
+## 💻 Requirements
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/YourUsername/simple-wa-bot.git
-   cd simple-wa-bot
-   ```
+- **Node.js** v18+
+- **FFmpeg** — for sticker creation and media conversion
+- **yt-dlp** — for media downloads
+- **PM2** *(optional)* — for multi-bot process management
+- **build-essential** *(Linux)* or **Visual Studio Build Tools** *(Windows)* — for `better-sqlite3` native bindings
 
-2. **Install Node.js dependencies:**
-   ```bash
-   npm install
-   ```
+---
 
-3. **Install System Dependencies (Important):**
-   Make sure you have `ffmpeg` and `yt-dlp` installed and added to your system's PATH.
+## 🚀 Setup
 
-4. **Environment Variables:**
-   Copy the example environment file and configure your details:
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` to set your `OWNER_NUMBER` and `BOT_NAME`.
+```bash
+# Clone & install
+git clone https://github.com/Tederby/wa-bot.git
+cd wa-bot
+npm install
 
-5. **Start the bot:**
-   ```bash
-   npm start
-   ```
+# Configure
+cp .env.example .env
+# Edit .env with your OWNER_NUMBER, BOT_NAME, API keys
+```
 
-6. **Link to WhatsApp:**
-   Upon running the bot for the first time, a **QR code** will be generated in the terminal. Open WhatsApp on your phone, go to **Linked Devices**, and scan the QR code. The session will be saved in the `./session` folder for subsequent logins.
+### Single Bot
+
+```bash
+npm start
+# Scan the QR code in terminal with WhatsApp → Linked Devices
+```
+
+### Multi-Bot (PM2)
+
+```bash
+# Migrate existing data (one-time)
+npm run migrate
+
+# Edit ecosystem.config.cjs to define your bot instances
+# Then start all bots:
+npm run pm2
+
+# View QR code for a specific bot:
+pm2 logs bot1
+
+# Add a new bot: uncomment/add entry in ecosystem.config.cjs, then:
+pm2 start ecosystem.config.cjs --only bot2
+pm2 logs bot2    # Scan QR
+```
 
 ---
 
 ## 📂 Project Structure
 
-```text
-simple-whatsapp-bot/
-├── commands/           # Modular command files (Auto-loaded)
-│   ├── _registry.js    # Dynamic command loader
-│   └── ...             # All command files (.js)
-├── lib/                # Core library and middleware
-│   └── Messages.js     # Baileys message wrapper/serializer
-├── services/           # External API services or specific heavy logic
-├── session/            # WhatsApp authentication session data
-├── temp/               # Temporary folder for media processing
-├── index.js            # Main application entry point & connection logic
-├── handler.js          # Middleware pipeline (context -> autodetect -> parse -> execute)
-├── setting.js          # Global configuration structures
-├── .env                # Private environment variables (Owner, Bot Name)
-└── package.json        # Project metadata and dependencies
+```
+wa-bot/
+├── commands/               # Auto-loaded command modules
+│   ├── _registry.js        # Dynamic loader & reply handler registry
+│   └── *.js                # Individual commands
+├── lib/                    # Core libraries
+│   ├── db.js               # SQLite engine (WAL mode)
+│   ├── database.js         # User/group CRUD operations
+│   ├── contextBuilder.js   # Message context extraction
+│   ├── middleware.js        # Permission guards
+│   ├── Messages.js         # Baileys message wrapper
+│   └── events/             # Event handlers (group updates, etc.)
+├── services/               # Background services
+│   ├── cleanup.js          # Periodic temp/state cleanup
+│   ├── reminder.js         # Scheduled reminder system
+│   └── ytdlp.js            # yt-dlp download engine
+├── scripts/
+│   └── migrate_json_to_sqlite.js
+├── sessions/               # Per-bot auth sessions (gitignored)
+├── temp/                   # Per-bot temp files (gitignored)
+├── index.js                # Entry point & connection lifecycle
+├── handler.js              # Message processing pipeline
+├── setting.js              # Configuration (reads from env)
+├── ecosystem.config.cjs    # PM2 multi-bot config
+└── database.db             # SQLite database (gitignored)
 ```
 
 ---
 
-## 🛠️ Creating New Commands
+## 🛠️ Creating Commands
 
-Adding a new command is as simple as creating a new `.js` file inside the `commands/` directory. The bot uses an auto-loader, so you **do not** need to manually import it anywhere.
+Drop a new `.js` file in `commands/` — the bot picks it up automatically (even at runtime via hot-reload).
 
-**Example `commands/hello.js`:**
 ```javascript
 export default {
     name: "hello",
-    aliases: ["hi", "greet"],
-    category: "core", // Used for grouping in the menu
-    usage: "hello",   // Example usage
-    description: "Sends a greeting message",
-    async handler({ message }) {
-        await message.reply("Hello there! 👋");
+    aliases: ["hi"],
+    category: "general",
+    description: "Sends a greeting",
+    // Optional flags: groupOnly, adminOnly, ownerOnly, privateOnly, botAdminRequired
+    async handler({ message, sock, args, sender, isGroup }) {
+        await message.reply("Hello! 👋");
     }
 };
 ```
@@ -136,4 +132,5 @@ export default {
 ---
 
 ## 📜 License
-This project is open-sourced under the [MIT License](LICENSE).
+
+[MIT](LICENSE)
