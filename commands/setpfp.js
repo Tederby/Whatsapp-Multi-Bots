@@ -23,6 +23,10 @@ export default {
             }
 
             if (args[0] && (args[0].toLowerCase() === "delete" || args[0].toLowerCase() === "remove")) {
+                if (!userData.meta?.pfp) {
+                    return message.reply("⚠️ Kamu belum memiliki foto profil kustom.");
+                }
+
                 setPfp(normalizedSender, null);
                 
                 const pfpDir = path.resolve(process.cwd(), "database", "pfp");
