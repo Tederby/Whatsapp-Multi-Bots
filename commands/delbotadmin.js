@@ -28,7 +28,7 @@ export default {
             const normalizedTarget = jidNormalizedUser(target);
             const targetBaseId = normalizedTarget.split("@")[0];
 
-            setBotAdmin(targetBaseId, false);
+            setBotAdmin(normalizedTarget, false);
 
             return sock.sendMessage(
                 message.chat,
