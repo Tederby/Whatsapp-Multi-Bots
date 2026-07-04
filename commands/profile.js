@@ -159,7 +159,7 @@ export default {
             }
 
             if (isDefault) {
-                caption += `\n\n💡 *Tips*: Gunakan perintah \`${prefix}setpfp\` untuk memasang foto profil kustom milikmu.`;
+                caption += `\n\n💡 *Tips*: Gunakan perintah \`${prefix}setpfp\` untuk memasang PFP kustom, atau \`${prefix}setpfp delete\` untuk menghapusnya.`;
             }
 
             await sock.sendMessage(

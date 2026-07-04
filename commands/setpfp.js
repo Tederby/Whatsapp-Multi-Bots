@@ -10,7 +10,7 @@ export default {
     aliases: ["setprofil", "setpp"],
     category: "general",
     description: "Mengatur foto profil kustom mandiri di database bot.",
-    usage: "!setpfp [reply/send image] atau !setpfp [link_gambar]",
+    usage: "!setpfp [reply/image] | !setpfp [link] | !setpfp delete",
     
     async handler({ message, sock, args, sender, prefix }) {
         try {
@@ -20,6 +20,18 @@ export default {
 
             if (!userData.registered) {
                 return message.reply(`❌ Kamu harus terdaftar terlebih dahulu untuk menggunakan fitur ini. Ketik \`${prefix}register\` untuk mendaftar.`);
+            }
+
+            if (args[0] && (args[0].toLowerCase() === "delete" || args[0].toLowerCase() === "remove")) {
+                setPfp(normalizedSender, null);
+                
+                const pfpDir = path.resolve(process.cwd(), "database", "pfp");
+                const filepath = path.join(pfpDir, `${senderBaseId}.jpg`);
+                if (fs.existsSync(filepath)) {
+                    fs.unlinkSync(filepath);
+                }
+                
+                return message.reply("✅ Foto profil kustom berhasil dihapus. Bot akan kembali menggunakan foto profil WhatsApp aslimu.");
             }
 
             let buffer = null;
@@ -53,7 +65,7 @@ export default {
                     return message.reply("❌ Gagal mengambil gambar dari link. Pastikan link valid dan langsung menuju ke file gambar.");
                 }
             } else {
-                return message.reply(`❌ Kirim atau reply gambar dengan caption \`${prefix}setpfp\` atau gunakan link: \`${prefix}setpfp https://...\``);
+                return message.reply(`❌ Kirim atau reply gambar dengan caption \`${prefix}setpfp\`\nAtau gunakan link: \`${prefix}setpfp https://...\`\nUntuk menghapus: \`${prefix}setpfp delete\``);
             }
 
             if (!buffer) {
