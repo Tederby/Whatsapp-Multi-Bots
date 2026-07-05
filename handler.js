@@ -109,11 +109,15 @@ let msgHandler = async (upsert, sock, message) => {
         }
 
         // ── 3. Auto-Detect (modular pattern matching) ───────────────
-        const detection = await runAutoDetects(text, message, sock);
-        if (detection.matched) {
-            logger.autoDetect(t, detection.name, ctx.pushname, ctx.isGroup, ctx.groupName);
-            await sock.readMessages([message.key]);
-            return;
+        // Only run auto-detect if the message is NOT a valid explicit command.
+        // This prevents auto-detect from intercepting commands like `!register steam <link>`
+        if (!cmd) {
+            const detection = await runAutoDetects(text, message, sock);
+            if (detection.matched) {
+                logger.autoDetect(t, detection.name, ctx.pushname, ctx.isGroup, ctx.groupName);
+                await sock.readMessages([message.key]);
+                return;
+            }
         }
 
         // ── 4. Process Command ──────────────────────────────────────
