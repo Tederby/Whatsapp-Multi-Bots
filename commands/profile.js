@@ -3,7 +3,7 @@
  */
 
 import { jidNormalizedUser } from "baileys";
-import { getUser, isBanned, isUserGroupBanned, resolveUserId } from "../lib/database.js";
+import { getUser, isBanned, isUserGroupBanned, resolveUserId, isBotAdmin, resolveToLid } from "../lib/database.js";
 import setting from "../setting.js";
 import fs from "fs";
 import path from "path";
@@ -86,7 +86,10 @@ export default {
                 caption += `┃ 📛 Nama  : -\n`;
             }
 
-            const isTargetBotAdmin = userData.meta?.isBotAdmin === true;
+            // Cek bot admin dari PN (resolved) DAN LID asli (untuk data lama)
+            const isTargetBotAdmin = 
+                userData.meta?.isBotAdmin === true ||
+                isBotAdmin(jidNormalizedUser(target));
 
             const roles = [];
             if (isTargetOwner) roles.push("👑 System Owner");
