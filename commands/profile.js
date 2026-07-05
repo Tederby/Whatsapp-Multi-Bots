@@ -126,9 +126,10 @@ export default {
             const hasMal = !!userData.meta?.malUsername;
             const hasSteam = !!userData.meta?.steamId;
             if (hasMal || hasSteam) {
-                if (hasSteam) caption += `🎮 Steam: https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
-                if (hasMal) caption += `🎌 MAL: https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
-                caption += `\n`;
+                caption += `╭───「 🔗 Linked Accounts 」\n`;
+                if (hasSteam) caption += `│ 🎮 Steam : https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
+                if (hasMal) caption += `│ 🎌 MAL   : https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
+                caption += `╰──────────────\n\n`;
             }
 
             // Ban status
