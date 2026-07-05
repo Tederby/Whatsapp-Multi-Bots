@@ -5,21 +5,91 @@
  * for future features (XP, level, bio, etc.)
  */
 
-import { registerUser, unregisterUser, isRegistered, getUser, saveUser } from "../lib/database.js";
+import { registerUser, unregisterUser, isRegistered, getUser, saveUser, resolveUserId } from "../lib/database.js";
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
+import { verifyMalAccount } from "../services/mal.js";
+import { verifySteamAccount } from "../services/steam.js";
+
+async function processDirectLinking(cmd, value, sender, pushname, message, sock, messageKey = null) {
+    if (!value) {
+        const replyText = `❌ Berikan ${cmd === 'mal' ? 'username MAL' : 'custom URL atau SteamID64'}.\nContoh: \`${cmd} <value>\``;
+        if (messageKey) {
+            await message.reply(replyText);
+        } else {
+            await message.reply(replyText);
+        }
+        return;
+    }
+
+    if (!isRegistered(sender)) {
+        registerUser(sender, pushname);
+    }
+
+    let loadingMsg = null;
+    if (messageKey) {
+        await sock.sendMessage(message.chat, { text: `>> *Linking ${cmd.toUpperCase()}*`, edit: messageKey });
+    } else {
+        loadingMsg = await sock.sendMessage(message.chat, { text: `🔍 Memverifikasi akun ${cmd.toUpperCase()}...` }, { quoted: message });
+    }
+
+    if (cmd === 'mal') {
+        const result = await verifyMalAccount(value);
+        if (!result) {
+            const errText = `❌ Akun MAL *${value}* tidak ditemukan.`;
+            if (messageKey) await sock.sendMessage(message.chat, { text: errText, edit: messageKey });
+            else if (loadingMsg) await sock.sendMessage(message.chat, { text: errText, edit: loadingMsg.key });
+            return;
+        }
+
+        const user = getUser(sender);
+        user.meta = user.meta || {};
+        user.meta.malUsername = result.username;
+        saveUser(sender, user);
+
+        const successText = `✅ Akun MAL berhasil ditautkan:\n🎌 *${result.username}*\n🔗 ${result.url}`;
+        if (messageKey) await sock.sendMessage(message.chat, { text: successText, edit: messageKey });
+        else if (loadingMsg) await sock.sendMessage(message.chat, { text: successText, edit: loadingMsg.key });
+
+    } else if (cmd === 'steam') {
+        const result = await verifySteamAccount(value);
+        if (!result) {
+            const errText = `❌ Akun Steam tidak ditemukan atau format salah.\nPastikan memasukkan Custom URL atau SteamID64 yang tepat.`;
+            if (messageKey) await sock.sendMessage(message.chat, { text: errText, edit: messageKey });
+            else if (loadingMsg) await sock.sendMessage(message.chat, { text: errText, edit: loadingMsg.key });
+            return;
+        }
+
+        const user = getUser(sender);
+        user.meta = user.meta || {};
+        user.meta.steamId = result.steamId;
+        saveUser(sender, user);
+
+        const successText = `✅ Akun Steam berhasil ditautkan:\n🎮 *${result.name}*\n🔗 ${result.url}`;
+        if (messageKey) await sock.sendMessage(message.chat, { text: successText, edit: messageKey });
+        else if (loadingMsg) await sock.sendMessage(message.chat, { text: successText, edit: loadingMsg.key });
+    }
+}
 
 export default {
     name: "register",
     aliases: ["reg", "daftar", "registrasi"],
     category: "general",
     description: "Mendaftarkan diri ke database bot dan mengatur profil.",
-    usage: "!register",
+    usage: "!register [mal/steam] [value]",
 
-    async handler({ message, sender, pushname, prefix, sock }) {
+    async handler({ message, args, sender, pushname, prefix, sock }) {
         try {
-            let user;
-            let isNewUser = false;
-            
+            // Safety net: pastikan sender selalu PN, bukan LID
+            sender = resolveUserId(sender);
+
+            if (args && args.length > 0) {
+                const cmd = args[0].toLowerCase();
+                if (cmd === "mal" || cmd === "steam") {
+                    await processDirectLinking(cmd, args.slice(1).join(" ").trim(), sender, pushname, message, sock);
+                    return;
+                }
+            }
+
             if (!isRegistered(sender)) {
                 user = registerUser(sender, pushname);
                 isNewUser = true;
@@ -108,41 +178,11 @@ async function replyHandler({ message, sock, state }) {
         return;
     }
 
-    // ── Account Linking: MAL ────────────────────────────────────────
-    if (cmd === "mal") {
-        const username = args.slice(1).join(" ").trim();
-        if (!username) {
-            await message.reply("❌ Berikan username MAL.\nContoh: `mal Tederby`");
-            return;
-        }
-
-        const user = getUser(userId);
-        user.meta = user.meta || {};
-        user.meta.malUsername = username;
-        saveUser(userId, user);
-
+    // ── Account Linking: MAL & Steam ────────────────────────────────────────
+    if (cmd === "mal" || cmd === "steam") {
+        const value = args.slice(1).join(" ").trim();
         deleteReplyHandler(messageKey.id);
-        await sock.sendMessage(message.chat, { text: `>> *Linking MAL*`, edit: messageKey });
-        await message.reply(`✅ Akun MAL berhasil ditautkan: *${username}*`);
-        return;
-    }
-
-    // ── Account Linking: Steam ──────────────────────────────────────
-    if (cmd === "steam") {
-        const steamId = args.slice(1).join("").trim();
-        if (!steamId) {
-            await message.reply("❌ Berikan custom URL atau SteamID64.\nContoh: `steam gabelogannewell`");
-            return;
-        }
-
-        const user = getUser(userId);
-        user.meta = user.meta || {};
-        user.meta.steamId = steamId;
-        saveUser(userId, user);
-
-        deleteReplyHandler(messageKey.id);
-        await sock.sendMessage(message.chat, { text: `>> *Linking Steam*`, edit: messageKey });
-        await message.reply(`✅ Akun Steam berhasil ditautkan: *${steamId}*`);
+        await processDirectLinking(cmd, value, userId, null, message, sock, messageKey);
         return;
     }
 

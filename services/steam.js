@@ -111,6 +111,20 @@ export async function sendSteamGameDetail(appId, message, sock, isAutoDetect = f
 
 // ── Steam Profile ──────────────────────────────────────────
 
+export function extractSteamInput(input) {
+    if (!input) return null;
+    let val = input.trim();
+    // Check if it's a steam profile link
+    let match = val.match(/steamcommunity\.com\/id\/([^/?]+)/i);
+    if (match) return match[1];
+    match = val.match(/steamcommunity\.com\/profiles\/(\d{17})/i);
+    if (match) return match[1];
+    
+    // Clean up if the user passed trailing slashes
+    val = val.replace(/\/+$/, "");
+    return val;
+}
+
 function detectInputType(input) {
     return /^\d{17}$/.test(input) ? "steamid" : "vanity";
 }
@@ -276,6 +290,46 @@ function buildProfileText(steamId, player, games, recent, level) {
     text += `\n🔗 *Profil:* https://steamcommunity.com/profiles/${steamId}`;
 
     return text.trim();
+}
+
+/**
+ * Verify if a Steam account exists and return its SteamID and custom URL.
+ * Returns null if not found or invalid.
+ */
+export async function verifySteamAccount(input) {
+    const apiKey = setting.steam?.apiKey;
+    if (!apiKey) return null;
+
+    const extracted = extractSteamInput(input);
+    if (!extracted) return null;
+
+    try {
+        let steamId;
+        const inputType = detectInputType(extracted);
+
+        if (inputType === "steamid") {
+            steamId = extracted;
+        } else {
+            steamId = await resolveVanityURL(apiKey, extracted);
+            if (!steamId) return null;
+        }
+
+        const profileData = await fetchProfileData(apiKey, steamId);
+        const players = profileData.summary?.response?.players;
+        if (!players || players.length === 0) return null;
+
+        const player = players[0];
+        const customUrl = extractCustomUrl(player.profileurl);
+
+        return {
+            steamId,
+            name: player.personaname,
+            customUrl,
+            url: `https://steamcommunity.com/profiles/${steamId}`
+        };
+    } catch (err) {
+        return null;
+    }
 }
 
 export async function sendSteamProfileDetail(input, message, sock, isAutoDetect = false) {

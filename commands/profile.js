@@ -126,15 +126,9 @@ export default {
             const hasMal = !!userData.meta?.malUsername;
             const hasSteam = !!userData.meta?.steamId;
             if (hasMal || hasSteam) {
-                caption += `╭───「 🔗 Linked Accounts 」\n`;
-                if (hasMal) caption += `│ ⋄ MAL   : ${userData.meta.malUsername}\n`;
-                if (hasSteam) caption += `│ ⋄ Steam : ${userData.meta.steamId}\n`;
-                caption += `╰──────────────\n\n`;
-            } else if (isSelf) {
-                caption += `╭───「 🔗 Linked Accounts 」\n`;
-                caption += `│ _Belum ada akun tertaut_\n`;
-                caption += `│ └ _Ketik \`${prefix}register\` lalu link_\n`;
-                caption += `╰──────────────\n\n`;
+                if (hasSteam) caption += `🎮 Steam: https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
+                if (hasMal) caption += `🎌 MAL: https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
+                caption += `\n`;
             }
 
             // Ban status
