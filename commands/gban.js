@@ -10,6 +10,7 @@ import { jidNormalizedUser } from "baileys";
 import {
     banUser, unbanUser, getAllBannedUsers,
     banGroup, unbanGroup, getAllBannedGroups,
+    resolveUserId,
 } from "../lib/database.js";
 
 export default {
@@ -70,7 +71,7 @@ export default {
                     return message.reply("Tag, reply, atau masukkan nomor user yang ingin di-unban.\n\nContoh: *!gunban @user* atau *!gunban 6281234567890*");
                 }
 
-                const normalizedTarget = jidNormalizedUser(target);
+                const normalizedTarget = resolveUserId(jidNormalizedUser(target));
                 const targetBaseId = target.split(":")[0].split("@")[0];
 
                 unbanUser(normalizedTarget);
@@ -106,7 +107,7 @@ export default {
                     );
                 }
 
-                const normalizedTarget = jidNormalizedUser(target);
+                const normalizedTarget = resolveUserId(jidNormalizedUser(target));
                 const targetBaseId = target.split(":")[0].split("@")[0];
 
                 // Prevent banning self

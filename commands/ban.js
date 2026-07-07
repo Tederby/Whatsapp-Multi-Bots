@@ -6,7 +6,7 @@
  */
 
 import { jidNormalizedUser } from "baileys";
-import { banUserInGroup, unbanUserInGroup, getGroupBannedUsers } from "../lib/database.js";
+import { banUserInGroup, unbanUserInGroup, getGroupBannedUsers, resolveUserId } from "../lib/database.js";
 
 export default {
     name: "ban",
@@ -57,7 +57,7 @@ export default {
                     return message.reply("Tag atau reply pesan user yang ingin di-unban.\n\nContoh: *!unban @user*");
                 }
 
-                const normalizedTarget = jidNormalizedUser(target);
+                const normalizedTarget = resolveUserId(jidNormalizedUser(target));
                 const targetBaseId = target.split(":")[0].split("@")[0];
 
                 unbanUserInGroup(chatId, normalizedTarget);
@@ -90,7 +90,7 @@ export default {
                 );
             }
 
-            const normalizedTarget = jidNormalizedUser(target);
+            const normalizedTarget = resolveUserId(jidNormalizedUser(target));
             const targetBaseId = target.split(":")[0].split("@")[0];
 
             // Prevent banning self

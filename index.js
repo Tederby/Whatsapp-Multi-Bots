@@ -8,7 +8,8 @@
  *  4. Hot-reload handler + commands on file changes
  */
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+// NOTE: NODE_TLS_REJECT_UNAUTHORIZED removed — was disabling TLS verification globally.
+// If you encounter SSL errors during development, set it per-request or use a custom agent.
 
 import fs from "fs";
 import {
@@ -174,7 +175,7 @@ async function connectToWhatsApp() {
 
     // ── Call rejection ─────────────────────────────────────────
     if (ev["call"]) {
-      handleIncomingCall(ev["call"], sock, upsert);
+      handleIncomingCall(ev["call"], sock);
     }
 
     // ── Group Participants Update ──────────────────────────────
@@ -345,15 +346,14 @@ function handleMessageUpsert(upsert, sock) {
   msgHandler(upsert, sock, message);
 }
 
-async function handleIncomingCall(callEvent, sock, upsert) {
+async function handleIncomingCall(callEvent, sock) {
   const { id, chatId, isGroup } = callEvent[0];
   if (isGroup) return;
 
   await sock.rejectCall(id, chatId);
   await sock.sendMessage(
     chatId,
-    { text: "Tidak bisa menerima panggilan suara/video." },
-    { ephemeralExpiration: upsert?.messages[0]?.contextInfo?.expiration }
+    { text: "Tidak bisa menerima panggilan suara/video." }
   );
 }
 
@@ -367,12 +367,18 @@ const handlerWatcher = chokidar.watch("./handler.js", {
   persistent: true,
 });
 
+let handlerReloadCount = 0;
+
 handlerWatcher.on("change", async (filePath) => {
   console.log(`[HOT-RELOAD] handler.js changed`);
   try {
     const newModule = await import(`./handler.js?cacheBust=${Date.now()}`);
     msgHandler = newModule.msgHandler;
-    console.log("[HOT-RELOAD] Handler updated ✅");
+    handlerReloadCount++;
+    console.log(`[HOT-RELOAD] Handler updated ✅ (reload #${handlerReloadCount})`);
+    if (handlerReloadCount >= 20) {
+      console.warn(`[HOT-RELOAD] ⚠️ ${handlerReloadCount} reloads — ESM cache-busting causes gradual memory leak. Consider 'pm2 restart ${BOT_ID}' to reclaim memory.`);
+    }
   } catch (err) {
     console.error("[HOT-RELOAD] Handler reload failed ❌", err.message);
   }

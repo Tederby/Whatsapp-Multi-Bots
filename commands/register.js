@@ -260,5 +260,16 @@ async function replyHandler({ message, sock, state }) {
         await message.reply(`✅ Tautan akun ${service.toUpperCase()} telah dilepas.`);
         return;
     }
+
+    // ── Fallback: perintah tidak dikenali ────────────────────────────────
+    await message.reply(
+        "❌ Perintah tidak dikenali.\n\n" +
+        "Pilihan yang tersedia:\n" +
+        "⋄ `name <nama baru>` — ganti nama\n" +
+        "⋄ `unreg` — hapus registrasi\n" +
+        "⋄ `mal <username>` — tautkan MAL\n" +
+        "⋄ `steam <id>` — tautkan Steam\n" +
+        "⋄ `unlink mal/steam` — lepas tautan"
+    );
 }
 

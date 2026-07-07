@@ -15,6 +15,7 @@ import setting from "../setting.js";
 import { cleanupExpiredReplyHandlers } from "../commands/_registry.js";
 import { purgeExpired as purgeInfoCache } from "./infoCache.js";
 import { purgeOldClaims } from "../lib/database.js";
+import db from "../lib/db.js";
 import { color } from "../lib/utils.js";
 
 let initialized = false;
@@ -56,6 +57,16 @@ export function initCleanup() {
     }, cfg.cleanupInterval);
 
     console.log(color("[CLEANUP]", "yellow"), "Cleanup service initialized");
+
+    // Periodic VACUUM to reclaim disk space (every 30 minutes)
+    setInterval(() => {
+        try {
+            db.exec("VACUUM");
+            console.log(color("[CLEANUP]", "yellow"), "VACUUM completed");
+        } catch (e) {
+            console.error(color("[CLEANUP ERROR]", "red"), "VACUUM failed:", e.message);
+        }
+    }, 30 * 60 * 1000);
 }
 
 /**

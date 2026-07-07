@@ -128,11 +128,12 @@ let msgHandler = async (upsert, sock, message) => {
 
         const cmdLabel = `${prefix}${commandName} [${args.length}]`;
 
-        // ── 4. Spam Filter ──────────────────────────────────────────
-        if (msgFilter.isFiltered(message.chat)) {
+        // ── 4. Spam Filter (per-user per-chat) ──────────────────────
+        const spamKey = `${ctx.sender}_${message.chat}`;
+        if (msgFilter.isFiltered(spamKey)) {
             return logger.spam(t, cmdLabel, ctx.pushname, ctx.isGroup, ctx.groupName);
         }
-        msgFilter.addFilter(message.chat, setting.spamDelay);
+        msgFilter.addFilter(spamKey, setting.spamDelay);
 
         // ── 5. Permission Guard (Middleware) ────────────────────────
         const guardMsg = checkPermissions(cmd, { ...ctx, chatId: message.chat });
