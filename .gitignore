@@ -5,6 +5,7 @@ package-lock.json
 /temp/*
 !/temp/.gitkeep
 .env
+database/*
 database.json
 database.db
 database.db-wal
