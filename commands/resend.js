@@ -48,7 +48,32 @@ export default {
                 }
                 
                 if (type === "imageMessage" || type === "videoMessage" || type === "documentMessage") {
-                    sendOptions.caption = originalMediaMessage.caption || "*Success Resend*";
+                    let outCaption = originalMediaMessage.caption || "*Success Resend*";
+                    let mentions = targetMsg.mentionedJid || [];
+
+                    // Mencegah loop eksekusi jika caption mengandung command bot (ZWS)
+                    const prefixes = ["!", ".", "#", "/", "-", "$"];
+                    if (prefixes.includes(outCaption[0])) {
+                        outCaption = "\u200B" + outCaption;
+                    }
+
+                    // Ambil ID (tanpa domain) dari mentions bawaan (bisa berupa PN atau LID)
+                    const existingMentionIds = mentions.map(jid => jid.split('@')[0]);
+
+                    // Parsing manual tag angka untuk caption
+                    const manualMentions = [...outCaption.matchAll(/@(\d{10,16})/g)]
+                        .map(v => v[1])
+                        .filter(num => !existingMentionIds.includes(num))
+                        .map(num => num + '@s.whatsapp.net');
+                        
+                    if (manualMentions.length > 0) {
+                        mentions = [...mentions, ...manualMentions];
+                    }
+
+                    sendOptions.caption = outCaption;
+                    if (mentions.length > 0) {
+                        sendOptions.mentions = mentions;
+                    }
                 }
                 
                 await sock.sendMessage(
