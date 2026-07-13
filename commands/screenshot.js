@@ -34,22 +34,31 @@ const FLAG_DEFINITIONS = {
     "-full":   "full",
     "-d":      "dark",
     "-dark":   "dark",
+    "-w":      "wait",
+    "-wait":   "wait",
 };
 
 function parseArgs(args) {
     const flags = new Set();
     let url = null;
+    let waitSeconds = null;
 
-    for (const arg of args) {
-        const lower = arg.toLowerCase();
+    for (let i = 0; i < args.length; i++) {
+        const lower = args[i].toLowerCase();
         if (FLAG_DEFINITIONS[lower]) {
-            flags.add(FLAG_DEFINITIONS[lower]);
+            const flagName = FLAG_DEFINITIONS[lower];
+            flags.add(flagName);
+            // -w takes an optional numeric argument: -w 5
+            if (flagName === "wait" && i + 1 < args.length && /^\d+$/.test(args[i + 1])) {
+                waitSeconds = Math.min(parseInt(args[i + 1], 10), 15); // cap at 15s
+                i++; // skip the number
+            }
         } else if (!url) {
-            url = arg;
+            url = args[i];
         }
     }
 
-    return { flags, url };
+    return { flags, url, waitSeconds };
 }
 
 function normalizeUrl(raw) {
@@ -75,6 +84,7 @@ const MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleW
 
 const NAVIGATION_TIMEOUT = 30_000;  // 30s max for page load
 const SCREENSHOT_MAX_HEIGHT = 16384; // Cap full-page to prevent absurd images
+const DEFAULT_WAIT_MS = 2000;        // Default 2s post-load delay for JS rendering
 
 // ── Command ─────────────────────────────────────────────────────────────────
 
@@ -83,7 +93,7 @@ export default {
     aliases: ["ss", "web", "capture"],
     category: "tools",
     description: "Mengambil screenshot tampilan website",
-    usage: "!ss <url> [-m mobile] [-f fullpage] [-d darkmode]",
+    usage: "!ss <url> [-m mobile] [-f fullpage] [-d dark] [-w detik]",
     async handler({ message, args, sock }) {
         if (args.length === 0) {
             await message.reply(
@@ -91,18 +101,20 @@ export default {
                 "Contoh:\n" +
                 "• `!ss google.com`\n" +
                 "• `!ss -m https://github.com`\n" +
-                "• `!ss reddit.com -f -d`\n\n" +
+                "• `!ss reddit.com -f -d`\n" +
+                "• `!ss -w 5 reddit.com` _(tunggu 5 detik)_\n\n" +
                 "╭───「 🏷️ Flags 」\n" +
                 "│ `-m` — Tampilan mobile\n" +
                 "│ `-f` — Full-page (seluruh halaman)\n" +
                 "│ `-d` — Dark mode\n" +
+                "│ `-w [detik]` — Tunggu ekstra (default 2s, max 15s)\n" +
                 "╰──────────────"
             );
             return;
         }
 
         // ── Parse flags & URL ───────────────────────────────────────────
-        const { flags, url: rawUrl } = parseArgs(args);
+        const { flags, url: rawUrl, waitSeconds } = parseArgs(args);
 
         if (!rawUrl) {
             await message.reply("❌ URL tidak ditemukan. Pastikan kamu menyertakan link website.");
@@ -122,15 +134,19 @@ export default {
             return;
         }
 
-        const isMobile  = flags.has("mobile");
-        const isFullPage = flags.has("full");
-        const isDark    = flags.has("dark");
+        const isMobile   = flags.has("mobile");
+        const isFullPage  = flags.has("full");
+        const isDark     = flags.has("dark");
+        const extraWaitMs = flags.has("wait") && waitSeconds !== null
+            ? waitSeconds * 1000
+            : DEFAULT_WAIT_MS;
 
         // Build status description
         const modeParts = [];
         modeParts.push(isMobile ? "📱 Mobile" : "🖥️ Desktop");
         if (isFullPage) modeParts.push("📜 Full-page");
-        if (isDark)     modeParts.push("🌙 Dark mode");
+        if (isDark)      modeParts.push("🌙 Dark mode");
+        if (extraWaitMs !== DEFAULT_WAIT_MS) modeParts.push(`⏳ Wait ${extraWaitMs / 1000}s`);
         const modeLabel = modeParts.join(" • ");
 
         const update = await message.replyUpdate(`⏳ Mengambil screenshot...\n┃ 🔗 ${url}\n┃ ${modeLabel}`);
@@ -171,6 +187,11 @@ export default {
                 waitUntil: "networkidle2",
                 timeout: NAVIGATION_TIMEOUT,
             });
+
+            // Extra wait for JS-heavy pages to finish rendering
+            if (extraWaitMs > 0) {
+                await new Promise(r => setTimeout(r, extraWaitMs));
+            }
 
             // Take screenshot
             const screenshotOptions = {
