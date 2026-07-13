@@ -37,20 +37,58 @@ export default {
                 return;
             }
 
-            // Formatting the HTML definition text to WhatsApp Markdown
+            // Decode HTML entities
             let text = kataDasar.d;
-            text = text.replace(/<br\s*\/?>/gi, '\n');
-            text = text.replace(/&#183;/g, ''); // Remove syllable separators
-            text = text.replace(/<sup>(.*?)<\/sup>/gi, ''); // Remove superscript
-            text = text.replace(/<b>(.*?)<\/b>/gi, '*$1*'); // Bold
-            text = text.replace(/<em>(.*?)<\/em>/gi, '_$1_'); // Italic
-            text = text.replace(/<[^>]+>/g, ''); // Remove remaining HTML tags
+            text = text.replace(/&#183;/g, '');
+            text = text.replace(/&#8220;/g, '"');
+            text = text.replace(/&#8221;/g, '"');
+            text = text.replace(/&quot;/g, '"');
+            text = text.replace(/&lt;/g, '<');
+            text = text.replace(/&gt;/g, '>');
+            text = text.replace(/&amp;/g, '&');
             
-            // Further cleanup to make it neat
-            text = text.replace(/\n\*(.*?)\*/g, '\n\n*$1*'); // Add double newline before bold word that starts a new section
-            text = text.replace(/ \*(\d+)\* /g, '\n  *$1.* '); // Indent numbered list and add dot
-            text = text.replace(/\n{3,}/g, '\n\n'); // Normalize multiple newlines
-            text = text.trim();
+            // Break definitions onto newlines
+            text = text.replace(/<br\s*\/?>/gi, '\n');
+            text = text.replace(/<sup>(.*?)<\/sup>/gi, '');
+            
+            // Format bold elements 
+            text = text.replace(/<b>\s*(\d+)\s*<\/b>/g, '\n$1. '); // Numbers to numbered lists
+            text = text.replace(/<b>(.*?)<\/b>/g, '*$1*'); // Bold
+            
+            // Format italic
+            text = text.replace(/<em>(.*?)<\/em>/g, '_$1_');
+            
+            // Remove remaining tags
+            text = text.replace(/<[^>]+>/g, '');
+            
+            // Construct structured layout
+            let lines = text.split('\n');
+            let formattedLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (!line) continue;
+                
+                if (line.match(/^\d+\.\s/)) {
+                    // Numbered list item
+                    formattedLines.push(line);
+                } else if (line.startsWith('*')) {
+                    // Main or sub-entry (e.g. "*suam* _a_ hangat: ...")
+                    let match = line.match(/^((?:\*[^*]+\*\s*(?:_[^_]+_\s*|,?\s*)*)+)(.*)$/);
+                    if (match && match[2].trim()) {
+                        formattedLines.push(match[1].trim());
+                        if (match[2].trim()) {
+                            formattedLines.push("> " + match[2].trim());
+                        }
+                    } else {
+                        formattedLines.push(line);
+                    }
+                } else {
+                    formattedLines.push("> " + line);
+                }
+            }
+            
+            text = formattedLines.join('\n');
 
             let replyText = `╭━━━〔 📖 KBBI SEARCH 〕━━━\n`;
             replyText += `┃ 🔍 Kata : ${kataDasar.w.replace(/<[^>]+>/g, '')}\n`;
