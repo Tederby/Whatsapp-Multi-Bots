@@ -37,15 +37,25 @@ export default {
                 return;
             }
 
-            // Clean up the HTML definition text
-            let text = kataDasar.d.replace(/<br\s*\/?>/gi, '\n');
-            text = text.replace(/<[^>]+>/g, ''); // Remove all remaining HTML tags
+            // Formatting the HTML definition text to WhatsApp Markdown
+            let text = kataDasar.d;
+            text = text.replace(/<br\s*\/?>/gi, '\n');
             text = text.replace(/&#183;/g, ''); // Remove syllable separators
+            text = text.replace(/<sup>(.*?)<\/sup>/gi, ''); // Remove superscript
+            text = text.replace(/<b>(.*?)<\/b>/gi, '*$1*'); // Bold
+            text = text.replace(/<em>(.*?)<\/em>/gi, '_$1_'); // Italic
+            text = text.replace(/<[^>]+>/g, ''); // Remove remaining HTML tags
+            
+            // Further cleanup to make it neat
+            text = text.replace(/\n\*(.*?)\*/g, '\n\n*$1*'); // Add double newline before bold word that starts a new section
+            text = text.replace(/ \*(\d+)\* /g, '\n  *$1.* '); // Indent numbered list and add dot
+            text = text.replace(/\n{3,}/g, '\n\n'); // Normalize multiple newlines
+            text = text.trim();
 
             let replyText = `╭━━━〔 📖 KBBI SEARCH 〕━━━\n`;
             replyText += `┃ 🔍 Kata : ${kataDasar.w.replace(/<[^>]+>/g, '')}\n`;
             replyText += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-            replyText += text.trim();
+            replyText += text;
 
             await message.reply(replyText);
 
