@@ -137,6 +137,12 @@ let msgHandler = async (upsert, sock, message) => {
 
         // ── 5. Permission Guard (Middleware) ────────────────────────
         const guardMsg = checkPermissions(cmd, { ...ctx, chatId: message.chat });
+        
+        if (cmd.ownerOnly) {
+            const status = guardMsg ? "BLOCKED" : "ALLOWED";
+            logger.auth(t, cmdLabel, ctx.pushname, ctx.isGroup, ctx.groupName, status);
+        }
+
         if (guardMsg) {
             if (guardMsg !== "SILENT_DROP") {
                 await message.reply(guardMsg);
