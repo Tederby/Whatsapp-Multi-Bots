@@ -11,27 +11,31 @@ export default {
     async handler({ message, sock, rawArgs, prefix, pushname }) {
         try {
             // Check original message media
-            let isMedia = false;
-            let isQuotedMedia = false;
+            const isValidMedia = (msg) => {
+                if (msg?.imageMessage || msg?.videoMessage) return true;
+                if (msg?.documentMessage) {
+                    const mime = msg.documentMessage.mimetype || '';
+                    if (mime.startsWith('image/') || mime.startsWith('video/')) return true;
+                }
+                return false;
+            };
 
-            if (message.message?.imageMessage || message.message?.videoMessage) {
-                isMedia = true;
-            }
-            if (message.quoted?.message?.imageMessage || message.quoted?.message?.videoMessage) {
-                isQuotedMedia = true;
-            }
+            const isMedia = isValidMedia(message.message);
+            const isQuotedMedia = isValidMedia(message.quoted?.message);
 
             const targetMsg = isQuotedMedia ? message.quoted : (isMedia ? message : null);
 
             if (!targetMsg) {
-                return await message.reply(`❌ Kirim gambar/video dengan caption *${prefix}s* atau balas (reply) media yang sudah ada.`);
+                return await message.reply(`❌ Kirim gambar/video/dokumen dengan caption *${prefix}s* atau balas (reply) media yang sudah ada.`);
             }
 
-            const isVideo = !!targetMsg.message?.videoMessage;
-            const mediaMessage = targetMsg.message?.imageMessage || targetMsg.message?.videoMessage;
+            const msgContent = targetMsg.message;
+            const isVideo = !!msgContent?.videoMessage || (msgContent?.documentMessage?.mimetype?.startsWith('video/'));
+            const isDocument = !!msgContent?.documentMessage;
+            const mediaMessage = msgContent?.imageMessage || msgContent?.videoMessage || msgContent?.documentMessage;
 
             if (!mediaMessage) {
-                return await message.reply('❌ Format media tidak didukung. Harap kirim gambar, video pendek, atau GIF.');
+                return await message.reply('❌ Format media tidak didukung. Harap kirim gambar, video pendek, atau dokumen media.');
             }
 
             // Verify video duration
@@ -64,7 +68,8 @@ export default {
             await message.reply(replyMsg);
 
             // Download media natively using baileys
-            const stream = await downloadContentFromMessage(mediaMessage, isVideo ? 'video' : 'image');
+            const downloadType = isDocument ? 'document' : (isVideo ? 'video' : 'image');
+            const stream = await downloadContentFromMessage(mediaMessage, downloadType);
             const chunks = [];
             for await (const chunk of stream) {
                 chunks.push(chunk);
