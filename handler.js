@@ -138,7 +138,9 @@ let msgHandler = async (upsert, sock, message) => {
         // ── 5. Permission Guard (Middleware) ────────────────────────
         const guardMsg = checkPermissions(cmd, { ...ctx, chatId: message.chat });
         if (guardMsg) {
-            await message.reply(guardMsg);
+            if (guardMsg !== "SILENT_DROP") {
+                await message.reply(guardMsg);
+            }
             return;
         }
 
