@@ -167,9 +167,13 @@ export default {
                 try {
                     // Try to fetch from WhatsApp with a timeout to prevent hanging
                     const waPfpPromise = sock.profilePictureUrl(normalizedTarget, 'image');
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000));
-                    const waPfp = await Promise.race([waPfpPromise, timeoutPromise]);
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000));
+                    let waPfp = await Promise.race([waPfpPromise, timeoutPromise]);
                     if (waPfp) {
+                        // Fix for a.whatsapp.net DNS error
+                        if (waPfp.includes('a.whatsapp.net')) {
+                            waPfp = waPfp.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+                        }
                         pfpSource = { url: waPfp };
                         isDefault = false; // We got a real PFP from WA
                     }
