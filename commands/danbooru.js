@@ -1,4 +1,4 @@
-import { fetchDanbooruPost, sendDanbooruMessage, validateDanbooruTags, fetchDanbooruByTags } from "../lib/danbooru.js";
+import { fetchDanbooruPost, sendDanbooruMessage, validateDanbooruTags, fetchDanbooruByTags, getFuzzyTagSuggestions } from "../lib/danbooru.js";
 
 export default {
     name: "danbooru",
@@ -53,11 +53,11 @@ export default {
             // 3. Arg is a number (ID or numeric tag check)
             if (/^\d+$/.test(firstArg) && args.length === 1) {
                 // It's a number. Let's check if it's a valid tag.
-                const validTags = await validateDanbooruTags([firstArg]);
+                const { validTags, corrections } = await validateDanbooruTags([firstArg]);
                 if (validTags.length > 0) {
                     // It's a valid numeric tag (e.g. '100', '1999').
                     const postData = await fetchDanbooruByTags(validTags);
-                    await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false, usedTags: validTags });
+                    await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false, usedTags: validTags, corrections });
                 } else {
                     // Not a tag, treat as ID
                     const postData = await fetchDanbooruPost(firstArg);
@@ -68,15 +68,39 @@ export default {
 
             // 4. Tags Search
             const inputTags = args.slice(0, 2); // Max 2 tags for free API
-            const validTags = await validateDanbooruTags(inputTags);
+            const { validTags, invalidTags, corrections } = await validateDanbooruTags(inputTags);
 
             if (validTags.length === 0) {
-                await message.reply("❌ Tag tidak ditemukan atau tidak valid. Pastikan penulisan tag benar (contoh: `hatsune_miku`).");
+                let errorMsg = "❌ Tag tidak ditemukan atau tidak valid.";
+                
+                // Fuzzy search fallback
+                const suggestions = [];
+                for (const invalidTag of invalidTags) {
+                    const fuzzy = await getFuzzyTagSuggestions(invalidTag);
+                    if (fuzzy.length > 0) {
+                        suggestions.push(...fuzzy);
+                    }
+                }
+
+                // Space check
+                if (args.length > 1) {
+                    const joinedTag = args.join('_');
+                    const fuzzyJoined = await getFuzzyTagSuggestions(joinedTag);
+                    if (fuzzyJoined.length > 0) {
+                        errorMsg += `\n\n💡 *Tip:* Di Danbooru karakter spasi menggunakan garis bawah (underscore). Mungkin maksud kamu 1 karakter: \`${fuzzyJoined[0]}\`?`;
+                    } else if (suggestions.length > 0) {
+                        errorMsg += `\n\nMungkin maksud kamu: \`${suggestions.slice(0, 5).join('`, `')}\`?`;
+                    }
+                } else if (suggestions.length > 0) {
+                    errorMsg += `\n\nMungkin maksud kamu: \`${suggestions.slice(0, 5).join('`, `')}\`?`;
+                }
+
+                await message.reply(errorMsg);
                 return;
             }
 
             const postData = await fetchDanbooruByTags(validTags);
-            await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false, usedTags: validTags });
+            await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false, usedTags: validTags, corrections });
 
         } catch (err) {
             if (err.message === "EXPLICIT_ONLY") {

@@ -1,14 +1,41 @@
 import { fetchDanbooruPost } from "../lib/danbooru.js";
+import axios from "axios";
 
 export default {
     name: "tag",
     aliases: ["tags"],
     category: "anime",
-    description: "Ambil list tag dari gambar Danbooru yang di-reply",
-    usage: "!tag (reply to a Danbooru post)",
-    async handler({ message, sock }) {
+    description: "Ambil list tag dari gambar Danbooru yang di-reply ATAU cari dictionary tag Danbooru",
+    usage: "!tag [query] ATAU !tag (reply to a Danbooru post)",
+    async handler({ message, sock, args }) {
+        if (args.length > 0) {
+            // Dictionary mode
+            const query = args.join("_");
+            try {
+                await message.reply(`🔍 Mencari kamus tag untuk '${query}'...`);
+                const response = await axios.get(`https://danbooru.donmai.us/tags.json?search[name_matches]=*${encodeURIComponent(query)}*&search[order]=count&limit=10`);
+                
+                if (!response.data || response.data.length === 0) {
+                    await message.reply(`❌ Tidak ditemukan tag yang cocok dengan '${query}'.`);
+                    return;
+                }
+
+                let resultMsg = `🏷️ *Kamus Tag Danbooru: '${query}'*\n\n`;
+                response.data.forEach((tag, index) => {
+                    const postCount = tag.post_count.toLocaleString('id-ID');
+                    resultMsg += `${index + 1}. \`${tag.name}\` (${postCount} post)\n`;
+                });
+                resultMsg += `\n💡 Gunakan \`!d <tag>\` untuk mencari gambar.`;
+
+                await message.reply(resultMsg);
+            } catch (err) {
+                await message.reply(`❌ Error mencari tag: ${err.message}`);
+            }
+            return;
+        }
+
         if (!message.quoted) {
-            await message.reply("❌ Kamu harus me-reply gambar Danbooru atau pesan peringatan dari bot untuk menggunakan command ini.");
+            await message.reply("❌ Kamu harus me-reply gambar Danbooru atau ketik `!tag <query>` untuk mencari tag.");
             return;
         }
 
