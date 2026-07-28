@@ -7,6 +7,7 @@ export default {
     description: "Gacha gambar random dari Danbooru, atau cari spesifik menggunakan Tag/ID/Link",
     usage: "!d [tag1] [tag2] atau !d [post_id/URL]",
     async handler({ message, args, sock }) {
+        args = args.map(arg => arg.toLowerCase());
         let isGacha = false;
 
         try {
@@ -94,6 +95,8 @@ export default {
                 } else if (suggestions.length > 0) {
                     errorMsg += `\n\nMungkin maksud kamu: \`${suggestions.slice(0, 5).join('`, `')}\`?`;
                 }
+
+                errorMsg += `\n\n💡 *Tip:* Gunakan command \`!tag <kata kunci>\` untuk mencari kamus tag Danbooru jika kamu bingung.`;
 
                 await message.reply(errorMsg);
                 return;

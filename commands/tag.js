@@ -8,6 +8,8 @@ export default {
     description: "Ambil list tag dari gambar Danbooru yang di-reply ATAU cari dictionary tag Danbooru",
     usage: "!tag [query] ATAU !tag (reply to a Danbooru post)",
     async handler({ message, sock, args }) {
+        args = args.map(arg => arg.toLowerCase());
+        
         if (args.length > 0) {
             // Dictionary mode
             const query = args.join("_");
