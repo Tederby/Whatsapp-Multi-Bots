@@ -37,6 +37,9 @@ export default {
 
         if (textArgs.toLowerCase() === "--del" || textArgs.toLowerCase().startsWith("--del ")) {
             let triggerToDelete = "";
+            let deleteByIndex = false;
+            let indexToDelete = -1;
+            
             if (textArgs.toLowerCase() === "--del" && message.quoted) {
                 if (message.quoted.message?.stickerMessage) {
                     const hash = Buffer.from(message.quoted.message.stickerMessage.fileSha256).toString('base64');
@@ -46,25 +49,44 @@ export default {
                 }
             } else {
                 triggerToDelete = textArgs.slice(6).trim().toLowerCase();
+                if (/^\d+$/.test(triggerToDelete)) {
+                    deleteByIndex = true;
+                    indexToDelete = parseInt(triggerToDelete, 10) - 1; // 0-based index
+                }
             }
             
             if (!triggerToDelete) {
-                return await message.reply(`❌ Masukkan kata kunci yang ingin dihapus, atau reply pesan yang ingin dihapus trigger-nya. Contoh: \`${prefix}autoreply --del halo\``);
+                return await message.reply(`❌ Masukkan kata kunci atau index yang ingin dihapus, atau reply pesan yang ingin dihapus trigger-nya. Contoh: \`${prefix}autoreply --del halo\` atau \`${prefix}autoreply --del 1\``);
             }
 
             const replies = config.autoReplies || {};
+            const keys = Object.keys(replies);
             let deleted = false;
             let mediaPathToDelete = null;
+            let finalDeletedTrigger = triggerToDelete;
             
-            // Perlu case-insensitive matching untuk menghapus
-            for (const key of Object.keys(replies)) {
-                if (key.toLowerCase() === triggerToDelete.toLowerCase()) {
+            if (deleteByIndex) {
+                if (indexToDelete >= 0 && indexToDelete < keys.length) {
+                    const key = keys[indexToDelete];
                     if (replies[key].type === "sticker" && replies[key].mediaPath) {
                         mediaPathToDelete = replies[key].mediaPath;
                     }
                     delete replies[key];
                     deleted = true;
-                    break;
+                    finalDeletedTrigger = key;
+                }
+            } else {
+                // Perlu case-insensitive matching untuk menghapus
+                for (const key of keys) {
+                    if (key.toLowerCase() === triggerToDelete.toLowerCase()) {
+                        if (replies[key].type === "sticker" && replies[key].mediaPath) {
+                            mediaPathToDelete = replies[key].mediaPath;
+                        }
+                        delete replies[key];
+                        deleted = true;
+                        finalDeletedTrigger = key;
+                        break;
+                    }
                 }
             }
 
@@ -74,10 +96,10 @@ export default {
                 }
                 config.autoReplies = replies;
                 saveGroupConfig(chat, config);
-                const displayKey = triggerToDelete.startsWith("sticker:") ? "[Stiker]" : triggerToDelete;
-                return await message.reply(`✅ Berhasil menghapus auto-reply untuk kata kunci: *${displayKey}*`);
+                const displayKey = finalDeletedTrigger.startsWith("sticker:") ? "[Stiker]" : finalDeletedTrigger;
+                return await message.reply(`✅ Berhasil menghapus auto-reply untuk: *${displayKey}*`);
             } else {
-                return await message.reply(`❌ Kata kunci tidak ditemukan di daftar auto-reply.`);
+                return await message.reply(`❌ Kata kunci atau index tidak ditemukan di daftar auto-reply.`);
             }
         }
 
