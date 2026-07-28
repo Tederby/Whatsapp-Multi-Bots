@@ -1,8 +1,8 @@
-# WhatsApp Bot 🤖
+# WhatsApp Bot
 
 A scalable, multi-instance WhatsApp bot built with [Baileys](https://github.com/WhiskeySockets/Baileys) and Node.js. Designed to run multiple bot numbers simultaneously from a single codebase using PM2.
 
-## ✨ Highlights
+## Highlights
 
 - **Multi-Bot** — Run dozens of bot numbers from one project via PM2. Each instance gets its own session, temp files, and config.
 - **SQLite Database** — Concurrent-safe database with WAL mode. No more JSON corruption when multiple bots write simultaneously.
@@ -12,7 +12,7 @@ A scalable, multi-instance WhatsApp bot built with [Baileys](https://github.com/
 
 ---
 
-## 🧩 Command Categories
+## Command Categories
 
 Commands are auto-loaded from the `commands/` directory — just drop a `.js` file and it works. No manual imports needed.
 
@@ -31,7 +31,7 @@ Commands are auto-loaded from the `commands/` directory — just drop a `.js` fi
 
 ---
 
-## 💻 Requirements
+## Requirements
 
 - **Node.js** v18+
 - **FFmpeg** — for sticker creation and media conversion
@@ -41,7 +41,7 @@ Commands are auto-loaded from the `commands/` directory — just drop a `.js` fi
 
 ---
 
-## 🚀 Setup
+## Setup
 
 ```bash
 # Clone & install
@@ -97,7 +97,7 @@ Run `pm2 restart bot2`, and view `pm2 logs bot2` to see the 8-digit Pairing Code
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 wa-bot/
@@ -128,7 +128,7 @@ wa-bot/
 
 ---
 
-## 🛠️ Creating Commands
+## Creating Commands
 
 Drop a new `.js` file in `commands/` — the bot picks it up automatically (even at runtime via hot-reload).
 
@@ -147,6 +147,6 @@ export default {
 
 ---
 
-## 📜 License
+## License
 
 [MIT](LICENSE)
