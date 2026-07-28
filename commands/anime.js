@@ -73,7 +73,7 @@ export default {
         }
 
         try {
-            const response = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=20`, {
+            const response = await axios.get(`https://api.tenrai.org/v1/anime?q=${encodeURIComponent(query)}&limit=20`, {
                 timeout: 15000, // Timeout 15 detik
                 httpsAgent: new https.Agent({ family: 4 }), // Paksa IPv4
                 headers: {
