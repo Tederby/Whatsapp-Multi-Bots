@@ -23,6 +23,12 @@ export default {
             }
 
             const stickerMsg = targetMsg.message.stickerMessage;
+            
+            // Fix for a.whatsapp.net DNS error
+            if (stickerMsg?.url && stickerMsg.url.includes('a.whatsapp.net')) {
+                stickerMsg.url = stickerMsg.url.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+            }
+
             const textArgs = (rawArgs || '').trim();
 
             // Format: !wm NamaPack|NamaAuthor

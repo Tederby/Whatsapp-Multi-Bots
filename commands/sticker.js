@@ -40,6 +40,11 @@ export default {
             const isDocument = !!msgContent?.documentMessage;
             const mediaMessage = msgContent?.imageMessage || msgContent?.videoMessage || msgContent?.documentMessage;
 
+            // Fix for a.whatsapp.net DNS error
+            if (mediaMessage?.url && mediaMessage.url.includes('a.whatsapp.net')) {
+                mediaMessage.url = mediaMessage.url.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+            }
+
             if (!mediaMessage) {
                 return await message.reply('❌ Format media tidak didukung. Harap kirim gambar, video pendek, atau dokumen media.');
             }

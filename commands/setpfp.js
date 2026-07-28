@@ -66,6 +66,10 @@ export default {
                     || quotedMsg.ephemeralMessage?.message?.imageMessage;
 
                 if (imgMsg) {
+                    // Fix for a.whatsapp.net DNS error
+                    if (imgMsg?.url && imgMsg.url.includes('a.whatsapp.net')) {
+                        imgMsg.url = imgMsg.url.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+                    }
                     const stream = await downloadContentFromMessage(imgMsg, 'image');
                     const chunks = [];
                     for await (const chunk of stream) {
@@ -75,7 +79,14 @@ export default {
                 }
             } else if (isMedia && message.message?.imageMessage) {
                 await message.reply("⏳ Sedang mengunduh dan memproses gambar...");
-                const stream = await downloadContentFromMessage(message.message.imageMessage, 'image');
+                
+                const imgMsg = message.message.imageMessage;
+                // Fix for a.whatsapp.net DNS error
+                if (imgMsg?.url && imgMsg.url.includes('a.whatsapp.net')) {
+                    imgMsg.url = imgMsg.url.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+                }
+
+                const stream = await downloadContentFromMessage(imgMsg, 'image');
                 const chunks = [];
                 for await (const chunk of stream) {
                     chunks.push(chunk);
