@@ -37,8 +37,6 @@ export default {
 
         if (textArgs.toLowerCase() === "--del" || textArgs.toLowerCase().startsWith("--del ")) {
             let triggerToDelete = "";
-            let deleteByIndex = false;
-            let indexToDelete = -1;
             
             if (textArgs.toLowerCase() === "--del" && message.quoted) {
                 if (message.quoted.message?.stickerMessage) {
@@ -49,10 +47,6 @@ export default {
                 }
             } else {
                 triggerToDelete = textArgs.slice(6).trim().toLowerCase();
-                if (/^\d+$/.test(triggerToDelete)) {
-                    deleteByIndex = true;
-                    indexToDelete = parseInt(triggerToDelete, 10) - 1; // 0-based index
-                }
             }
             
             if (!triggerToDelete) {
@@ -65,7 +59,22 @@ export default {
             let mediaPathToDelete = null;
             let finalDeletedTrigger = triggerToDelete;
             
-            if (deleteByIndex) {
+            // 1. Coba hapus berdasarkan EXACT MATCH trigger terlebih dahulu
+            for (const key of keys) {
+                if (key.toLowerCase() === triggerToDelete.toLowerCase()) {
+                    if (replies[key].type === "sticker" && replies[key].mediaPath) {
+                        mediaPathToDelete = replies[key].mediaPath;
+                    }
+                    delete replies[key];
+                    deleted = true;
+                    finalDeletedTrigger = key;
+                    break;
+                }
+            }
+
+            // 2. Jika tidak ada exact match dan input adalah angka, coba hapus berdasarkan index
+            if (!deleted && /^\d+$/.test(triggerToDelete)) {
+                const indexToDelete = parseInt(triggerToDelete, 10) - 1; // 0-based index
                 if (indexToDelete >= 0 && indexToDelete < keys.length) {
                     const key = keys[indexToDelete];
                     if (replies[key].type === "sticker" && replies[key].mediaPath) {
@@ -74,19 +83,6 @@ export default {
                     delete replies[key];
                     deleted = true;
                     finalDeletedTrigger = key;
-                }
-            } else {
-                // Perlu case-insensitive matching untuk menghapus
-                for (const key of keys) {
-                    if (key.toLowerCase() === triggerToDelete.toLowerCase()) {
-                        if (replies[key].type === "sticker" && replies[key].mediaPath) {
-                            mediaPathToDelete = replies[key].mediaPath;
-                        }
-                        delete replies[key];
-                        deleted = true;
-                        finalDeletedTrigger = key;
-                        break;
-                    }
                 }
             }
 
