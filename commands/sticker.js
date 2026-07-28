@@ -7,7 +7,7 @@ export default {
     aliases: ['s', 'stiker'],
     category: 'media',
     description: 'Membuat stiker dari gambar atau video pendek',
-    usage: '!s (send/reply to an image or short video) atau !s Pack|Author',
+    usage: '!s (send/reply to an image or short video) atau !s NamaPack|NamaAuthor',
     async handler({ message, sock, rawArgs, prefix, pushname }) {
         try {
             // Check original message media
@@ -19,6 +19,12 @@ export default {
                 }
                 return false;
             };
+
+            // If user quotes a sticker, redirect them to use !wm
+            const isQuotedSticker = !!message.quoted?.message?.stickerMessage;
+            if (isQuotedSticker) {
+                return await message.reply(`💡 Untuk mengganti watermark stiker, gunakan command *${prefix}wm*\n\nContoh: *${prefix}wm NamaPack|NamaAuthor*\n\nBalas (reply/quote) stiker yang ingin diganti watermarknya.`);
+            }
 
             const isMedia = isValidMedia(message.message);
             const isQuotedMedia = isValidMedia(message.quoted?.message);
@@ -45,24 +51,24 @@ export default {
 
             const textArgs = (rawArgs || '').trim();
 
+            // Format: !s NamaPack|NamaAuthor
             // Di WhatsApp, Author ditampilkan di atas (kiri), Pack di bawah (kanan).
-            // User ingin "Bot Name - User Name" -> Author: Bot Name, Pack: User Name
-            let authorName = setting.name || 'Bot Stiker';
             let packName = pushname || 'WhatsApp User';
+            let authorName = setting.name || 'Bot Stiker';
 
             let replyMsg = '⏳ Sedang membuat stiker...';
 
             if (textArgs) {
                 const splitArgs = textArgs.split('|');
-                // User input: Tederby|Anime (Tederby sebagai Author, Anime sebagai Pack)
-                authorName = splitArgs[0].trim();
+                // User input: Anime|Tederby (Anime sebagai Pack, Tederby sebagai Author)
+                packName = splitArgs[0].trim();
                 if (splitArgs.length > 1) {
-                    packName = splitArgs[1].trim();
+                    authorName = splitArgs[1].trim();
                 } else {
-                    packName = pushname || 'WhatsApp User';
+                    authorName = setting.name || 'Bot Stiker';
                 }
             } else {
-                replyMsg += `\n\n💡 *Tips*: Kamu bisa menambahkan watermark dengan perintah \`${prefix}s NamaAuthor|NamaPack\` (contoh: \`${prefix}s Tederby|Anime\`)`;
+                replyMsg += `\n\n💡 *Tips*: Kamu bisa menambahkan watermark dengan perintah \`${prefix}s NamaPack|NamaAuthor\` (contoh: \`${prefix}s Anime|Tederby\`)`;
             }
 
             await message.reply(replyMsg);
