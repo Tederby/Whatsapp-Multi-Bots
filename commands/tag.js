@@ -12,11 +12,11 @@ export default {
             // Dictionary mode
             const query = args.join("_");
             try {
-                await message.reply(`🔍 Mencari kamus tag untuk '${query}'...`);
+                const sentMsg = await message.reply(`🔍 Mencari kamus tag untuk '${query}'...`);
                 const response = await axios.get(`https://danbooru.donmai.us/tags.json?search[name_matches]=*${encodeURIComponent(query)}*&search[order]=count&limit=10`);
                 
                 if (!response.data || response.data.length === 0) {
-                    await message.reply(`❌ Tidak ditemukan tag yang cocok dengan '${query}'.`);
+                    await sock.sendMessage(message.chat, { text: `❌ Tidak ditemukan tag yang cocok dengan '${query}'.`, edit: sentMsg.key });
                     return;
                 }
 
@@ -27,7 +27,7 @@ export default {
                 });
                 resultMsg += `\n💡 Gunakan \`!d <tag>\` untuk mencari gambar.`;
 
-                await message.reply(resultMsg);
+                await sock.sendMessage(message.chat, { text: resultMsg, edit: sentMsg.key });
             } catch (err) {
                 await message.reply(`❌ Error mencari tag: ${err.message}`);
             }
