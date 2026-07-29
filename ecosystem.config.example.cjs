@@ -23,13 +23,13 @@ module.exports = {
       node_args: "--experimental-vm-modules",
       env: {
         BOT_ID: "bot1",
-        BOT_NAME: "Kazuhiko",
-        OWNER_NUMBER: "6287825136146",
+        BOT_NAME: "BotName1",
+        OWNER_NUMBER: "628xxxxxxxxxxx",
         PREFIXES: "!.#/-",
         SPAM_DELAY: "5000",
-        // YOUTUBE_API_KEY: " ",  If use different API
-        // STEAM_API_KEY: " ",
-        // PAIRING_NUMBER: " ", // Opsional: Isi dengan nomor bot untuk login via Pairing Code (tanpa scan QR)
+        // YOUTUBE_API_KEY: "YOUR_YOUTUBE_API_KEY",  If use different API
+        // STEAM_API_KEY: "YOUR_STEAM_API_KEY",
+        PAIRING_NUMBER: "628xxxxxxxxxxx", // Opsional: Isi dengan nomor bot untuk login via Pairing Code (tanpa scan QR)
       },
     },
     {
@@ -38,25 +38,25 @@ module.exports = {
       node_args: "--experimental-vm-modules",
       env: {
         BOT_ID: "bot2",
-        BOT_NAME: "Chisuga",
-        OWNER_NUMBER: "6287825136146",
+        BOT_NAME: "BotName2",
+        OWNER_NUMBER: "628xxxxxxxxxxx",
         PREFIXES: "!.#/-",
         SPAM_DELAY: "5000",
-        // PAIRING_NUMBER: " ",
+        // PAIRING_NUMBER: "628xxxxxxxxxxx",
       },
     },
     // ── Template (uncomment untuk mengaktifkan) ──────────────
     // {
-    //   name: "bot2",
+    //   name: "bot3",
     //   script: "./index.js",
     //   node_args: "--experimental-vm-modules",
     //   env: {
-    //     BOT_ID: "bot2",
-    //     BOT_NAME: "Chisuga",
-    //     OWNER_NUMBER: "6287825136146",
+    //     BOT_ID: "bot3",
+    //     BOT_NAME: "BotName3",
+    //     OWNER_NUMBER: "628xxxxxxxxxxx",
     //     PREFIXES: "!.#/-",
     //     SPAM_DELAY: "5000",
-    //     // PAIRING_NUMBER: "628xxxxxxxxx",
+    //     // PAIRING_NUMBER: "628xxxxxxxxxxx",
     //   },
     // },
   ],
