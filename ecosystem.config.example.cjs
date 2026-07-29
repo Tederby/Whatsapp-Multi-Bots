@@ -1,5 +1,7 @@
 /**
  * PM2 Ecosystem Configuration
+ * 
+ * DELETE the ".example"
  *
  * Manage multiple bot instances from a single codebase.
  * Each bot gets its own BOT_ID, session folder, and config.
