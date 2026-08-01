@@ -4,7 +4,7 @@ export default {
     category: "tools",
     description: "Echo text back to the sender",
     usage: "!say <text> atau reply pesan",
-    async handler({ message, rawArgs, sock }) {
+    async handler({ message, rawArgs, sock, pushname }) {
         let outText = rawArgs;
         let mentions = message.mentionedJid || [];
 
@@ -15,13 +15,10 @@ export default {
         }
 
         if (!outText) return message.reply("Masukkan teks atau reply pesan teks yang ingin dikirim ulang!");
-        
-        // Mencegah loop eksekusi jika user iseng memasukkan command bot (misal: !say !menu)
-        // Dengan menyisipkan karakter tidak terlihat (Zero-Width Space) di awal
-        const prefixes = ["!", ".", "#", "/", "-", "$"];
-        if (prefixes.includes(outText[0])) {
-            outText = "\u200B" + outText;
-        }
+
+        // Format output sebagai quote dengan nama user
+        const formattedText = `> ${outText}\n- ${pushname}`;
+
 
         // Ambil ID (tanpa domain) dari mentions bawaan (bisa berupa PN atau LID)
         const existingMentionIds = mentions.map(jid => jid.split('@')[0]);
@@ -41,7 +38,7 @@ export default {
         const match = outText.match(urlRegex);
         
         const sendOptions = {
-            text: outText,
+            text: formattedText,
             mentions: mentions
         };
 
