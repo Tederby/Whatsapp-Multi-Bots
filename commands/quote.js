@@ -43,11 +43,45 @@ export default {
 
             const normalizedTarget = resolveUserId(jidNormalizedUser(targetJid));
 
+            // Perbaiki tampilan mentions di dalam teks (ubah @62812... atau @lid menjadi nama)
+            if (message.quoted.mentionedJid && message.quoted.mentionedJid.length > 0) {
+                for (const jid of message.quoted.mentionedJid) {
+                    const id = jid.split('@')[0];
+                    const mentionNormal = resolveUserId(jidNormalizedUser(jid));
+                    const mentionUser = getUser(mentionNormal);
+                    
+                    let mentionName = mentionUser.name;
+                    if (!mentionName) {
+                        if (/^\d+$/.test(id)) {
+                            // Format nomor cantik: +62 812-xxx
+                            mentionName = `+${id.slice(0, 2)} ${id.slice(2, 5)}-${id.slice(5, 9)}`; 
+                        } else {
+                            mentionName = "User";
+                        }
+                    }
+                    const regex = new RegExp(`@${id}(?:@lid)?`, 'g');
+                    text = text.replace(regex, `@${mentionName}`);
+                }
+            }
+
             message.replyUpdate("⏳ Merender gambar quote estetik...");
 
             // 4. Cari tahu nama pengguna (pushname dari cache bot atau fallback ke database)
             const userData = getUser(normalizedTarget);
-            let targetName = message.quoted.pushName || userData.name || normalizedTarget.split("@")[0];
+            let targetName = message.quoted.pushName || userData.name;
+            if (!targetName) {
+                const num = normalizedTarget.split("@")[0];
+                if (/^\d+$/.test(num)) {
+                    // Format nomor WA menjadi +62 812-3456-7890
+                    if (num.length >= 10 && num.length <= 15) {
+                        targetName = `+${num.slice(0, 2)} ${num.slice(2, 5)}-${num.slice(5, 9)}-${num.slice(9)}`;
+                    } else {
+                        targetName = "+" + num;
+                    }
+                } else {
+                    targetName = "Seseorang"; // Fallback aman untuk LID tanpa nama
+                }
+            }
 
             // 5. Cari tahu foto profil pengguna
             const placeholderImageUrl = "https://i.imgur.com/ckO9GJN.png";
