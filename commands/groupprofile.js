@@ -55,6 +55,15 @@ export default {
             caption += `│ ⋄ Goodbye : ${config.goodbye ? "✅ Aktif" : "❌ Nonaktif"}\n`;
             caption += `│ ⋄ Banned  : ${bannedUsers.length} Users\n`;
 
+            // Sider Tracking info
+            if (config.meta?.trackingEnabled) {
+                const elapsed = Math.floor((Date.now() - config.meta.trackingStartedAt) / 86400000);
+                const period = config.meta.trackingPeriodDays || 30;
+                caption += `│ ⋄ Tracking: ✅ Aktif (hari ke-${elapsed}/${period})\n`;
+            } else {
+                caption += `│ ⋄ Tracking: ❌ Nonaktif\n`;
+            }
+
             if (config.banned) {
                 caption += `│ \n`;
                 caption += `│ ⚠️ *GRUP INI DI-BAN SECARA GLOBAL*\n`;

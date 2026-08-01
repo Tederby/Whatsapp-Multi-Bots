@@ -14,7 +14,7 @@ import { buildContext } from "./lib/contextBuilder.js";
 import { runAutoDetects } from "./lib/autoDetect.js";
 import { logger } from "./lib/logger.js";
 import { checkPermissions } from "./lib/middleware.js";
-import { isBanned, isGroupBanned, getActiveBotsInGroup, claimMessage } from "./lib/database.js";
+import { isBanned, isGroupBanned, getActiveBotsInGroup, claimMessage, getGroupConfig, incrementMsgCount } from "./lib/database.js";
 import setting from "./setting.js";
 
 // ── Blocklist Cache (avoid network call per-message) ────────────────────────
@@ -44,6 +44,35 @@ let msgHandler = async (upsert, sock, message) => {
         if (message.sender === "") return;
 
         const t = message.messageTimestamp;
+
+        // ── Sider Tracking (before offline replay filter) ────────
+        // Placed BEFORE the 120s check so messages received while
+        // bot was offline are still counted for tracking.
+        if (message.isGroup) {
+            const chatId = message.chat;
+            const trackConfig = getGroupConfig(chatId);
+            if (trackConfig.meta?.trackingEnabled) {
+                let trackSender = message.sender;
+                // Minimal device-ID sanitasi (full resolve happens in buildContext)
+                if (trackSender.includes(":")) {
+                    trackSender = trackSender.split(":")[0] +
+                        (trackSender.includes("@") ? "@" + trackSender.split("@")[1] : "");
+                }
+
+                // Skip bot's own messages
+                const botJid = sock.user.id.includes(":")
+                    ? sock.user.id.split(":")[0] + "@s.whatsapp.net"
+                    : sock.user.id;
+
+                if (trackSender !== botJid) {
+                    // Skip excluded users
+                    const excluded = trackConfig.meta.trackingExcluded || [];
+                    if (!excluded.includes(trackSender)) {
+                        incrementMsgCount(chatId, trackSender);
+                    }
+                }
+            }
+        }
 
         // ── Ignore offline replay (prevent double processing) ───────
         const nowSec = Math.floor(Date.now() / 1000);
