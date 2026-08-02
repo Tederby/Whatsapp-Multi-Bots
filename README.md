@@ -103,17 +103,20 @@ Run `pm2 restart bot2`, and view `pm2 logs bot2` to see the 8-digit Pairing Code
 ## Project Structure
 
 ```
-wa-bot/
+Whatsapp-Multi-Bots/
 ├── commands/               # Auto-loaded command modules
 │   ├── _registry.js        # Dynamic loader & reply handler registry
 │   └── *.js                # Individual commands
 ├── lib/                    # Core libraries
-│   ├── db.js               # SQLite engine (WAL mode)
-│   ├── database.js         # User/group CRUD operations
+│   ├── autoDetect.js       # Background pattern matching
+│   ├── commandParser.js    # Parses commands from messages
 │   ├── contextBuilder.js   # Message context extraction
-│   ├── middleware.js        # Permission guards
+│   ├── database.js         # User/group CRUD operations
+│   ├── db.js               # SQLite engine (WAL mode)
+│   ├── events/             # Event handlers (group updates, etc.)
 │   ├── Messages.js         # Baileys message wrapper
-│   └── events/             # Event handlers (group updates, etc.)
+│   ├── middleware.js       # Permission guards
+│   └── ...                 # Other libraries (quoteGenerator, utils, etc.)
 ├── services/               # Background services
 │   ├── cleanup.js          # Periodic temp/state cleanup
 │   ├── reminder.js         # Scheduled reminder system
@@ -126,7 +129,8 @@ wa-bot/
 ├── index.js                # Entry point & connection lifecycle
 ├── handler.js              # Message processing pipeline
 ├── setting.js              # Configuration (reads from env)
-├── ecosystem.config.cjs    # PM2 multi-bot config
+├── ecosystem.config.example.cjs # PM2 multi-bot config template
+├── ecosystem.config.cjs    # PM2 multi-bot config (gitignored)
 └── database.db             # SQLite database (gitignored)
 ```
 
