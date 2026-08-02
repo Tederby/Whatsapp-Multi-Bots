@@ -62,11 +62,11 @@ function getHeader(timeoutSec) {
     return text;
 }
 
-function generateCategoryList() {
+function generateCategoryList(timeoutSec = 90) {
     const groups = getGroupedCommands();
     const allKeys = getOrderedCategories(groups);
 
-    let text = getHeader(90);
+    let text = getHeader(timeoutSec);
     text += `╭───「 📂 Kategori Menu 」\n`;
     
     for (const cat of allKeys) {
@@ -81,7 +81,7 @@ function generateCategoryList() {
     return text.trim();
 }
 
-function generateCategoryCommands(category) {
+function generateCategoryCommands(category, timeoutSec = 60) {
     const groups = getGroupedCommands();
     let actualCategory = null;
     for (const key of groups.keys()) {
@@ -93,7 +93,7 @@ function generateCategoryCommands(category) {
 
     if (!actualCategory) return null;
 
-    let text = getHeader(60);
+    let text = getHeader(timeoutSec);
     const label = CATEGORY_LABELS[actualCategory] || DEFAULT_CATEGORY;
     const cmds = groups.get(actualCategory);
 
@@ -116,11 +116,11 @@ function generateCategoryCommands(category) {
     return text.trim();
 }
 
-function generateAllCommands() {
+function generateAllCommands(timeoutSec = 60) {
     const groups = getGroupedCommands();
     const allKeys = getOrderedCategories(groups);
 
-    let text = getHeader(60);
+    let text = getHeader(timeoutSec);
     for (const cat of allKeys) {
         const label = CATEGORY_LABELS[cat] || DEFAULT_CATEGORY;
         const cmds = groups.get(cat);
@@ -151,7 +151,13 @@ export default {
     category: "general",
     description: "Menampilkan daftar perintah bot secara interaktif",
     usage: "!menu [all/nama kategori]",
-    async handler({ message, args, sock, sender }) {
+    async handler({ message, args, sock, sender, isGroup }) {
+        if (!isGroup) {
+            const menuText = generateAllCommands(0);
+            await sock.sendMessage(message.chat, { text: menuText }, { quoted: message });
+            return;
+        }
+
         let menuText = "";
         let isAll = false;
         let isSpecific = false;
@@ -160,10 +166,10 @@ export default {
         if (args.length > 0) {
             const input = args.join(" ").toLowerCase().trim();
             if (input === "all") {
-                menuText = generateAllCommands();
+                menuText = generateAllCommands(timeoutSec);
                 isAll = true;
             } else {
-                menuText = generateCategoryCommands(input);
+                menuText = generateCategoryCommands(input, timeoutSec);
                 if (!menuText) {
                     await message.reply(`❌ Kategori *${input}* tidak ditemukan.\nKetik \`!menu\` untuk melihat daftar kategori.`);
                     return;
@@ -171,8 +177,8 @@ export default {
                 isSpecific = true;
             }
         } else {
-            menuText = generateCategoryList();
             timeoutSec = 90;
+            menuText = generateCategoryList(timeoutSec);
         }
 
         const sentMsg = await sock.sendMessage(message.chat, { text: menuText }, { quoted: message });
