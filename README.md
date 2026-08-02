@@ -25,7 +25,9 @@ Commands are auto-loaded from the `commands/` directory — just drop a `.js` fi
 | 🌸 **Anime** | Anime/manga search via MyAnimeList, Danbooru image boards |
 | 🔍 **Search** | Steam game search, Steam profile lookup, YouTube search |
 | 🛠️ **Tools** | User registration, profiles, reminders, reports, feedback |
-| 👑 **Owner** | Bot management, remote bash terminal, global bans |
+| 🛡️ **Bot Admin** | Commands to manage bot admins and global bans |
+| 💻 **System** | System level commands, database fixing, bash terminal |
+| 👑 **Owner** | Bot management, remote terminal, scanning IDs |
 
 > Commands are actively maintained and expanded over time. Use `!menu` to see the full list of currently available commands.
 
@@ -36,6 +38,7 @@ Commands are auto-loaded from the `commands/` directory — just drop a `.js` fi
 - **Node.js** v18+
 - **FFmpeg** — for sticker creation and media conversion
 - **yt-dlp** — for media downloads
+- **Puppeteer dependencies** — automatically installed via npm, but Linux servers may require OS dependencies (e.g., `libnss3`, `libatk1.0-0`, etc.)
 - **PM2** *(optional)* — for multi-bot process management
 - **build-essential** *(Linux)* or **Visual Studio Build Tools** *(Windows)* — for `better-sqlite3` native bindings
 
@@ -45,8 +48,8 @@ Commands are auto-loaded from the `commands/` directory — just drop a `.js` fi
 
 ```bash
 # Clone & install
-git clone https://github.com/Tederby/wa-bot.git
-cd wa-bot
+git clone https://github.com/Tederby/Whatsapp-Multi-Bots.git
+cd Whatsapp-Multi-Bots
 npm install
 
 # Configure
@@ -71,7 +74,7 @@ npm run migrate
 # Then start all bots:
 npm run pm2
 
-# View QR code for a specific bot:
+# View QR code or pairing code for a specific bot:
 pm2 logs bot1
 
 # Add a new bot: uncomment/add entry in ecosystem.config.cjs, then:
@@ -114,7 +117,8 @@ wa-bot/
 ├── services/               # Background services
 │   ├── cleanup.js          # Periodic temp/state cleanup
 │   ├── reminder.js         # Scheduled reminder system
-│   └── ytdlp.js            # yt-dlp download engine
+│   ├── ytdlp.js            # yt-dlp download engine
+│   └── ...                 # Other services (mal.js, steam.js, etc.)
 ├── scripts/
 │   └── migrate_json_to_sqlite.js
 ├── sessions/               # Per-bot auth sessions (gitignored)
