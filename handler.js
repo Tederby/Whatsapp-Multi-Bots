@@ -14,7 +14,7 @@ import { buildContext } from "./lib/contextBuilder.js";
 import { runAutoDetects } from "./lib/autoDetect.js";
 import { logger } from "./lib/logger.js";
 import { checkPermissions } from "./lib/middleware.js";
-import { isBanned, isGroupBanned, getActiveBotsInGroup, claimMessage, getGroupConfig, incrementMsgCount } from "./lib/database.js";
+import { isBanned, isGroupBanned, getActiveBotsInGroup, claimMessage, getGroupConfig, incrementMsgCount, isRegistered, registerUser } from "./lib/database.js";
 import setting from "./setting.js";
 
 // ── Blocklist Cache (avoid network call per-message) ────────────────────────
@@ -179,7 +179,14 @@ let msgHandler = async (upsert, sock, message) => {
             return;
         }
 
-        // ── 6. Log & Execute ────────────────────────────────────────
+        // ── 6. Auto-Register (silent) ────────────────────────────────
+        // Jika user belum terdaftar di database, register otomatis
+        // menggunakan pushname sebagai nama tampilan.
+        if (!isRegistered(ctx.sender)) {
+            registerUser(ctx.sender, ctx.pushname);
+        }
+
+        // ── 7. Log & Execute ────────────────────────────────────────
         logger.exec(t, cmdLabel, ctx.pushname, ctx.isGroup, ctx.groupName);
         await sock.readMessages([message.key]);
 

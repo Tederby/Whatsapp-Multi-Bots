@@ -10,7 +10,7 @@ export default {
     category: "tools",
     description: "Membuat gambar quote dari pesan yang di-reply",
     usage: "!quote <teks> atau !quote [reply pesan]",
-    async handler({ message, sock, prefix, rawArgs, sender, pushname, isGroup, groupMetadata }) {
+    async handler({ message, sock, prefix, rawArgs, sender, pushname }) {
         try {
             let text = "";
             let targetJid = "";
@@ -59,16 +59,6 @@ export default {
                     
                     let mentionName = mentionUser.name;
                     if (!mentionName) {
-                        // Coba cari nama dari groupMetadata participants (notify = WA display name)
-                        if (isGroup && groupMetadata?.participants) {
-                            const participant = groupMetadata.participants.find(p => {
-                                const pNorm = resolveUserId(jidNormalizedUser(p.phoneNumber || p.id));
-                                return pNorm === mentionNormal;
-                            });
-                            if (participant?.notify) mentionName = participant.notify;
-                        }
-                    }
-                    if (!mentionName) {
                         if (/^\d+$/.test(id)) {
                             // Format nomor cantik: +62 812-xxx
                             mentionName = `+${id.slice(0, 2)} ${id.slice(2, 5)}-${id.slice(5, 9)}`; 
@@ -83,21 +73,14 @@ export default {
 
             message.replyUpdate("⏳ Merender gambar quote estetik...");
 
-            // 4. Cari tahu nama pengguna (pushname dari cache bot atau fallback ke database)
+            // 4. Cari tahu nama pengguna (dari database, karena auto-register di handler)
             const userData = getUser(normalizedTarget);
+            let usedPhoneNumber = false;
+
             if (!targetName) {
                 targetName = userData.name;
-
-                // Fallback: cari nama WA (notify) dari groupMetadata participants
-                if (!targetName && isGroup && groupMetadata?.participants) {
-                    const participant = groupMetadata.participants.find(p => {
-                        const pNorm = resolveUserId(jidNormalizedUser(p.phoneNumber || p.id));
-                        return pNorm === normalizedTarget;
-                    });
-                    if (participant?.notify) targetName = participant.notify;
-                }
-
                 if (!targetName) {
+                    usedPhoneNumber = true;
                     const num = normalizedTarget.split("@")[0];
                     if (/^\d+$/.test(num)) {
                         // Format nomor WA menjadi +62 812-3456-7890
@@ -150,9 +133,14 @@ export default {
             const imageBuffer = await generateQuote(text, targetName, pfpUrl);
 
             // 7. Kirim hasil
+            let caption = "✨ *Quote by " + targetName + "*";
+            if (usedPhoneNumber) {
+                caption += `\n\n💡 _Nama muncul sebagai nomor karena user belum pernah menggunakan bot. Ketik \`${prefix}register\` untuk mendaftar agar namamu tampil di quote._`;
+            }
+
             await sock.sendMessage(
                 message.chat,
-                { image: imageBuffer, caption: "✨ *Quote by " + targetName + "*" },
+                { image: imageBuffer, caption },
                 { quoted: message }
             );
 
