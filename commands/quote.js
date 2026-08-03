@@ -10,7 +10,7 @@ export default {
     category: "tools",
     description: "Membuat gambar quote dari pesan yang di-reply",
     usage: "!quote <teks> atau !quote [reply pesan]",
-    async handler({ message, sock, prefix, rawArgs, sender, pushname }) {
+    async handler({ message, sock, prefix, rawArgs, sender, pushname, isGroup, groupMetadata }) {
         try {
             let text = "";
             let targetJid = "";
@@ -51,13 +51,23 @@ export default {
             const normalizedTarget = resolveUserId(jidNormalizedUser(targetJid));
 
             // Perbaiki tampilan mentions di dalam teks (ubah @62812... atau @lid menjadi nama)
-            if (message.quoted.mentionedJid && message.quoted.mentionedJid.length > 0) {
+            if (message.quoted?.mentionedJid && message.quoted.mentionedJid.length > 0) {
                 for (const jid of message.quoted.mentionedJid) {
                     const id = jid.split('@')[0];
                     const mentionNormal = resolveUserId(jidNormalizedUser(jid));
                     const mentionUser = getUser(mentionNormal);
                     
                     let mentionName = mentionUser.name;
+                    if (!mentionName) {
+                        // Coba cari nama dari groupMetadata participants (notify = WA display name)
+                        if (isGroup && groupMetadata?.participants) {
+                            const participant = groupMetadata.participants.find(p => {
+                                const pNorm = resolveUserId(jidNormalizedUser(p.phoneNumber || p.id));
+                                return pNorm === mentionNormal;
+                            });
+                            if (participant?.notify) mentionName = participant.notify;
+                        }
+                    }
                     if (!mentionName) {
                         if (/^\d+$/.test(id)) {
                             // Format nomor cantik: +62 812-xxx
@@ -77,6 +87,16 @@ export default {
             const userData = getUser(normalizedTarget);
             if (!targetName) {
                 targetName = userData.name;
+
+                // Fallback: cari nama WA (notify) dari groupMetadata participants
+                if (!targetName && isGroup && groupMetadata?.participants) {
+                    const participant = groupMetadata.participants.find(p => {
+                        const pNorm = resolveUserId(jidNormalizedUser(p.phoneNumber || p.id));
+                        return pNorm === normalizedTarget;
+                    });
+                    if (participant?.notify) targetName = participant.notify;
+                }
+
                 if (!targetName) {
                     const num = normalizedTarget.split("@")[0];
                     if (/^\d+$/.test(num)) {
