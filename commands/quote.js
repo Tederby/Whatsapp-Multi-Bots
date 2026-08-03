@@ -9,34 +9,41 @@ export default {
     aliases: ["q"],
     category: "tools",
     description: "Membuat gambar quote dari pesan yang di-reply",
-    usage: "!quote [reply pesan]",
-    async handler({ message, sock, prefix }) {
+    usage: "!quote <teks> atau !quote [reply pesan]",
+    async handler({ message, sock, prefix, rawArgs, sender, pushname }) {
         try {
-            // 1. Validasi reply
-            if (!message.quoted) {
-                return message.reply(`Gunakan perintah ini dengan me-reply sebuah pesan teks.\nContoh: \`${prefix}quote\``);
-            }
+            let text = "";
+            let targetJid = "";
+            let targetName = "";
 
-            // 2. Cegah stiker dan media tanpa caption
-            const type = Object.keys(message.quoted.message || {})[0];
-            if (type === "stickerMessage") {
-                return message.reply("Bot tidak bisa membuat quote dari stiker!");
-            }
-
-            let text = message.quoted.text;
-            if (!text) {
-                // Ekstrak caption jika ada
-                if (type === "imageMessage" && message.quoted.message.imageMessage.caption) {
-                    text = message.quoted.message.imageMessage.caption;
-                } else if (type === "videoMessage" && message.quoted.message.videoMessage.caption) {
-                    text = message.quoted.message.videoMessage.caption;
-                } else {
-                    return message.reply("Pesan yang di-reply tidak mengandung teks yang bisa di-quote.");
+            if (rawArgs) {
+                // Self-quote priority
+                text = rawArgs;
+                targetJid = sender;
+                targetName = pushname;
+            } else if (message.quoted) {
+                // 1. Validasi reply
+                const type = Object.keys(message.quoted.message || {})[0];
+                if (type === "stickerMessage") {
+                    return message.reply("Bot tidak bisa membuat quote dari stiker!");
                 }
+
+                text = message.quoted.text;
+                if (!text) {
+                    if (type === "imageMessage" && message.quoted.message.imageMessage.caption) {
+                        text = message.quoted.message.imageMessage.caption;
+                    } else if (type === "videoMessage" && message.quoted.message.videoMessage.caption) {
+                        text = message.quoted.message.videoMessage.caption;
+                    } else {
+                        return message.reply("Pesan yang di-reply tidak mengandung teks yang bisa di-quote.");
+                    }
+                }
+                
+                targetJid = message.quoted.sender || message.quoted.participant;
+            } else {
+                return message.reply(`Gunakan perintah ini dengan mengetik teks atau me-reply pesan teks.\nContoh: \`${prefix}quote Halo\` atau \`${prefix}quote\` sambil me-reply pesan`);
             }
 
-            // 3. Tarik ID pengirim pesan yang di-reply
-            const targetJid = message.quoted.sender || message.quoted.participant;
             if (!targetJid) {
                 return message.reply("Gagal mendapatkan ID pengirim pesan.");
             }
@@ -68,18 +75,20 @@ export default {
 
             // 4. Cari tahu nama pengguna (pushname dari cache bot atau fallback ke database)
             const userData = getUser(normalizedTarget);
-            let targetName = message.quoted.pushName || userData.name;
             if (!targetName) {
-                const num = normalizedTarget.split("@")[0];
-                if (/^\d+$/.test(num)) {
-                    // Format nomor WA menjadi +62 812-3456-7890
-                    if (num.length >= 10 && num.length <= 15) {
-                        targetName = `+${num.slice(0, 2)} ${num.slice(2, 5)}-${num.slice(5, 9)}-${num.slice(9)}`;
+                targetName = userData.name;
+                if (!targetName) {
+                    const num = normalizedTarget.split("@")[0];
+                    if (/^\d+$/.test(num)) {
+                        // Format nomor WA menjadi +62 812-3456-7890
+                        if (num.length >= 10 && num.length <= 15) {
+                            targetName = `+${num.slice(0, 2)} ${num.slice(2, 5)}-${num.slice(5, 9)}-${num.slice(9)}`;
+                        } else {
+                            targetName = "+" + num;
+                        }
                     } else {
-                        targetName = "+" + num;
+                        targetName = "Seseorang"; // Fallback aman untuk LID tanpa nama
                     }
-                } else {
-                    targetName = "Seseorang"; // Fallback aman untuk LID tanpa nama
                 }
             }
 
