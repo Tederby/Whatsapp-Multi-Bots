@@ -1,9 +1,10 @@
-import { downloadContentFromMessage, jidNormalizedUser } from "baileys";
+import { downloadContentFromMessage } from "baileys";
 import { Jimp } from "jimp";
 import path from "path";
 import fs from "fs";
 import axios from "axios";
 import { getUser, setPfp } from "../lib/database.js";
+import { resolveTarget } from "../lib/jidHelper.js";
 
 export default {
     name: "setpfp",
@@ -14,8 +15,9 @@ export default {
     
     async handler({ message, sock, args, sender, prefix }) {
         try {
-            const normalizedSender = jidNormalizedUser(sender);
-            const senderBaseId = normalizedSender.split("@")[0];
+            // resolveTarget: jidNormalizedUser + resolveUserId (LID→PN)
+            // Ensures PFP is stored under PN key, matching profile.js lookup
+            const { jid: normalizedSender, baseId: senderBaseId } = resolveTarget(sender);
             const userData = getUser(normalizedSender);
 
             if (!userData.registered) {

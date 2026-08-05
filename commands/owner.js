@@ -1,5 +1,5 @@
 import setting from "../setting.js";
-import { getAllBotAdmins } from "../lib/database.js";
+import { getAllBotAdmins, resolveUserId } from "../lib/database.js";
 import { jidNormalizedUser } from "baileys";
 
 export default {
@@ -31,11 +31,12 @@ export default {
         // Deduplicate and normalize admins (WhatsApp can have both plain numbers and @s.whatsapp.net, and @lid)
         const uniqueAdmins = new Set();
         rawAdmins.forEach(jid => {
-            let normalized = jidNormalizedUser(jid);
-            if (!normalized) normalized = jid; // If jidNormalizedUser fails on bare numbers
+            // resolveUserId: convert LID→PN if mapping exists
+            let normalized = resolveUserId(jidNormalizedUser(jid));
+            if (!normalized) normalized = jid;
             
             if (!normalized.includes("@")) {
-                normalized += "@s.whatsapp.net"; // Fallback for bare numbers
+                normalized += "@s.whatsapp.net";
             }
             uniqueAdmins.add(normalized);
         });

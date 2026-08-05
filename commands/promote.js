@@ -1,4 +1,4 @@
-import { jidNormalizedUser } from "baileys";
+import { extractTarget, findParticipant } from '../lib/jidHelper.js';
 
 export default {
     name: "promote",
@@ -12,52 +12,38 @@ export default {
 
     async handler({ message, sock, args, prefix, groupMetadata }) {
         try {
-            let target = null;
-            if (message.mentionedJid && message.mentionedJid.length > 0) {
-                target = message.mentionedJid[0];
-            } else if (message.quoted) {
-                target = message.quoted.sender || message.quoted.participant;
-            } else if (args[0]) {
-                const num = args[0].replace(/[^0-9]/g, "");
-                if (num) target = num + "@s.whatsapp.net";
-            }
+            const target = extractTarget(message, args);
 
             if (!target) {
                 return message.reply(`Tag, reply, atau masukkan nomor user yang ingin dijadikan Admin.\nContoh: \`${prefix}promote @user\``);
             }
 
-            const normalizedTarget = jidNormalizedUser(target);
-            const targetBaseId = normalizedTarget.split("@")[0];
-
-            let actualTargetJid = normalizedTarget;
-
-            // Pre-check: is target already admin?
-            if (groupMetadata?.participants) {
-                const participant = groupMetadata.participants.find(p => 
-                    p.id.split(":")[0].split("@")[0] === targetBaseId
+            // Find participant in group (returns raw JID for API call)
+            const participantInfo = findParticipant(groupMetadata, target.baseId);
+            if (!participantInfo) {
+                return sock.sendMessage(
+                    message.chat,
+                    { text: `❌ @${target.baseId} tidak ditemukan di grup ini.`, mentions: [target.jid] },
+                    { quoted: message }
                 );
-                if (!participant) {
-                    return message.reply(`❌ @${targetBaseId} tidak ditemukan di grup ini.`);
-                }
-                
-                actualTargetJid = participant.id;
-
-                if (participant.admin) {
-                    return sock.sendMessage(
-                        message.chat,
-                        { text: `⚠️ @${targetBaseId} sudah menjadi Admin Grup.`, mentions: [normalizedTarget] },
-                        { quoted: message }
-                    );
-                }
             }
 
-            await sock.groupParticipantsUpdate(message.chat, [actualTargetJid], "promote");
+            if (participantInfo.isAdmin) {
+                return sock.sendMessage(
+                    message.chat,
+                    { text: `⚠️ @${target.baseId} sudah menjadi Admin Grup.`, mentions: [target.jid] },
+                    { quoted: message }
+                );
+            }
+
+            // Use raw participant JID for API call (could be LID in LID-mode groups)
+            await sock.groupParticipantsUpdate(message.chat, [participantInfo.participant], "promote");
 
             return sock.sendMessage(
                 message.chat,
                 {
-                    text: `✅ Berhasil menaikkan @${targetBaseId} menjadi Admin Grup!`,
-                    mentions: [normalizedTarget],
+                    text: `✅ Berhasil menaikkan @${target.baseId} menjadi Admin Grup!`,
+                    mentions: [target.jid],
                 },
                 { quoted: message }
             );

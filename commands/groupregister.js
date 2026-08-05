@@ -1,25 +1,33 @@
 /**
  * Group Register — Admin registers the group in the bot's database.
+ *
+ * Sub-commands routed via aliases:
+ *   !gregister    — register group
+ *   !gunregister  — unregister group
  */
 
 import { registerGroup, unregisterGroup, getGroupConfig } from "../lib/database.js";
+import { resolveTarget } from "../lib/jidHelper.js";
 
 export default {
     name: "gregister",
-    aliases: ["groupregister", "gregreg", "gdaftar"],
+    aliases: ["groupregister", "gregreg", "gdaftar", "gunregister", "groupunregister", "gunreg"],
     category: "group",
     description: "Mendaftarkan grup ke database bot.",
     usage: "!gregister | !gunregister",
     groupOnly: true,
     adminOnly: true,
 
-    async handler({ message, sender, prefix }) {
+    async handler({ message, sender, prefix, commandName }) {
         try {
-            const text = message.text || "";
             const chatId = message.chat;
 
             // ── Unregister ──────────────────────────────────────────
-            if (text.match(/^[!.#/\-]g(roup)?unreg(ister)?/i)) {
+            const isUnreg = commandName === "gunregister" ||
+                            commandName === "groupunregister" ||
+                            commandName === "gunreg";
+
+            if (isUnreg) {
                 const config = getGroupConfig(chatId);
                 if (!config.registered) {
                     return message.reply("❌ Grup ini belum terdaftar.");
@@ -37,17 +45,21 @@ export default {
                         day: "numeric", month: "long", year: "numeric",
                     })
                     : "Tidak diketahui";
-                const senderBaseId = (config.registeredBy || "").split("@")[0];
+
+                // Resolve registeredBy untuk display (bisa LID di data lama)
+                const { baseId: regByBaseId } = resolveTarget(config.registeredBy || "");
 
                 return message.reply(
                     `⚠️ Grup ini sudah terdaftar!\n\n` +
                     `📅 Terdaftar sejak: ${regDate}\n` +
-                    `📝 Didaftarkan oleh: @${senderBaseId}\n\n` +
+                    `📝 Didaftarkan oleh: @${regByBaseId || "unknown"}\n\n` +
                     `_Gunakan \`${prefix}gunregister\` untuk menghapus registrasi._`
                 );
             }
 
-            registerGroup(chatId, sender);
+            // Resolve sender ke PN agar registeredBy selalu konsisten
+            const { jid: resolvedSender } = resolveTarget(sender);
+            registerGroup(chatId, resolvedSender);
 
             return message.reply(
                 `✅ *REGISTRASI GRUP BERHASIL*\n\n` +

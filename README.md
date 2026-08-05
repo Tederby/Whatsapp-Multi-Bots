@@ -9,6 +9,7 @@ A scalable, multi-instance WhatsApp bot built with [Baileys](https://github.com/
 - **Hot-Reload** — Edit commands or the handler while the bot is running. Changes apply instantly without restart.
 - **Middleware Pipeline** — Clean architecture: `guard → ban-check → context → auto-detect → parse → spam-filter → permissions → execute`.
 - **Auto-Detect** — Background pattern matching that responds to specific URLs or text patterns without needing an explicit command prefix.
+- **Robust JID Handling** — Seamlessly resolves WhatsApp's LID vs PN addressing modes, ensuring mentions and database lookups work flawlessly.
 
 ---
 
@@ -114,6 +115,7 @@ Whatsapp-Multi-Bots/
 │   ├── database.js         # User/group CRUD operations
 │   ├── db.js               # SQLite engine (WAL mode)
 │   ├── events/             # Event handlers (group updates, etc.)
+│   ├── jidHelper.js        # JID normalization & LID resolution
 │   ├── Messages.js         # Baileys message wrapper
 │   ├── middleware.js       # Permission guards
 │   └── ...                 # Other libraries (quoteGenerator, utils, etc.)

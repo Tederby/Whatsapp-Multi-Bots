@@ -3,6 +3,7 @@
  */
 
 import { getGroupConfig, getGroupBannedUsers } from "../lib/database.js";
+import { resolveTarget } from "../lib/jidHelper.js";
 
 export default {
     name: "groupprofile",
@@ -30,7 +31,8 @@ export default {
                     day: "numeric", month: "long", year: "numeric",
                 })
                 : null;
-            const regByBaseId = config.registeredBy ? config.registeredBy.split("@")[0] : null;
+            const regByResolved = config.registeredBy ? resolveTarget(config.registeredBy) : null;
+            const regByBaseId = regByResolved?.baseId || null;
 
             // Build display
             let caption = `╭━━━〔 👥 Group Info 〕━━━\n`;
@@ -73,7 +75,7 @@ export default {
 
             // Collect mentions
             const mentions = [];
-            if (config.registeredBy) mentions.push(config.registeredBy);
+            if (regByResolved?.jid) mentions.push(regByResolved.jid);
 
             await sock.sendMessage(
                 chatId,

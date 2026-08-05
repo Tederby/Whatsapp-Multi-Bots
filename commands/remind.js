@@ -1,4 +1,5 @@
 import { addReminder, hasReminder } from "../services/reminder.js";
+import { resolveUserId } from "../lib/database.js";
 
 function parseDuration(str) {
     const regex = /^(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i;
@@ -54,6 +55,8 @@ export default {
     usage: "!remind 10m Cek oven\n!remind 1d 12h Bayar tagihan\n!remind 31/12/2026 23:59 Happy New Year!",
 
     async handler({ message, rawArgs, sender }) {
+        // Resolve sender to PN for consistent reminder key
+        sender = resolveUserId(sender);
         const chatId = message.chat;
 
         if (!rawArgs || rawArgs.trim() === "") {

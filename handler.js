@@ -197,6 +197,7 @@ let msgHandler = async (upsert, sock, message) => {
             args,
             rawArgs,
             prefix,
+            commandName,
             ...ctx,
         });
 

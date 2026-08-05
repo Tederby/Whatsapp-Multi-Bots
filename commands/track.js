@@ -9,7 +9,7 @@
 
 import { getGroupConfig, saveGroupConfig, getGroupMsgCounts,
          getUserMsgCount, resetGroupMsgCounts } from "../lib/database.js";
-import { resolveUserId } from "../lib/database.js";
+import { resolveTarget } from "../lib/jidHelper.js";
 import { generateSiderReport, resetAndStartNewCycle } from "../lib/siderTracker.js";
 
 export default {
@@ -352,7 +352,7 @@ async function handleExclude(message, sock, args, chatId, config, meta, prefix) 
     // Add mentioned users to exclusion list
     const added = [];
     for (const jid of mentioned) {
-        const resolved = resolveUserId(jid);
+        const { jid: resolved } = resolveTarget(jid);
         if (!excluded.includes(resolved)) {
             excluded.push(resolved);
             added.push(resolved);
@@ -408,7 +408,7 @@ async function handleInclude(message, sock, args, chatId, config, meta, prefix) 
     // Remove mentioned users from exclusion list
     const removed = [];
     for (const jid of mentioned) {
-        const resolved = resolveUserId(jid);
+        const { jid: resolved } = resolveTarget(jid);
         const idx = excluded.indexOf(resolved);
         if (idx !== -1) {
             excluded.splice(idx, 1);
@@ -448,7 +448,8 @@ async function handleCheck(message, sock, args, sender, chatId, meta, prefix) {
     let isSelf = true;
 
     if (mentioned.length > 0) {
-        targetJid = resolveUserId(mentioned[0]);
+        const { jid: resolved } = resolveTarget(mentioned[0]);
+        targetJid = resolved;
         isSelf = (targetJid === sender);
     }
 

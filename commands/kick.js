@@ -1,5 +1,6 @@
-import { jidNormalizedUser } from "baileys";
 import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
+import { resolveTarget, findParticipant } from '../lib/jidHelper.js';
+
 export default {
     name: "kick",
     aliases: ["k", "tendang"],
@@ -12,49 +13,34 @@ export default {
 
     async handler({ message, sock, groupMetadata, sender }) {
         try {
-            let target = null;
+            let rawTarget = null;
             if (message.mentionedJid && message.mentionedJid.length > 0) {
-                target = message.mentionedJid[0];
+                rawTarget = message.mentionedJid[0];
             } else if (message.quoted) {
-                target = message.quoted.sender || message.quoted.participant;
+                rawTarget = message.quoted.sender || message.quoted.participant;
             } else if (message.contextInfo?.participant) {
-                target = message.contextInfo.participant;
+                rawTarget = message.contextInfo.participant;
             }
 
-            if (!target) {
+            if (!rawTarget) {
                 return message.reply("Harap tag member atau reply pesan member yang ingin di-kick!");
             }
 
-            const targetJid = jidNormalizedUser(target);
-            const targetBaseId = targetJid.split('@')[0];
-            const botBaseId = jidNormalizedUser(sock.user.id).split('@')[0];
+            // Resolve ke PN untuk display & mentions
+            const { jid: targetJid, baseId: targetBaseId } = resolveTarget(rawTarget);
+            const { baseId: botBaseId } = resolveTarget(sock.user.id);
 
             if (botBaseId === targetBaseId) {
                 return message.reply("Bot tidak bisa kick diri sendiri.");
             }
 
-            let actualTargetJid = null;
-            // Memeriksa apakah target masih ada di grup
-            const isTargetInGroup = groupMetadata.participants.some(p => {
-                const participantBaseId = p.id.split(':')[0].split('@')[0];
-                if (participantBaseId === targetBaseId) {
-                    actualTargetJid = p.id;
-                    return true;
-                }
-                return false;
-            });
-
-            if (!isTargetInGroup) {
+            // Find actual participant JID (bisa LID) untuk API call
+            const participantInfo = findParticipant(groupMetadata, targetBaseId);
+            if (!participantInfo) {
                 return message.reply("Member tersebut tidak ada di grup ini.");
             }
 
-            // Memeriksa apakah target adalah admin grup
-            const isTargetAdmin = groupMetadata.participants.some(p => {
-                const participantBaseId = p.id.split(':')[0].split('@')[0];
-                return participantBaseId === targetBaseId && p.admin;
-            });
-
-            if (isTargetAdmin) {
+            if (participantInfo.isAdmin) {
                 return message.reply("Tidak bisa mengeluarkan sesama admin grup.");
             }
 
@@ -74,7 +60,8 @@ export default {
 
                 if (replyText === 'confirm') {
                     try {
-                        await replySock.groupParticipantsUpdate(replyMessage.chat, [state.targetJid], 'remove');
+                        // Gunakan actualTargetJid (dari participant, bisa LID) untuk API call
+                        await replySock.groupParticipantsUpdate(replyMessage.chat, [state.actualTargetJid], 'remove');
                         await replySock.sendMessage(
                             replyMessage.chat,
                             {
@@ -94,7 +81,13 @@ export default {
                 } else {
                     await replyMessage.reply("Instruksi tidak dikenali. Ketik *confirm* untuk melanjutkan, atau *cancel* untuk membatalkan.");
                 }
-            }, { targetJid: actualTargetJid, targetBaseId, commandName: "kick", userId: sender });
+            }, {
+                actualTargetJid: participantInfo.participant, // Raw JID untuk API
+                targetJid,       // PN JID untuk mentions
+                targetBaseId,    // Phone number untuk text display
+                commandName: "kick",
+                userId: sender
+            });
 
         } catch (error) {
             console.error('Kick command error:', error);

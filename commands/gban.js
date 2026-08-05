@@ -6,12 +6,11 @@
  * Owner can ban a group without being in it (by JID).
  */
 
-import { jidNormalizedUser } from "baileys";
 import {
     banUser, unbanUser, getAllBannedUsers,
     banGroup, unbanGroup, getAllBannedGroups,
-    resolveUserId,
 } from "../lib/database.js";
+import { resolveTarget, extractTarget } from "../lib/jidHelper.js";
 
 export default {
     name: "gban",
@@ -56,46 +55,27 @@ export default {
             }
 
             if (invokedCmd === "gunban") {
-                let target = null;
-                if (message.mentionedJid && message.mentionedJid.length > 0) {
-                    target = message.mentionedJid[0];
-                } else if (message.quoted) {
-                    target = message.quoted.sender || message.quoted.participant;
-                } else if (args[0]) {
-                    // Allow raw number input
-                    const num = args[0].replace(/[^0-9]/g, "");
-                    if (num) target = num + "@s.whatsapp.net";
-                }
+                const target = extractTarget(message, args);
 
                 if (!target) {
                     return message.reply("Tag, reply, atau masukkan nomor user yang ingin di-unban.\n\nContoh: *!gunban @user* atau *!gunban 6281234567890*");
                 }
 
-                const normalizedTarget = resolveUserId(jidNormalizedUser(target));
-                const targetBaseId = target.split(":")[0].split("@")[0];
-
-                unbanUser(normalizedTarget);
+                unbanUser(target.jid);
 
                 return sock.sendMessage(
                     message.chat,
                     {
-                        text: `✅ @${targetBaseId} telah di-unban secara global. Mereka bisa menggunakan bot kembali di mana pun.`,
-                        mentions: [normalizedTarget],
+                        text: `✅ @${target.baseId} telah di-unban secara global. Mereka bisa menggunakan bot kembali di mana pun.`,
+                        mentions: [target.jid],
                     },
                     { quoted: message }
                 );
             }
 
             if (invokedCmd === "gban") {
-                let target = null;
-                if (message.mentionedJid && message.mentionedJid.length > 0) {
-                    target = message.mentionedJid[0];
-                } else if (message.quoted) {
-                    target = message.quoted.sender || message.quoted.participant;
-                } else if (args[0] && !args[0].includes("@g.us")) {
-                    const num = args[0].replace(/[^0-9]/g, "");
-                    if (num) target = num + "@s.whatsapp.net";
-                }
+                // extractTarget skips args that contain @g.us (handled by extractTarget's number validation)
+                const target = extractTarget(message, args?.length > 0 && !args[0].includes("@g.us") ? args : []);
 
                 if (!target) {
                     return message.reply(
@@ -107,33 +87,30 @@ export default {
                     );
                 }
 
-                const normalizedTarget = resolveUserId(jidNormalizedUser(target));
-                const targetBaseId = target.split(":")[0].split("@")[0];
-
                 // Prevent banning self
-                const senderBaseId = sender.split(":")[0].split("@")[0];
-                if (targetBaseId === senderBaseId) {
+                const { baseId: senderBaseId } = resolveTarget(sender);
+                if (target.baseId === senderBaseId) {
                     return message.reply("❌ Kamu tidak bisa mem-ban diri sendiri.");
                 }
 
                 // Prevent banning bot
-                const botBaseId = sock.user.id.split(":")[0].split("@")[0];
-                if (targetBaseId === botBaseId) {
+                const { baseId: botBaseId } = resolveTarget(sock.user.id);
+                if (target.baseId === botBaseId) {
                     return message.reply("❌ Tidak bisa mem-ban bot.");
                 }
 
                 // Get reason (remaining args after target)
                 const reason = args.slice(1).join(" ") || null;
 
-                banUser(normalizedTarget, sender, reason);
+                banUser(target.jid, sender, reason);
 
-                let reply = `🚫 @${targetBaseId} telah di-ban secara *global*.\nUser ini tidak bisa menggunakan bot di mana pun.`;
+                let reply = `🚫 @${target.baseId} telah di-ban secara *global*.\nUser ini tidak bisa menggunakan bot di mana pun.`;
                 if (reason) reply += `\n\n📝 Alasan: _${reason}_`;
                 reply += `\n\n_Gunakan \`${prefix}gunban @user\` untuk membatalkan._`;
 
                 return sock.sendMessage(
                     message.chat,
-                    { text: reply, mentions: [normalizedTarget] },
+                    { text: reply, mentions: [target.jid] },
                     { quoted: message }
                 );
             }
