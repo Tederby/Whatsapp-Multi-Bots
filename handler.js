@@ -87,6 +87,10 @@ let msgHandler = async (upsert, sock, message) => {
         if (ctx.isGroup && isGroupBanned(message.chat)) return;
         if (isBanned(ctx.sender)) return;
 
+        // ── 1. Command Parsing ──────────────────────────────────────
+        const parsed = parseCommand(text);
+        const cmd = parsed ? getCommand(parsed.commandName) : null;
+
         // ── Block check (group only) ────────────────────────────────
         if (ctx.isGroup) {
             const listBlocked = await getCachedBlocklist(sock);
@@ -96,7 +100,7 @@ let msgHandler = async (upsert, sock, message) => {
             const botId = process.env.BOT_ID || setting.botId || "bot";
             const participants = ctx.groupMetadata?.participants;
             
-            if (participants && participants.length > 0) {
+            if (participants && participants.length > 0 && !(cmd && cmd.multiBot)) {
                 const participantJids = participants.map(p => p.id);
                 const activeBots = getActiveBotsInGroup(participantJids);
                 
@@ -115,10 +119,6 @@ let msgHandler = async (upsert, sock, message) => {
                 }
             }
         }
-
-        // ── 1. Command Parsing ──────────────────────────────────────
-        const parsed = parseCommand(text);
-        const cmd = parsed ? getCommand(parsed.commandName) : null;
 
         // ── 2. Reply Handler Interception ───────────────────────────
         // Catches replies to multi-step commands (e.g. ytdlf format selection)
