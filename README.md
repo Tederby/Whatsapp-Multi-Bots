@@ -101,6 +101,18 @@ Run `pm2 restart bot2`, and view `pm2 logs bot2` to see the 8-digit Pairing Code
 
 ---
 
+## Multi-Device & JID Resolution
+
+WhatsApp now operates natively in Multi-Device mode and uses two addressing modes:
+1. **PN (Phone Number)** format: `1234567890@s.whatsapp.net`
+2. **LID (Lid)** format: `1234567890@lid`
+
+In some group types, user mentions, quotes, and metadata are exclusively returned in LID format. If your database uses PN format, looking up users with a raw LID will fail or cause inconsistent behavior (like missing profile pictures or failed tagging).
+
+This project includes a centralized resolver, `lib/jidHelper.js`, which ensures all incoming JIDs (whether PN or LID) are normalized and mapped to their correct canonical database IDs. All commands using user tagging (like moderation tools) are explicitly built to support LID groups seamlessly without breaking.
+
+---
+
 ## Project Structure
 
 ```
