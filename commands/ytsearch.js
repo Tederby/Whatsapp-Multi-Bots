@@ -48,7 +48,7 @@ function generateListText(results, page, query) {
 
 export default {
     name: "ytsearch",
-    aliases: ["yts", "youtubesearch"],
+    aliases: ["yts", "youtubesearch", "yt"],
     category: "download",
     description: "Mencari video YouTube dan mendownloadnya",
     usage: "!yts <query>",

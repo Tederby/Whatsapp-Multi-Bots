@@ -17,7 +17,7 @@ import setting from "../setting.js";
 
 export default {
     name: "ytdl",
-    aliases: ["yt", "video", "ytv", "mp4"],
+    aliases: ["video", "ytv", "mp4"],
     category: "download",
     description: "Quick video/audio download (auto format)",
     usage: "!ytdl <url>",
