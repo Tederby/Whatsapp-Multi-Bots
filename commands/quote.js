@@ -1,4 +1,4 @@
-import { jidNormalizedUser } from "baileys";
+import { jidNormalizedUser, downloadContentFromMessage } from "baileys";
 import { getUser, resolveUserId } from "../lib/database.js";
 import { generateQuote } from "../lib/quoteGenerator.js";
 import fs from "fs";
@@ -15,6 +15,7 @@ export default {
             let text = "";
             let targetJid = "";
             let targetName = "";
+            let contentImageBase64 = null;
 
             if (rawArgs) {
                 // Self-quote priority
@@ -40,6 +41,27 @@ export default {
                 }
                 
                 targetJid = message.quoted.sender || message.quoted.participant;
+
+                // Download content image if the quoted message contains an image
+                if (type === "imageMessage" && message.quoted.message.imageMessage) {
+                    try {
+                        const imgMsg = message.quoted.message.imageMessage;
+                        // Fix for a.whatsapp.net DNS error
+                        if (imgMsg?.url && imgMsg.url.includes('a.whatsapp.net')) {
+                            imgMsg.url = imgMsg.url.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+                        }
+                        const stream = await downloadContentFromMessage(imgMsg, 'image');
+                        const chunks = [];
+                        for await (const chunk of stream) {
+                            chunks.push(chunk);
+                        }
+                        const imgBuffer = Buffer.concat(chunks);
+                        contentImageBase64 = `data:image/jpeg;base64,${imgBuffer.toString('base64')}`;
+                    } catch (imgErr) {
+                        console.log("[QUOTE CMD] Gagal download gambar konten:", imgErr.message);
+                        // Lanjut tanpa gambar konten
+                    }
+                }
             } else {
                 return message.reply(`Gunakan perintah ini dengan mengetik teks atau me-reply pesan teks.\nContoh: \`${prefix}quote Halo\` atau \`${prefix}quote\` sambil me-reply pesan`);
             }
@@ -130,7 +152,7 @@ export default {
             }
 
             // 6. Generate Quote Image
-            const imageBuffer = await generateQuote(text, targetName, pfpUrl);
+            const imageBuffer = await generateQuote(text, targetName, pfpUrl, contentImageBase64);
 
             // 7. Kirim hasil
             let caption = "✨ *Quote by " + targetName + "*";
