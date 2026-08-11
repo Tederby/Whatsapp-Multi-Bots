@@ -39,7 +39,7 @@ export default {
                         return message.reply("Pesan yang di-reply tidak mengandung teks yang bisa di-quote.");
                     }
                 }
-                
+
                 targetJid = message.quoted.sender || message.quoted.participant;
 
                 // Download content image if the quoted message contains an image
@@ -78,12 +78,12 @@ export default {
                     const id = jid.split('@')[0];
                     const mentionNormal = resolveUserId(jidNormalizedUser(jid));
                     const mentionUser = getUser(mentionNormal);
-                    
+
                     let mentionName = mentionUser.name;
                     if (!mentionName) {
                         if (/^\d+$/.test(id)) {
                             // Format nomor cantik: +62 812-xxx
-                            mentionName = `+${id.slice(0, 2)} ${id.slice(2, 5)}-${id.slice(5, 9)}`; 
+                            mentionName = `+${id.slice(0, 2)} ${id.slice(2, 5)}-${id.slice(5, 9)}`;
                         } else {
                             mentionName = "User";
                         }
@@ -93,7 +93,7 @@ export default {
                 }
             }
 
-            message.replyUpdate("⏳ Merender gambar quote estetik...");
+            message.replyUpdate("⏳ Merender gambar...");
 
             // 4. Cari tahu nama pengguna (dari database, karena auto-register di handler)
             const userData = getUser(normalizedTarget);
