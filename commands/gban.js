@@ -9,8 +9,10 @@
 import {
     banUser, unbanUser, getAllBannedUsers,
     banGroup, unbanGroup, getAllBannedGroups,
+    isBotAdmin,
 } from "../lib/database.js";
 import { resolveTarget, extractTarget } from "../lib/jidHelper.js";
+import setting from "../setting.js";
 
 export default {
     name: "gban",
@@ -20,7 +22,7 @@ export default {
     usage: "!gban @user | !gunban @user | !gbanlist | !bangrup <groupId> | !unbangrup <groupId> | !bangruplist",
     botAdminOnly: true,
 
-    async handler({ message, sock, args, sender, prefix }) {
+    async handler({ message, sock, args, sender, prefix, isOwner }) {
         try {
             const text = message.text || "";
 
@@ -97,6 +99,17 @@ export default {
                 const { baseId: botBaseId } = resolveTarget(sock.user.id);
                 if (target.baseId === botBaseId) {
                     return message.reply("❌ Tidak bisa mem-ban bot.");
+                }
+
+                // Prevent banning owner
+                const normalizeNum = (n) => n.startsWith("0") ? "62" + n.slice(1) : n;
+                if (setting.owner.some(num => normalizeNum(num) === target.baseId)) {
+                    return message.reply("❌ Tidak bisa mem-ban Owner bot secara global.");
+                }
+
+                // Prevent non-owner from banning BotAdmin
+                if (!isOwner && isBotAdmin(target.jid)) {
+                    return message.reply("❌ Hanya Owner yang bisa mem-ban Bot Admin secara global.");
                 }
 
                 // Get reason (remaining args after target)

@@ -1,5 +1,6 @@
 import { jidNormalizedUser } from "baileys";
-import { setBotAdmin, resolveUserId } from "../lib/database.js";
+import { setBotAdmin, resolveUserId, isBotAdmin } from "../lib/database.js";
+import setting from "../setting.js";
 
 export default {
     name: "addbotadmin",
@@ -28,6 +29,37 @@ export default {
             // Resolve LID → PN agar bot admin tersimpan dengan key PN yang konsisten
             const normalizedTarget = resolveUserId(jidNormalizedUser(target));
             const targetBaseId = normalizedTarget.split("@")[0];
+
+            // Prevent adding bot as BotAdmin (nonsensical)
+            const botBaseId = jidNormalizedUser(sock.user.id).split(":")[0].split("@")[0];
+            if (targetBaseId === botBaseId) {
+                return message.reply("❌ Bot tidak bisa dijadikan Bot Admin.");
+            }
+
+            // Owner already has all BotAdmin privileges automatically
+            const normalizeNum = (n) => n.startsWith("0") ? "62" + n.slice(1) : n;
+            if (setting.owner.some(num => normalizeNum(num) === targetBaseId)) {
+                return sock.sendMessage(
+                    message.chat,
+                    {
+                        text: `⚠️ @${targetBaseId} adalah Owner bot dan sudah memiliki semua privilege Bot Admin secara otomatis.`,
+                        mentions: [normalizedTarget],
+                    },
+                    { quoted: message }
+                );
+            }
+
+            // Check if target is already a BotAdmin
+            if (isBotAdmin(normalizedTarget)) {
+                return sock.sendMessage(
+                    message.chat,
+                    {
+                        text: `⚠️ @${targetBaseId} sudah menjadi Bot Admin.`,
+                        mentions: [normalizedTarget],
+                    },
+                    { quoted: message }
+                );
+            }
 
             setBotAdmin(normalizedTarget, true);
 

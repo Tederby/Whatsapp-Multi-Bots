@@ -10,8 +10,9 @@
  *   !banlist     — show banned users
  */
 
-import { banUserInGroup, unbanUserInGroup, getGroupBannedUsers } from "../lib/database.js";
+import { banUserInGroup, unbanUserInGroup, getGroupBannedUsers, isBotAdmin } from "../lib/database.js";
 import { resolveTarget, extractTarget, findParticipant } from "../lib/jidHelper.js";
+import setting from "../setting.js";
 
 export default {
     name: "ban",
@@ -22,7 +23,7 @@ export default {
     groupOnly: true,
     adminOnly: true,
 
-    async handler({ message, sock, args, sender, isGroup, groupMetadata, commandName }) {
+    async handler({ message, sock, args, sender, isGroup, groupMetadata, commandName, isOwner }) {
         try {
             const chatId = message.chat;
 
@@ -96,6 +97,17 @@ export default {
             const participantInfo = findParticipant(groupMetadata, target.baseId);
             if (participantInfo?.isAdmin) {
                 return message.reply("❌ Tidak bisa mem-ban admin grup.");
+            }
+
+            // Prevent banning owner
+            const normalizeNum = (n) => n.startsWith("0") ? "62" + n.slice(1) : n;
+            if (setting.owner.some(num => normalizeNum(num) === target.baseId)) {
+                return message.reply("❌ Tidak bisa mem-ban Owner bot.");
+            }
+
+            // Prevent banning BotAdmin (unless executor is Owner)
+            if (!isOwner && isBotAdmin(target.jid)) {
+                return message.reply("❌ Hanya Owner yang bisa mem-ban Bot Admin.");
             }
 
             banUserInGroup(chatId, target.jid);

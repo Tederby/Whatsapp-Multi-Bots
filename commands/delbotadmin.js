@@ -1,5 +1,5 @@
 import { jidNormalizedUser } from "baileys";
-import { setBotAdmin, resolveUserId, resolveToLid } from "../lib/database.js";
+import { setBotAdmin, resolveUserId, resolveToLid, isBotAdmin } from "../lib/database.js";
 
 export default {
     name: "delbotadmin",
@@ -28,6 +28,18 @@ export default {
             // Resolve LID → PN untuk konsistensi
             const normalizedTarget = resolveUserId(jidNormalizedUser(target));
             const targetBaseId = normalizedTarget.split("@")[0];
+
+            // Check if target is actually a BotAdmin
+            if (!isBotAdmin(normalizedTarget)) {
+                return sock.sendMessage(
+                    message.chat,
+                    {
+                        text: `⚠️ @${targetBaseId} bukan Bot Admin.`,
+                        mentions: [normalizedTarget],
+                    },
+                    { quoted: message }
+                );
+            }
 
             // Demote di kedua key (PN dan LID) untuk bersihkan data lama
             setBotAdmin(normalizedTarget, false);
