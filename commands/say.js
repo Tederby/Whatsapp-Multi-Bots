@@ -16,8 +16,9 @@ export default {
 
         if (!outText) return message.reply("Masukkan teks atau reply pesan teks yang ingin dikirim ulang!");
 
-        // Format output sebagai quote dengan nama user
-        const formattedText = `> ${outText}\n- ${pushname}`;
+        // Format output sebagai quote dengan nama user (prefix setiap baris dengan "> ")
+        const quotedBody = outText.split('\n').map(line => `> ${line}`).join('\n');
+        const formattedText = `${quotedBody}\n- ${pushname}`;
 
 
         // Ambil ID (tanpa domain) dari mentions bawaan (bisa berupa PN atau LID)
