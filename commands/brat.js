@@ -2,11 +2,12 @@ import axios from "axios";
 import { Sticker, StickerTypes } from "wa-sticker-formatter";
 
 export default {
+  name: "bratsticker",
   aliases: ["brat", "brt", "bart", "bratgenerator"],
   category: "maker",
   description: "Bikin stiker tekxs brat",
 
-  handler: async ({ message, sock, rawArgs, prefix }) => {
+  handler: async ({ message, sock, rawArgs, prefix, pushname }) => {
     const text = Array.isArray(rawArgs) ? rawArgs.join(" ") : rawArgs;
 
     if (!text || !text.trim()) {
@@ -24,7 +25,7 @@ export default {
      
       const sticker = new Sticker(response.data, {
         pack: "MyLiza",
-        author: `Ⓒ ${message.pushName || "User"}`,
+        author: `Ⓒ ${pushname || "User"}`,
         type: StickerTypes.FULL,
         quality: 100,
       });
