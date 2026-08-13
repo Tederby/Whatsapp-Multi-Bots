@@ -14,7 +14,7 @@ export default {
   desc: "Membuat sticker text gaya brat",
 
   handler: async ({ message, sock, rawArgs }) => {
-    // Ambil text dari rawArgs (array) atau string gabungan
+    
     const text = Array.isArray(rawArgs) ? rawArgs.join(" ") : rawArgs;
 
     if (!text || !text.trim()) {
