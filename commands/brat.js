@@ -8,10 +8,22 @@ export default {
   description: "Bikin stiker tekxs brat",
 
   handler: async ({ message, sock, rawArgs, prefix, pushname }) => {
-    const text = Array.isArray(rawArgs) ? rawArgs.join(" ") : rawArgs;
+    let text = Array.isArray(rawArgs) ? rawArgs.join(" ") : rawArgs;
+
+    if (!text && message.quoted) {
+      text = message.quoted.text;
+      if (!text) {
+        const type = Object.keys(message.quoted.message || {})[0];
+        if (type === "imageMessage" && message.quoted.message.imageMessage.caption) {
+          text = message.quoted.message.imageMessage.caption;
+        } else if (type === "videoMessage" && message.quoted.message.videoMessage.caption) {
+          text = message.quoted.message.videoMessage.caption;
+        }
+      }
+    }
 
     if (!text || !text.trim()) {
-      return message.reply(`Formatnya kurang pas nih, contoh: ${prefix}brat halo sayang`);
+      return message.reply(`Formatnya kurang pas nih, contoh: ${prefix}brat halo sayang atau balas pesan dengan ${prefix}brat`);
     }
 
     const apiUrl = `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(text.trim())}`;
@@ -22,9 +34,9 @@ export default {
         return message.reply("Aduh, gagal dapet gambarnya dari API nih...");
       }
 
-     
+
       const sticker = new Sticker(response.data, {
-        pack: "MyLiza",
+        pack: "Tederby",
         author: `Ⓒ ${pushname || "User"}`,
         type: StickerTypes.FULL,
         quality: 100,
@@ -32,7 +44,7 @@ export default {
 
       const stickerBuffer = await sticker.toBuffer();
 
-     
+
       await sock.sendMessage(
         message.chat,
         { sticker: stickerBuffer },
