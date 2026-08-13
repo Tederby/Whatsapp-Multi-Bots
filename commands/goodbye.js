@@ -40,7 +40,27 @@ export default {
                 return message.reply(`Pesan perpisahan diperbarui dan fitur diaktifkan:\n\n${goodbyeText}`);
 
             } else {
-                return message.reply(`Penggunaan:\n\`${prefix}goodbye on\` → Aktifkan goodbye\n\`${prefix}goodbye off\` → Nonaktifkan goodbye\n\`${prefix}goodbye set <teks>\` → Atur teks goodbye\n\nKamu bisa menggunakan @user untuk tag member yang keluar dan @group untuk nama grup.`);
+                return message.reply(
+                    `╭━━━〔 👋 GOODBYE 〕━━━\n` +
+                    `┃\n` +
+                    `┃ Penggunaan:\n` +
+                    `┃ • \`${prefix}goodbye on\` → Aktifkan\n` +
+                    `┃ • \`${prefix}goodbye off\` → Nonaktifkan\n` +
+                    `┃ • \`${prefix}goodbye set <teks>\` → Atur teks\n` +
+                    `┃\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `╭───「 💡 Tips Admin 」\n` +
+                    `│ Fitur ini *aktif secara default*.\n` +
+                    `│\n` +
+                    `│ Gunakan placeholder:\n` +
+                    `│ • *@user* → mention member yg keluar\n` +
+                    `│ • *@group* → nama grup\n` +
+                    `│\n` +
+                    `│ Contoh set pesan custom:\n` +
+                    `│ \`${prefix}goodbye set Bye @user! 😢\n` +
+                    `│ Semoga bisa kembali lagi ke *@group*.\`\n` +
+                    `╰──────────────`
+                );
             }
 
         } catch (error) {

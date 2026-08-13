@@ -40,7 +40,28 @@ export default {
                 return message.reply(`Pesan selamat datang diperbarui dan fitur diaktifkan:\n\n${welcomeText}`);
 
             } else {
-                return message.reply(`Penggunaan:\n\`${prefix}welcome on\` → Aktifkan welcome\n\`${prefix}welcome off\` → Nonaktifkan welcome\n\`${prefix}welcome set <teks>\` → Atur teks welcome\n\nKamu bisa menggunakan @user untuk tag member baru dan @group untuk nama grup.`);
+                return message.reply(
+                    `╭━━━〔 👋 WELCOME 〕━━━\n` +
+                    `┃\n` +
+                    `┃ Penggunaan:\n` +
+                    `┃ • \`${prefix}welcome on\` → Aktifkan\n` +
+                    `┃ • \`${prefix}welcome off\` → Nonaktifkan\n` +
+                    `┃ • \`${prefix}welcome set <teks>\` → Atur teks\n` +
+                    `┃\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+                    `╭───「 💡 Tips Admin 」\n` +
+                    `│ Fitur ini *aktif secara default*.\n` +
+                    `│\n` +
+                    `│ Gunakan placeholder:\n` +
+                    `│ • *@user* → mention member baru\n` +
+                    `│ • *@group* → nama grup\n` +
+                    `│\n` +
+                    `│ Contoh set pesan custom:\n` +
+                    `│ \`${prefix}welcome set Halo @user! 👋\n` +
+                    `│ Selamat bergabung di *@group*.\n` +
+                    `│ Baca rules dulu ya!\`\n` +
+                    `╰──────────────`
+                );
             }
 
         } catch (error) {
