@@ -9,32 +9,42 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default {
   name: "bratsticker",
-  command: ["brat", "bart", "brt", "bratgenerator"],
+  command: ["brat", "bart","brt", "bratgenerator"],
   tags: ["maker"],
   desc: "Membuat sticker text gaya brat",
-  customPrefix: "",
-  example: "Akan saya cium",
-  limit: true,
-  consumeLimit: 1,
 
-  run: async (m, { conn, text, usedPrefix, command }) => {
-    if (!text) {
-      return m.reply(`Contoh penggunaan: ${usedPrefix}${command} halo aku dabi`);
+  handler: async ({ message, sock, rawArgs }) => {
+    // Ambil text dari rawArgs (array) atau string gabungan
+    const text = Array.isArray(rawArgs) ? rawArgs.join(" ") : rawArgs;
+
+    if (!text || !text.trim()) {
+      return sock.sendMessage(
+        message.key.remoteJid,
+        { text: "Contoh penggunaan: .brat cihuy" },
+        { quoted: message }
+      );
     }
 
-    const apiUrl = `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(text)}`;
+    const apiUrl = `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(text.trim())}`;
     const tempDir = path.resolve(__dirname, "../../temp");
 
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
 
-    const inputPath = path.join(tempDir, `brat_${Date.now()}.png`);
-    const outputPath = path.join(tempDir, `brat_${Date.now()}.webp`);
+    const timeStamp = Date.now();
+    const inputPath = path.join(tempDir, `brat_${timeStamp}.png`);
+    const outputPath = path.join(tempDir, `brat_${timeStamp}.webp`);
 
     try {
       const response = await axios.get(apiUrl, { responseType: "arraybuffer" });
-      if (!response.data) return m.reply("Gagal mengambil gambar brat dari API.");
+      if (!response.data) {
+        return sock.sendMessage(
+          message.key.remoteJid,
+          { text: "Gagal mengambil gambar brat dari API." },
+          { quoted: message }
+        );
+      }
 
       fs.writeFileSync(inputPath, response.data);
 
@@ -44,33 +54,47 @@ export default {
         if (err) {
           console.error("FFmpeg error:", err);
           cleanupFiles([inputPath, outputPath]);
-          return m.reply("Gagal mengkonversi gambar ke format sticker.");
+          return sock.sendMessage(
+            message.key.remoteJid,
+            { text: "Gagal mengkonversi gambar ke format sticker." },
+            { quoted: message }
+          );
         }
 
         try {
           const stickerBuffer = fs.readFileSync(outputPath);
+          const pushName = message.pushName || "User";
+          
           const finalStickerPath = await writeExifImg(stickerBuffer, {
-            packname: "MyLiza",
-            author: `Ⓒ ${m.pushName || "User"}`
+            packname: "MyMineLiza",
+            author: `Ⓒ hehe`
           });
 
-          await conn.sendMessage(
-            m.chat,
+          await sock.sendMessage(
+            message.key.remoteJid,
             { sticker: fs.readFileSync(finalStickerPath) },
-            { quoted: m }
+            { quoted: message }
           );
 
           cleanupFiles([inputPath, outputPath, finalStickerPath]);
         } catch (exifError) {
           console.error("Exif error:", exifError);
           cleanupFiles([inputPath, outputPath]);
-          m.reply("Gagal menambahkan metadata exif pada sticker.");
+          sock.sendMessage(
+            message.key.remoteJid,
+            { text: "Gagal menambahkan metadata exif pada sticker." },
+            { quoted: message }
+          );
         }
       });
     } catch (e) {
       console.error("Brat plugin error:", e);
       cleanupFiles([inputPath, outputPath]);
-      m.reply("Terjadi kesalahan saat menghubungi API brat. Coba lagi nanti.");
+      sock.sendMessage(
+        message.key.remoteJid,
+        { text: "Terjadi kesalahan saat menghubungi API brat. Coba lagi nanti." },
+        { quoted: message }
+      );
     }
   }
 };
