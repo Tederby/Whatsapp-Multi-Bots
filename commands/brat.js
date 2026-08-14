@@ -4,16 +4,34 @@ import { Sticker, StickerTypes } from "wa-sticker-formatter";
 export default {
   aliases: ["brat", "brt", "bart", "bratgenerator"],
   category: "maker",
-  description: "Bikin stiker tekxs brat",
+  description: "Bikin stiker teks gaya brat",
 
   handler: async ({ message, sock, rawArgs, prefix }) => {
-    const text = Array.isArray(rawArgs) ? rawArgs.join(" ") : rawArgs;
+    
+    const argsText = Array.isArray(rawArgs) ? rawArgs.join(" ") : (rawArgs || "");
 
-    if (!text || !text.trim()) {
-      return message.reply(`Formatnya kurang pas nih, contoh: ${prefix}brat halo sayang`);
+    
+    const quoted = message.quoted;
+    const quotedText =
+      quoted?.text ||
+      quoted?.body ||
+      quoted?.caption ||
+      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation ||
+      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text ||
+      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage?.caption ||
+      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage?.caption ||
+      "";
+
+    
+    const text = argsText.trim() || quotedText.trim();
+
+    if (!text) {
+      return message.reply(
+        `Ketik teksnya atau reply pesan teks yang mau dibikin brat ya!\nContoh: ${prefix}brat halo dabi`
+      );
     }
 
-    const apiUrl = `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(text.trim())}`;
+    const apiUrl = `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(text)}`;
 
     try {
       const response = await axios.get(apiUrl, { responseType: "arraybuffer" });
@@ -23,7 +41,7 @@ export default {
 
      
       const sticker = new Sticker(response.data, {
-        pack: "MyLiza",
+        pack: "Tederby",
         author: `Ⓒ ${message.pushName || "User"}`,
         type: StickerTypes.FULL,
         quality: 100,
@@ -31,7 +49,7 @@ export default {
 
       const stickerBuffer = await sticker.toBuffer();
 
-     
+      
       await sock.sendMessage(
         message.chat,
         { sticker: stickerBuffer },
