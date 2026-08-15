@@ -29,7 +29,7 @@ import { initCleanup } from "./services/cleanup.js";
 import { initReminders } from "./services/reminder.js";
 import { reloadCommand, initCommands, commandsDir } from "./commands/_registry.js";
 import { handleGroupParticipantsUpdate } from "./lib/events/group-participants.js";
-import { upsertBotRegistry } from "./lib/database.js";
+import { upsertBotRegistry, getUser, saveUser, banUser } from "./lib/database.js";
 import setting from "./setting.js";
 
 // ── Initialize command registry (must happen after all static imports settle) ─
@@ -346,15 +346,54 @@ function handleMessageUpsert(upsert, sock) {
   msgHandler(upsert, sock, message);
 }
 
+const processedCalls = new Set();
+
 async function handleIncomingCall(callEvent, sock) {
-  const { id, chatId, isGroup } = callEvent[0];
+  const call = callEvent[0];
+  if (!call) return;
+  
+  const { id, chatId, isGroup, status } = call;
   if (isGroup) return;
 
-  await sock.rejectCall(id, chatId);
-  await sock.sendMessage(
-    chatId,
-    { text: "Tidak bisa menerima panggilan suara/video." }
-  );
+  // Tolak panggilan
+  await sock.rejectCall(id, chatId).catch(() => {});
+
+  // Cegah spam event call dari Baileys (biasanya event muncul berkali-kali untuk 1 panggilan)
+  // Hanya proses jika statusnya 'offer' atau ID belum pernah diproses
+  if (status && status !== "offer") return;
+  
+  if (processedCalls.has(id)) return;
+  processedCalls.add(id);
+  setTimeout(() => processedCalls.delete(id), 3600000); // Hapus cache setelah 1 jam
+
+  // Track peringatan dan global ban
+  const user = getUser(chatId);
+  if (user.banned) return; // Jika sudah di-ban, diamkan saja (silent drop)
+
+  user.meta = user.meta || {};
+  user.meta.callCount = (user.meta.callCount || 0) + 1;
+  saveUser(chatId, user);
+
+  if (user.meta.callCount >= 4) {
+    banUser(chatId, sock.user.id, "Spam panggilan telpon / video");
+    await sock.sendMessage(
+      chatId,
+      { text: "🚫 Kamu telah di-ban secara global karena menelpon bot berulang kali." }
+    ).catch(() => {});
+  } else {
+    const left = 3 - user.meta.callCount;
+    let warningText = `⚠️ Bot tidak bisa menerima panggilan suara/video.`;
+    if (left === 0) {
+      warningText += `\n\n*Peringatan terakhir!* Jika menelpon lagi, kamu akan terkena global ban.`;
+    } else {
+      warningText += `\n\n_Peringatan ${user.meta.callCount}/3. Setelah 3 kali, otomatis global ban._`;
+    }
+    
+    await sock.sendMessage(
+      chatId,
+      { text: warningText }
+    ).catch(() => {});
+  }
 }
 
 // ── Start ───────────────────────────────────────────────────────────────────
