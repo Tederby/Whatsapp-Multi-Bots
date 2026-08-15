@@ -105,7 +105,15 @@ export default {
         const targetLang = args[0];
 
         // Determine source text: inline args or quoted message
-        let sourceText = args.slice(1).join(" ");
+        // Use rawArgs (not args.join) to preserve newlines in multi-line text
+        let sourceText = "";
+        if (args.length > 1 && rawArgs) {
+            // Strip the language code (first word) from rawArgs, keeping original formatting
+            const firstWhitespace = rawArgs.search(/\s/);
+            if (firstWhitespace !== -1) {
+                sourceText = rawArgs.slice(firstWhitespace + 1);
+            }
+        }
 
         if (!sourceText && message.quoted) {
             sourceText = message.quoted.text
