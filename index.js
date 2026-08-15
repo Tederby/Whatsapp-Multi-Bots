@@ -30,6 +30,7 @@ import { initReminders } from "./services/reminder.js";
 import { reloadCommand, initCommands, commandsDir } from "./commands/_registry.js";
 import { handleGroupParticipantsUpdate } from "./lib/events/group-participants.js";
 import { upsertBotRegistry, getUser, saveUser, banUser } from "./lib/database.js";
+import { resolveTarget } from "./lib/jidHelper.js";
 import setting from "./setting.js";
 
 // ── Initialize command registry (must happen after all static imports settle) ─
@@ -346,7 +347,15 @@ function handleMessageUpsert(upsert, sock) {
   msgHandler(upsert, sock, message);
 }
 
-const processedCalls = new Set();
+// ── Call dedup cache (Map<callId, timestamp>) ──────────────────────────────
+const processedCalls = new Map();
+const CALL_DEDUP_TTL = 3600000; // 1 jam
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, ts] of processedCalls) {
+    if (now - ts > CALL_DEDUP_TTL) processedCalls.delete(id);
+  }
+}, 600000); // Cleanup setiap 10 menit
 
 async function handleIncomingCall(callEvent, sock) {
   const call = callEvent[0];
@@ -363,30 +372,36 @@ async function handleIncomingCall(callEvent, sock) {
   if (status && status !== "offer") return;
   
   if (processedCalls.has(id)) return;
-  processedCalls.add(id);
-  setTimeout(() => processedCalls.delete(id), 3600000); // Hapus cache setelah 1 jam
+  processedCalls.set(id, Date.now());
+
+  // Resolve chatId ke canonical PN — chatId bisa berupa LID di addressing mode baru
+  const { jid: resolvedJid, baseId } = resolveTarget(chatId);
+  const userId = resolvedJid || chatId; // Fallback ke raw chatId jika resolve gagal
+
+  // Abaikan owner dari hukuman ban (tapi telpon tetap ditolak di atas)
+  const normalizeNum = (n) => n.replace(/^\+/, "").replace(/^0/, "62");
+  if (setting.owner.some(num => normalizeNum(num) === baseId)) return;
 
   // Track peringatan dan global ban
-  const user = getUser(chatId);
+  const user = getUser(userId);
   if (user.banned) return; // Jika sudah di-ban, diamkan saja (silent drop)
 
   user.meta = user.meta || {};
   user.meta.callCount = (user.meta.callCount || 0) + 1;
-  saveUser(chatId, user);
+  saveUser(userId, user);
 
   if (user.meta.callCount >= 4) {
-    banUser(chatId, sock.user.id, "Spam panggilan telpon / video");
+    banUser(userId, sock.user.id, "Spam panggilan telpon / video");
     await sock.sendMessage(
       chatId,
       { text: "🚫 Kamu telah di-ban secara global karena menelpon bot berulang kali." }
     ).catch(() => {});
   } else {
-    const left = 3 - user.meta.callCount;
     let warningText = `⚠️ Bot tidak bisa menerima panggilan suara/video.`;
-    if (left === 0) {
+    if (user.meta.callCount === 3) {
       warningText += `\n\n*Peringatan terakhir!* Jika menelpon lagi, kamu akan terkena global ban.`;
     } else {
-      warningText += `\n\n_Peringatan ${user.meta.callCount}/3. Setelah 3 kali, otomatis global ban._`;
+      warningText += `\n\n_Peringatan ${user.meta.callCount}/3. Setelah 3x peringatan, otomatis global ban._`;
     }
     
     await sock.sendMessage(
