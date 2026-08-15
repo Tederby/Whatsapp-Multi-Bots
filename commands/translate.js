@@ -104,22 +104,30 @@ export default {
 
         const targetLang = args[0];
 
-        // Determine source text: inline args or quoted message
+        // Extract inline text (everything after the language code), preserving newlines
         // Use rawArgs (not args.join) to preserve newlines in multi-line text
-        let sourceText = "";
+        let inlineText = "";
         if (args.length > 1 && rawArgs) {
-            // Strip the language code (first word) from rawArgs, keeping original formatting
             const firstWhitespace = rawArgs.search(/\s/);
             if (firstWhitespace !== -1) {
-                sourceText = rawArgs.slice(firstWhitespace + 1);
+                inlineText = rawArgs.slice(firstWhitespace + 1);
             }
         }
 
-        if (!sourceText && message.quoted) {
-            sourceText = message.quoted.text
+        // Extract quoted message text
+        const quotedText = message.quoted
+            ? (message.quoted.text
                 || message.quoted.message?.imageMessage?.caption
                 || message.quoted.message?.videoMessage?.caption
-                || "";
+                || "")
+            : "";
+
+        // Combine: if both exist, quoted text is the main source and inline text is appended
+        let sourceText = "";
+        if (quotedText && inlineText) {
+            sourceText = quotedText + "\n\n" + inlineText;
+        } else {
+            sourceText = inlineText || quotedText;
         }
 
         if (!sourceText) {
