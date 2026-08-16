@@ -1,8 +1,79 @@
 import axios from "axios";
+import { jidNormalizedUser } from "baileys";
+import { getUser, resolveUserId } from "../lib/database.js";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const PRIMARY_MODEL = "gemini-3.5-flash-lite";
 const FALLBACK_MODEL = "gemini-3.1-flash-lite";
+
+/**
+ * Format phone number into clean display string.
+ */
+function formatPhoneNumber(num) {
+    if (num.length >= 10 && num.length <= 15) {
+        return `+${num.slice(0, 2)} ${num.slice(2, 5)}-${num.slice(5, 9)}${num.length > 9 ? '-' + num.slice(9) : ''}`;
+    }
+    return `+${num}`;
+}
+
+/**
+ * Replace mention IDs (@62812... or @lid...) in text with human-readable user names or formatted numbers.
+ */
+function resolveMentionsInText(text, message) {
+    if (!text) return text;
+
+    // Kumpulkan seluruh mention JID dari pesan utama dan pesan yang di-reply
+    const mentions = [
+        ...(message.mentionedJid || []),
+        ...(message.quoted?.mentionedJid || [])
+    ];
+
+    const existingMentionIds = mentions.map(jid => jid.split('@')[0]);
+
+    // Parsing manual tag angka (misal @628123456789)
+    const manualMentions = [...text.matchAll(/@(\d{10,16})/g)]
+        .map(v => v[1])
+        .filter(num => !existingMentionIds.includes(num))
+        .map(num => num + '@s.whatsapp.net');
+
+    // Parsing manual LID tag (misal @123456789012345@lid)
+    const manualLidMentions = [...text.matchAll(/@(\d{10,20})@lid/g)]
+        .map(v => v[1])
+        .filter(num => !existingMentionIds.includes(num))
+        .map(num => num + '@lid');
+
+    const allMentions = [...mentions, ...manualMentions, ...manualLidMentions];
+    if (allMentions.length === 0) return text;
+
+    let result = text;
+    for (const jid of allMentions) {
+        const id = jid.split('@')[0];
+        const mentionNormal = resolveUserId(jidNormalizedUser(jid));
+        const mentionUser = getUser(mentionNormal);
+
+        let mentionName = mentionUser.name;
+        if (!mentionName) {
+            const normalId = mentionNormal.split('@')[0];
+            if (/^\d+$/.test(normalId)) {
+                mentionName = formatPhoneNumber(normalId);
+            } else if (/^\d+$/.test(id)) {
+                mentionName = formatPhoneNumber(id);
+            } else {
+                mentionName = "User";
+            }
+        }
+
+        const normalId = mentionNormal.split('@')[0];
+        const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = id === normalId
+            ? `@${escapeRegex(id)}(?:@lid)?`
+            : `@(?:${escapeRegex(id)}|${escapeRegex(normalId)})(?:@lid)?`;
+
+        result = result.replace(new RegExp(pattern, 'g'), `@${mentionName}`);
+    }
+
+    return result;
+}
 
 /**
  * Build the system prompt for translation.
@@ -23,6 +94,7 @@ function buildPrompt(targetLang, text) {
         `6. If the input is a normal sentence, paragraph, or lyric, just translate it naturally based on Rule 3. Do NOT add parenthetical explanations.`,
         `7. If the source language is the same as the target language, still output the original text unchanged.`,
         `8. Do NOT transliterate meaning unless it is a proper noun (names, places, brands).`,
+        `9. Preserve user mentions/handles starting with @ (e.g., @Name, @Username, or @+62...) exactly as they are without translating the names.`,
         ``,
         `Text to translate:`,
         text
@@ -127,6 +199,9 @@ export default {
                 "Gunakan: `!translate id <teks>` atau reply pesan dengan `!translate id`"
             );
         }
+
+        // Resolusi tag/mention (@62812... atau @lid...) menjadi nama user (@Name)
+        sourceText = resolveMentionsInText(sourceText, message);
 
         const update = await message.replyUpdate("⏳ Menerjemahkan...");
 
