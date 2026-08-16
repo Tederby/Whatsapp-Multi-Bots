@@ -6,25 +6,23 @@ const FALLBACK_MODEL = "gemini-3.1-flash-lite";
 
 /**
  * Build the system prompt for translation.
- * The prompt is designed to:
- * - Return ONLY the translated text, nothing else
- * - Auto-detect source language
- * - Preserve the original tone, register, and style
- * - For single words / idioms: translate literally, then add meaning in parentheses
+ * Updated: Auto-genre detection (Swiss Army Knife approach)
  */
 function buildPrompt(targetLang, text) {
     return [
-        `You are a translation engine. Your ONLY job is to output the translated text. Do NOT include any preamble, explanation, label, or filler such as "Here is the translation" or "Sure!". Your response must contain NOTHING except the translation itself.`,
+        `You are a highly adaptable translation engine. Your ONLY job is to output the translated text. Do NOT include any preamble, explanation, label, or filler such as "Here is the translation".`,
         ``,
         `Rules:`,
-        `1. Auto-detect the source language.`,
+        `1. Auto-detect the source language and the GENRE of the text (e.g., casual chat, technical, manual, song lyrics, poetry, fiction).`,
         `2. Translate the text into: ${targetLang}.`,
-        `3. Preserve the original tone, register, slang, and formatting exactly. If the source is casual, the translation must be casual. If formal, keep it formal.`,
+        `3. DYNAMIC TRANSLATION STYLE (CRITICAL):`,
+        `   - If the text is technical, informational, or everyday conversation: prioritize strict literal accuracy, clarity, and preserve the original tone/formatting.`,
+        `   - If the text is a song lyric, poem, or creative fiction: prioritize poetic flow, rhythm, emotional resonance, and natural localization. Translate the implicit meaning (e.g., metaphors) to sound beautiful in the target language rather than strictly word-for-word.`,
         `4. Preserve the line-by-line structure of the input. Each line in the source must correspond to exactly one line in the output. Do NOT merge or collapse multiple lines into one.`,
-        `5. If the input is a single word or a short idiom/expression (≤5 words), translate it literally first, then append a brief contextual meaning in parentheses. Example: "Saudade" → "Kerinduan mendalam (perasaan rindu yang melankolis terhadap sesuatu yang hilang)".`,
-        `6. If the input is a normal sentence or paragraph, just translate it naturally. Do NOT add parenthetical explanations.`,
+        `5. If the input is a single word or a short idiom/expression (≤5 words), translate it literally first, then append a brief contextual meaning in parentheses. Example: "Saudade" → "Kerinduan mendalam (perasaan rindu yang melankolis...)".`,
+        `6. If the input is a normal sentence, paragraph, or lyric, just translate it naturally based on Rule 3. Do NOT add parenthetical explanations.`,
         `7. If the source language is the same as the target language, still output the original text unchanged.`,
-        `8. Do NOT transliterate — always translate the meaning.`,
+        `8. Do NOT transliterate meaning unless it is a proper noun (names, places, brands).`,
         ``,
         `Text to translate:`,
         text
@@ -33,14 +31,14 @@ function buildPrompt(targetLang, text) {
 
 /**
  * Call Gemini generateContent API.
- * Returns the generated text or throws an error.
  */
 async function callGemini(model, prompt, apiKey) {
     const url = `${GEMINI_API_BASE}/${model}:generateContent`;
     const res = await axios.post(url, {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            temperature: 0.3,
+            // Dinaikin dikit jadi 0.4 biar dapet balance antara kaku & puitis
+            temperature: 0.4,
             maxOutputTokens: 2048,
         },
     }, {
@@ -64,7 +62,6 @@ async function callGemini(model, prompt, apiKey) {
 
 /**
  * Translate with automatic fallback.
- * Uses PRIMARY_MODEL first; if it returns 429 (rate limit), retries with FALLBACK_MODEL.
  */
 async function translateWithFallback(targetLang, text, apiKey) {
     const prompt = buildPrompt(targetLang, text);
@@ -74,10 +71,9 @@ async function translateWithFallback(targetLang, text, apiKey) {
     } catch (err) {
         const status = err.response?.status;
         if (status === 429) {
-            // Primary model is rate-limited, fall back
             return { text: await callGemini(FALLBACK_MODEL, prompt, apiKey), model: FALLBACK_MODEL };
         }
-        throw err; // Re-throw non-429 errors
+        throw err;
     }
 }
 
@@ -93,7 +89,6 @@ export default {
             return message.reply("❌ GEMINI_API_KEY belum diatur di file .env.");
         }
 
-        // First arg is target language code
         if (args.length === 0) {
             return message.reply(
                 "❌ Sertakan kode bahasa tujuan.\n" +
@@ -104,8 +99,6 @@ export default {
 
         const targetLang = args[0];
 
-        // Extract inline text (everything after the language code), preserving newlines
-        // Use rawArgs (not args.join) to preserve newlines in multi-line text
         let inlineText = "";
         if (args.length > 1 && rawArgs) {
             const firstWhitespace = rawArgs.search(/\s/);
@@ -114,7 +107,6 @@ export default {
             }
         }
 
-        // Extract quoted message text
         const quotedText = message.quoted
             ? (message.quoted.text
                 || message.quoted.message?.imageMessage?.caption
@@ -122,7 +114,6 @@ export default {
                 || "")
             : "";
 
-        // Combine: if both exist, quoted text is the main source and inline text is appended
         let sourceText = "";
         if (quotedText && inlineText) {
             sourceText = quotedText + "\n\n" + inlineText;
