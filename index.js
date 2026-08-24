@@ -345,22 +345,27 @@ function handleMessageUpsert(upsert, sock) {
   const message = Messages(upsert, sock);
   if (!message) return;
 
+  const isGroup = message.key?.remoteJid?.endsWith("@g.us");
+  const fromMe = message.key?.fromMe;
+
   if (upsert.type !== "notify") {
     if (!(upsert.type === "append" && message.key && message.key.fromMe)) {
       return;
     }
     // Jangan proses pesan append yang sudah terlalu lama (history sync)
     const now = Math.floor(Date.now() / 1000);
-    if (now - message.messageTimestamp > 60) return;
+    if (now - message.messageTimestamp > 60) { console.log(`[DEBUG-UPSERT] DROP: append too old, age=${now - message.messageTimestamp}s`); return; }
   }
 
   if (message.key && message.key.remoteJid === "status@broadcast") return;
+
+  console.log(`[DEBUG-UPSERT] type=${upsert.type} fromMe=${fromMe} isGroup=${isGroup} remoteJid=${message.key?.remoteJid?.slice(0, 20)} stanzaId=${message.key?.id?.slice(0, 12)} participant=${message.key?.participant?.slice(0, 20)} addressingMode=${message.key?.addressingMode}`);
 
   // ── Dedup: prevent double-processing of fromMe messages ──────
   // When bot owner sends a message, Baileys may fire it as both
   // "append" and "notify". Only process the first one we see.
   if (message.key?.fromMe && message.key?.id) {
-    if (_fromMeDedup.has(message.key.id)) return;
+    if (_fromMeDedup.has(message.key.id)) { console.log(`[DEBUG-UPSERT] DROP: fromMe dedup hit for ${message.key.id.slice(0, 12)}`); return; }
     _fromMeDedup.set(message.key.id, Date.now());
   }
 
