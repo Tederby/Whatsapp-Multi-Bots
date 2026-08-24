@@ -370,6 +370,18 @@ function handleMessageUpsert(upsert, sock) {
   }
 
   // fromMe diizinkan agar pemilik bot bisa memproses command
+  if (fromMe && isGroup) {
+    console.log(`[DEBUG-RAW] mtype=${message.mtype} type=${message.type} text='${message.text}' msgKeys=${JSON.stringify(Object.keys(message.message || {}))}`);
+    const mtype = message.mtype;
+    if (mtype && message.message?.[mtype]) {
+      console.log(`[DEBUG-RAW] message[mtype] keys=${JSON.stringify(Object.keys(message.message[mtype]))}`);
+    }
+    // Dump the full message object structure (without binary data)
+    const rawMsg = message.message;
+    if (rawMsg) {
+      console.log(`[DEBUG-RAW] full message=${JSON.stringify(rawMsg, (k, v) => Buffer.isBuffer(v) ? '<Buffer>' : v, 2).slice(0, 2000)}`);
+    }
+  }
   msgHandler(upsert, sock, message);
 }
 
