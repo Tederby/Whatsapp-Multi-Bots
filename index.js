@@ -327,6 +327,19 @@ function handleConnectionUpdate(update, sock) {
     }, 60000);
   }
 }
+// ── fromMe dedup cache (prevents double-handling from append + notify) ──────
+// Baileys can fire the same fromMe message twice — once as "append" and once as
+// "notify". Without dedup, the handler runs twice for the same stanzaId, which
+// causes claimMessage to fail silently on the second pass (or worse, the command
+// runs twice if claim is skipped).
+const _fromMeDedup = new Map();
+const FROMME_DEDUP_TTL = 30_000; // 30 seconds
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, ts] of _fromMeDedup) {
+    if (now - ts > FROMME_DEDUP_TTL) _fromMeDedup.delete(id);
+  }
+}, 60_000);
 
 function handleMessageUpsert(upsert, sock) {
   const message = Messages(upsert, sock);
@@ -342,6 +355,14 @@ function handleMessageUpsert(upsert, sock) {
   }
 
   if (message.key && message.key.remoteJid === "status@broadcast") return;
+
+  // ── Dedup: prevent double-processing of fromMe messages ──────
+  // When bot owner sends a message, Baileys may fire it as both
+  // "append" and "notify". Only process the first one we see.
+  if (message.key?.fromMe && message.key?.id) {
+    if (_fromMeDedup.has(message.key.id)) return;
+    _fromMeDedup.set(message.key.id, Date.now());
+  }
 
   // fromMe diizinkan agar pemilik bot bisa memproses command
   msgHandler(upsert, sock, message);

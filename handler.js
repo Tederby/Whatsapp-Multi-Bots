@@ -97,10 +97,13 @@ let msgHandler = async (upsert, sock, message) => {
             if (listBlocked.includes(ctx.sender)) return;
             
             // ── Multi-Bot Priority Claim ────────────────────────────
+            // Skip for fromMe — bot's own messages can't be claimed by
+            // another bot, and Baileys may fire them twice (append + notify)
+            // causing the second to silently fail claimMessage.
             const botId = process.env.BOT_ID || setting.botId || "bot";
             const participants = ctx.groupMetadata?.participants;
             
-            if (participants && participants.length > 0 && !(cmd && cmd.multiBot)) {
+            if (participants && participants.length > 0 && !(cmd && cmd.multiBot) && !message.key.fromMe) {
                 const participantJids = participants.map(p => p.id);
                 const activeBots = getActiveBotsInGroup(participantJids);
                 
