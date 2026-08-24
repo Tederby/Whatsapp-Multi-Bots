@@ -109,6 +109,7 @@ export default {
             if (err.message === "EXPLICIT_ONLY") {
                 await message.reply("❌ Tidak ditemukan gambar yang aman pada post terbaru untuk tag ini. Gambar NSFW/Explicit otomatis diblokir oleh sistem.");
             } else {
+                console.error(`[Danbooru] Command error:`, err);
                 await message.reply(`❌ Error: ${err.message}`);
             }
         }
