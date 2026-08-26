@@ -66,17 +66,29 @@ export default {
 
         // Kirim gambar beserta teks dan mention, fallback ke text jika gagal
         try {
+            const axios = (await import("axios")).default;
+            const response = await axios.get(imageUrl, {
+                responseType: "arraybuffer",
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (compatible; WhatsAppBot/1.0)",
+                    "Referer": "https://danbooru.donmai.us/"
+                },
+                timeout: 30000
+            });
+            const imageBuffer = Buffer.from(response.data);
+
             await sock.sendMessage(
                 message.chat,
                 {
-                    image: { url: imageUrl },
+                    image: imageBuffer,
                     caption: text,
                     mentions: allMentions,
                 },
                 { quoted: message }
             );
-        } catch {
-            // Image URL mungkin down — fallback ke text-only
+        } catch (err) {
+            console.error("Owner Image Error:", err.message);
+            // Image URL mungkin down atau diblokir — fallback ke text-only
             await sock.sendMessage(
                 message.chat,
                 {

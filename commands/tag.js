@@ -15,7 +15,13 @@ export default {
             const query = args.join("_");
             try {
                 const sentMsg = await message.reply(`🔍 Mencari kamus tag untuk '${query}'...`);
-                const response = await axios.get(`https://danbooru.donmai.us/tags.json?search[name_matches]=*${encodeURIComponent(query)}*&search[order]=count&limit=10`);
+                const response = await axios.get(`https://danbooru.donmai.us/tags.json?search[name_matches]=*${encodeURIComponent(query)}*&search[order]=count&limit=10`, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (compatible; WhatsAppBot/1.0)',
+                        'Referer': 'https://danbooru.donmai.us/'
+                    },
+                    timeout: 10000
+                });
                 
                 if (!response.data || response.data.length === 0) {
                     await sock.sendMessage(message.chat, { text: `❌ Tidak ditemukan tag yang cocok dengan '${query}'.`, edit: sentMsg.key });
@@ -43,8 +49,7 @@ export default {
 
         const quotedText = message.quoted.text || message.quoted.caption || "";
         
-        // Cari ID post di teks (terutama dari URL Post Link, atau format lama)
-        const idMatch = quotedText.match(/danbooru\.donmai\.us\/posts\/(\d+)/i) || quotedText.match(/post(?:[ :*]+)?(\d+)/i);
+        const idMatch = quotedText.match(/danbooru\.donmai\.us\/posts\/(\d+)/i) || quotedText.match(/post(?:[ :*]+)?(\d+)/i) || quotedText.match(/id\s*[:]+\s*(\d+)/i);
         
         if (!idMatch) {
             await message.reply("❌ Tidak dapat menemukan ID Danbooru di pesan yang di-reply.");
