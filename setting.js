@@ -34,7 +34,7 @@ const setting = {
     },
 
     // ── Spam Filter ─────────────────────────────────────────────────────
-    spamDelay: Number(process.env.SPAM_DELAY) || 5000, // ms cooldown per chat
+    spamDelay: Number(process.env.SPAM_DELAY) || 3000, // ms cooldown per chat
 };
 
 export default setting;
