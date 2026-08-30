@@ -41,7 +41,7 @@ let msgHandler = async (upsert, sock, message) => {
         text = text || "";
 
         // ── Guard: empty sender ─────────────────────────────────────
-        if (message.sender === "") { console.log('[DEBUG] DROP: empty sender'); return; }
+        if (message.sender === "") return;
 
         const t = message.messageTimestamp;
 
@@ -76,18 +76,16 @@ let msgHandler = async (upsert, sock, message) => {
 
         // ── Ignore offline replay (prevent double processing) ───────
         const nowSec = Math.floor(Date.now() / 1000);
-        if (nowSec - t > 120) { console.log(`[DEBUG] DROP: offline replay, age=${nowSec - t}s`); return; }
+        if (nowSec - t > 120) return;
 
         // ── Build context ───────────────────────────────────────────
         const ctx = await buildContext(message, sock);
-        if (!ctx.sender) { console.log('[DEBUG] DROP: ctx.sender is falsy'); return; }
-
-        console.log(`[DEBUG] MSG from=${ctx.sender} isGroup=${ctx.isGroup} fromMe=${message.key.fromMe} text=${(text || '').slice(0, 30)} addressingMode=${message.key.addressingMode}`);
+        if (!ctx.sender) return;
 
         // ── Global ban checks (silent — no response) ────────────────
         // Checked early to avoid wasting resources on banned entities.
-        if (ctx.isGroup && isGroupBanned(message.chat)) { console.log(`[DEBUG] DROP: group banned ${message.chat}`); return; }
-        if (isBanned(ctx.sender)) { console.log(`[DEBUG] DROP: user banned ${ctx.sender}`); return; }
+        if (ctx.isGroup && isGroupBanned(message.chat)) return;
+        if (isBanned(ctx.sender)) return;
 
         // ── 1. Command Parsing ──────────────────────────────────────
         const parsed = parseCommand(text);
@@ -96,16 +94,13 @@ let msgHandler = async (upsert, sock, message) => {
         // ── Block check (group only) ────────────────────────────────
         if (ctx.isGroup) {
             const listBlocked = await getCachedBlocklist(sock);
-            if (listBlocked.includes(ctx.sender)) { console.log(`[DEBUG] DROP: blocklist includes ${ctx.sender}`); return; }
+            if (listBlocked.includes(ctx.sender)) return;
             
             // ── Multi-Bot Priority Claim ────────────────────────────
-            // Skip for fromMe — bot's own messages can't be claimed by
-            // another bot, and Baileys may fire them twice (append + notify)
-            // causing the second to silently fail claimMessage.
             const botId = process.env.BOT_ID || setting.botId || "bot";
             const participants = ctx.groupMetadata?.participants;
             
-            if (participants && participants.length > 0 && !(cmd && cmd.multiBot) && !message.key.fromMe) {
+            if (participants && participants.length > 0 && !(cmd && cmd.multiBot)) {
                 const participantJids = participants.map(p => p.id);
                 const activeBots = getActiveBotsInGroup(participantJids);
                 
@@ -120,7 +115,6 @@ let msgHandler = async (upsert, sock, message) => {
                 const stanzaId = message.key.id;
                 const claimed = claimMessage(stanzaId, botId);
                 if (!claimed) {
-                    console.log(`[DEBUG] DROP: claim failed for stanzaId=${stanzaId}`);
                     return; // Diambil alih oleh bot lain dengan prioritas lebih tinggi
                 }
             }

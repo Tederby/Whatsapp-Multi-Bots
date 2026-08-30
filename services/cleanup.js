@@ -16,7 +16,7 @@ import { cleanupExpiredReplyHandlers } from "../commands/_registry.js";
 import { purgeExpired as purgeInfoCache } from "./infoCache.js";
 import { purgeOldClaims } from "../lib/database.js";
 import db from "../lib/db.js";
-import { color } from "../lib/utils.js";
+import { logger } from "../lib/logger.js";
 
 let initialized = false;
 
@@ -49,22 +49,17 @@ export function initCleanup() {
         purgeOldClaims(5 * 60 * 1000); // 5 mins
 
         if (filesPurged + statesPurged + cachePurged > 0) {
-            console.log(
-                color("[CLEANUP]", "yellow"),
-                `files: ${filesPurged}, states: ${statesPurged}, cache: ${cachePurged}`
-            );
+            logger.info("CLEANUP", `files: ${filesPurged}, states: ${statesPurged}, cache: ${cachePurged}`);
         }
     }, cfg.cleanupInterval);
 
-    console.log(color("[CLEANUP]", "yellow"), "Cleanup service initialized");
+    logger.info("CLEANUP", "Service initialized");
 
-    // Periodic VACUUM to reclaim disk space (every 30 minutes)
     setInterval(() => {
         try {
             db.exec("VACUUM");
-            console.log(color("[CLEANUP]", "yellow"), "VACUUM completed");
         } catch (e) {
-            console.error(color("[CLEANUP ERROR]", "red"), "VACUUM failed:", e.message);
+            logger.warn("CLEANUP", `VACUUM failed: ${e.message}`);
         }
     }, 30 * 60 * 1000);
 }
@@ -80,7 +75,7 @@ function purgeAllTemp(tempDir) {
             fs.unlinkSync(path.join(tempDir, file));
         }
         if (files.length > 0) {
-            console.log(color("[CLEANUP]", "yellow"), `Startup purge: removed ${files.length} temp file(s)`);
+            logger.info("CLEANUP", `Startup purge: ${files.length} temp file(s)`);
         }
     } catch (e) {
         console.error(color("[CLEANUP ERROR]", "red"), e.message);
@@ -107,7 +102,7 @@ function cleanupTempFiles(tempDir, maxAgeMs) {
             }
         }
     } catch (e) {
-        console.error(color("[CLEANUP ERROR]", "red"), e.message);
+        console.error("[CLEANUP]", e.message);
     }
     return count;
 }

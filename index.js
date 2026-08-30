@@ -32,6 +32,7 @@ import { handleGroupParticipantsUpdate } from "./lib/events/group-participants.j
 import { upsertBotRegistry, getUser, saveUser, banUser } from "./lib/database.js";
 import { resolveTarget } from "./lib/jidHelper.js";
 import setting from "./setting.js";
+import { logger as log } from "./lib/logger.js";
 
 // ── Initialize command registry (must happen after all static imports settle) ─
 await initCommands();
@@ -327,26 +328,10 @@ function handleConnectionUpdate(update, sock) {
     }, 60000);
   }
 }
-// ── fromMe dedup cache (prevents double-handling from append + notify) ──────
-// Baileys can fire the same fromMe message twice — once as "append" and once as
-// "notify". Without dedup, the handler runs twice for the same stanzaId, which
-// causes claimMessage to fail silently on the second pass (or worse, the command
-// runs twice if claim is skipped).
-const _fromMeDedup = new Map();
-const FROMME_DEDUP_TTL = 30_000; // 30 seconds
-setInterval(() => {
-  const now = Date.now();
-  for (const [id, ts] of _fromMeDedup) {
-    if (now - ts > FROMME_DEDUP_TTL) _fromMeDedup.delete(id);
-  }
-}, 60_000);
 
 function handleMessageUpsert(upsert, sock) {
   const message = Messages(upsert, sock);
   if (!message) return;
-
-  const isGroup = message.key?.remoteJid?.endsWith("@g.us");
-  const fromMe = message.key?.fromMe;
 
   if (upsert.type !== "notify") {
     if (!(upsert.type === "append" && message.key && message.key.fromMe)) {
@@ -354,34 +339,12 @@ function handleMessageUpsert(upsert, sock) {
     }
     // Jangan proses pesan append yang sudah terlalu lama (history sync)
     const now = Math.floor(Date.now() / 1000);
-    if (now - message.messageTimestamp > 60) { console.log(`[DEBUG-UPSERT] DROP: append too old, age=${now - message.messageTimestamp}s`); return; }
+    if (now - message.messageTimestamp > 60) return;
   }
 
   if (message.key && message.key.remoteJid === "status@broadcast") return;
 
-  console.log(`[DEBUG-UPSERT] type=${upsert.type} fromMe=${fromMe} isGroup=${isGroup} remoteJid=${message.key?.remoteJid?.slice(0, 20)} stanzaId=${message.key?.id?.slice(0, 12)} participant=${message.key?.participant?.slice(0, 20)} addressingMode=${message.key?.addressingMode}`);
-
-  // ── Dedup: prevent double-processing of fromMe messages ──────
-  // When bot owner sends a message, Baileys may fire it as both
-  // "append" and "notify". Only process the first one we see.
-  if (message.key?.fromMe && message.key?.id) {
-    if (_fromMeDedup.has(message.key.id)) { console.log(`[DEBUG-UPSERT] DROP: fromMe dedup hit for ${message.key.id.slice(0, 12)}`); return; }
-    _fromMeDedup.set(message.key.id, Date.now());
-  }
-
   // fromMe diizinkan agar pemilik bot bisa memproses command
-  if (fromMe && isGroup) {
-    console.log(`[DEBUG-RAW] mtype=${message.mtype} type=${message.type} text='${message.text}' msgKeys=${JSON.stringify(Object.keys(message.message || {}))}`);
-    const mtype = message.mtype;
-    if (mtype && message.message?.[mtype]) {
-      console.log(`[DEBUG-RAW] message[mtype] keys=${JSON.stringify(Object.keys(message.message[mtype]))}`);
-    }
-    // Dump the full message object structure (without binary data)
-    const rawMsg = message.message;
-    if (rawMsg) {
-      console.log(`[DEBUG-RAW] full message=${JSON.stringify(rawMsg, (k, v) => Buffer.isBuffer(v) ? '<Buffer>' : v, 2).slice(0, 2000)}`);
-    }
-  }
   msgHandler(upsert, sock, message);
 }
 
@@ -462,17 +425,16 @@ const handlerWatcher = chokidar.watch("./handler.js", {
 let handlerReloadCount = 0;
 
 handlerWatcher.on("change", async (filePath) => {
-  console.log(`[HOT-RELOAD] handler.js changed`);
   try {
     const newModule = await import(`./handler.js?cacheBust=${Date.now()}`);
     msgHandler = newModule.msgHandler;
     handlerReloadCount++;
-    console.log(`[HOT-RELOAD] Handler updated ✅ (reload #${handlerReloadCount})`);
+    log.info("HOT-RELOAD", `Handler updated (reload #${handlerReloadCount})`);
     if (handlerReloadCount >= 20) {
-      console.warn(`[HOT-RELOAD] ⚠️ ${handlerReloadCount} reloads — ESM cache-busting causes gradual memory leak. Consider 'pm2 restart ${BOT_ID}' to reclaim memory.`);
+      log.warn("HOT-RELOAD", `${handlerReloadCount} reloads — consider 'pm2 restart ${BOT_ID}' to reclaim memory.`);
     }
   } catch (err) {
-    console.error("[HOT-RELOAD] Handler reload failed ❌", err.message);
+    log.error("HOT-RELOAD", err);
   }
 });
 
@@ -486,7 +448,7 @@ const commandWatcher = chokidar.watch(commandsDir, {
 commandWatcher.on("add", async (filePath) => {
   // New command file added
   if (!filePath.endsWith(".js")) return;
-  console.log(`[HOT-RELOAD] New command file detected: ${filePath}`);
+  log.info("HOT-RELOAD", `New command: ${filePath.split("/").pop()}`);
   await reloadCommand(filePath);
 });
 
