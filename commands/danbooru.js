@@ -34,7 +34,7 @@ export default {
                 }
 
                 if (!postData) {
-                    await message.reply("Ampas banget gacha lu hari ini ngab, udah 3 kali ngeroll dapet ID zonk semua wkwkwk. Coba lagi ntar yak!");
+                    await message.reply("Ampas banget gacha lu hari ini ngab, udah 3 kali ngeroll dapet ID zonk semua wkwkwk. Coba lagi ntar atau gunakan `!dnew` untuk melihat art terbaru!");
                     return;
                 }
 
