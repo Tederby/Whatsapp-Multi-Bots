@@ -14,7 +14,7 @@ import { buildContext } from "./lib/contextBuilder.js";
 import { runAutoDetects } from "./lib/autoDetect.js";
 import { logger } from "./lib/logger.js";
 import { checkPermissions } from "./lib/middleware.js";
-import { isBanned, isGroupBanned, getActiveBotsInGroup, claimMessage, getGroupConfig, incrementMsgCount, isRegistered, registerUser } from "./lib/database.js";
+import { isBanned, isGroupBanned, isUserGroupBanned, getActiveBotsInGroup, claimMessage, getGroupConfig, incrementMsgCount, isRegistered, registerUser } from "./lib/database.js";
 import setting from "./setting.js";
 
 // ── Blocklist Cache (avoid network call per-message) ────────────────────────
@@ -50,25 +50,27 @@ let msgHandler = async (upsert, sock, message) => {
         // bot was offline are still counted for tracking.
         if (message.isGroup) {
             const chatId = message.chat;
-            const trackConfig = getGroupConfig(chatId);
-            if (trackConfig.meta?.trackingEnabled) {
-                let trackSender = message.sender;
-                // Minimal device-ID sanitasi (full resolve happens in buildContext)
-                if (trackSender.includes(":")) {
-                    trackSender = trackSender.split(":")[0] +
-                        (trackSender.includes("@") ? "@" + trackSender.split("@")[1] : "");
-                }
+            if (!isGroupBanned(chatId)) {
+                const trackConfig = getGroupConfig(chatId);
+                if (trackConfig.meta?.trackingEnabled) {
+                    let trackSender = message.sender;
+                    // Minimal device-ID sanitasi (full resolve happens in buildContext)
+                    if (trackSender.includes(":")) {
+                        trackSender = trackSender.split(":")[0] +
+                            (trackSender.includes("@") ? "@" + trackSender.split("@")[1] : "");
+                    }
 
-                // Skip bot's own messages
-                const botJid = sock.user.id.includes(":")
-                    ? sock.user.id.split(":")[0] + "@s.whatsapp.net"
-                    : sock.user.id;
+                    // Skip bot's own messages
+                    const botJid = sock.user.id.includes(":")
+                        ? sock.user.id.split(":")[0] + "@s.whatsapp.net"
+                        : sock.user.id;
 
-                if (trackSender !== botJid) {
-                    // Skip excluded users
-                    const excluded = trackConfig.meta.trackingExcluded || [];
-                    if (!excluded.includes(trackSender)) {
-                        incrementMsgCount(chatId, trackSender);
+                    if (trackSender !== botJid && !isBanned(trackSender) && !isUserGroupBanned(chatId, trackSender)) {
+                        // Skip excluded users
+                        const excluded = trackConfig.meta.trackingExcluded || [];
+                        if (!excluded.includes(trackSender)) {
+                            incrementMsgCount(chatId, trackSender);
+                        }
                     }
                 }
             }
@@ -82,10 +84,11 @@ let msgHandler = async (upsert, sock, message) => {
         const ctx = await buildContext(message, sock);
         if (!ctx.sender) return;
 
-        // ── Global ban checks (silent — no response) ────────────────
+        // ── Early ban checks (silent drop — no response) ────────────
         // Checked early to avoid wasting resources on banned entities.
         if (ctx.isGroup && isGroupBanned(message.chat)) return;
         if (isBanned(ctx.sender)) return;
+        if (ctx.isGroup && isUserGroupBanned(message.chat, ctx.sender)) return;
 
         // ── 1. Command Parsing ──────────────────────────────────────
         const parsed = parseCommand(text);

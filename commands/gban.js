@@ -129,10 +129,14 @@ export default {
             }
 
             // ═══════════════════════════════════════════════════════════
-            // GLOBAL GROUP BAN
+            // GLOBAL GROUP BAN (Owner Only)
             // ═══════════════════════════════════════════════════════════
 
             if (invokedCmd === "bangruplist") {
+                if (!isOwner) {
+                    return message.reply("❌ Perintah ini khusus untuk System Owner.");
+                }
+
                 const banned = getAllBannedGroups();
                 if (banned.length === 0) {
                     return message.reply("✅ Tidak ada grup yang di-ban.");
@@ -152,6 +156,10 @@ export default {
             }
 
             if (invokedCmd === "unbangrup") {
+                if (!isOwner) {
+                    return message.reply("❌ Perintah ini khusus untuk System Owner.");
+                }
+
                 const groupId = args[0];
                 if (!groupId) {
                     return message.reply(`Masukkan Group ID yang ingin di-unban.\n\nContoh: \`${prefix}unbangrup 628xxx-xxx@g.us\``);
@@ -166,6 +174,10 @@ export default {
             }
 
             if (invokedCmd === "bangrup") {
+                if (!isOwner) {
+                    return message.reply("❌ Perintah ini khusus untuk System Owner.");
+                }
+
                 // Can ban the current group or a remote group by JID
                 let targetGroup = null;
 

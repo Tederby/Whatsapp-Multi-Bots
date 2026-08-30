@@ -13,6 +13,7 @@
 
 import db from "../lib/db.js";
 import { color } from "../lib/utils.js";
+import { isBanned, isGroupBanned, isUserGroupBanned } from "../lib/database.js";
 
 const BOT_ID = process.env.BOT_ID || "default";
 
@@ -50,6 +51,16 @@ function clearAllTimers() {
 async function _triggerReminder(reminder) {
     if (!globalSock) return;
     const { user_id, chat_id, message, id } = reminder;
+
+    // Abaikan jika user atau grup tujuan berstatus banned
+    const isTargetBanned = isBanned(user_id) || isGroupBanned(chat_id) || (chat_id.endsWith("@g.us") && isUserGroupBanned(chat_id, user_id));
+    if (isTargetBanned) {
+        try {
+            stmts.remove.run(user_id, chat_id);
+        } catch { /* ignore */ }
+        timers.delete(`${user_id}_${chat_id}`);
+        return;
+    }
 
     try {
         await globalSock.sendMessage(chat_id, {

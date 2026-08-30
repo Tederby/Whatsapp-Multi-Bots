@@ -1,5 +1,6 @@
 import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
 import { resolveTarget, findParticipant } from '../lib/jidHelper.js';
+import { isBanned, isUserGroupBanned } from '../lib/database.js';
 
 export default {
     name: "add",
@@ -48,6 +49,15 @@ export default {
             const existing = findParticipant(groupMetadata, displayBaseId);
             if (existing) {
                 return message.reply("Nomor tersebut sudah ada di dalam grup ini.");
+            }
+
+            // Pengecekan status ban target
+            if (isBanned(targetJid)) {
+                return message.reply(`❌ Nomor *@${displayBaseId}* sedang di-ban secara *global* oleh Owner bot.`);
+            }
+
+            if (isUserGroupBanned(message.chat, targetJid)) {
+                return message.reply(`⚠️ Nomor *@${displayBaseId}* saat ini di-ban dari menggunakan bot di grup ini.\nGunakan *!unban @${displayBaseId}* terlebih dahulu jika ingin mengizinkannya.`);
             }
 
             // Mengirim pesan konfirmasi
