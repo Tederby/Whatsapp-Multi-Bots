@@ -12,8 +12,8 @@
  */
 
 import db from "../lib/db.js";
-import { color } from "../lib/utils.js";
 import { isBanned, isGroupBanned, isUserGroupBanned } from "../lib/database.js";
+import { logger } from "../lib/logger.js";
 
 const BOT_ID = process.env.BOT_ID || "default";
 
@@ -68,7 +68,7 @@ async function _triggerReminder(reminder) {
             mentions: [user_id],
         });
     } catch (err) {
-        console.error(color("[REMINDER ERROR]", "red"), `Gagal mengirim reminder ke ${user_id} di ${chat_id}:`, err.message);
+        logger.error("REMINDER", `Gagal mengirim reminder ke ${user_id} di ${chat_id}: ${err.message}`);
     }
 
     // Remove from DB and timer map

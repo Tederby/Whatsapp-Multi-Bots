@@ -18,11 +18,12 @@
 
 import { spawn } from "child_process";
 import os from "os";
+import setting from "../setting.js";
 
 // ── Configuration ───────────────────────────────────────────────────────────
-const SSH_HOST = "103.168.146.150";
-const SSH_PORT = 40015;
-const SSH_USER = "root";
+const SSH_HOST = setting.ssh.host;
+const SSH_PORT = setting.ssh.port;
+const SSH_USER = setting.ssh.user;
 const EXEC_TIMEOUT = 60_000;        // 60 seconds max per command
 const MAX_OUTPUT_LENGTH = 4000;     // WhatsApp safe limit (chars)
 const SHELL = "/bin/bash";

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { jidNormalizedUser } from "baileys";
 import { getUser, resolveUserId } from "../lib/database.js";
+import setting from "../setting.js";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const PRIMARY_MODEL = "gemini-3.5-flash-lite";
@@ -156,7 +157,7 @@ export default {
     description: "Terjemahkan teks ke bahasa lain menggunakan AI (Gemini)",
     usage: "!translate <kode bahasa> <teks> atau reply pesan dengan !translate <kode bahasa>",
     async handler({ message, args, rawArgs }) {
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = setting.gemini?.apiKey || process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return message.reply("❌ GEMINI_API_KEY belum diatur di file .env.");
         }

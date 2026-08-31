@@ -1,4 +1,5 @@
 import axios from 'axios';
+import setting from '../setting.js';
 
 /**
  * Konversi durasi format ISO 8601 (misal PT4M13S) menjadi string mm:ss atau hh:mm:ss
@@ -34,7 +35,7 @@ export function parseYtDuration(duration) {
  * @returns {Promise<Array>} Array berisi detail video
  */
 export async function searchYouTube(query, maxResults = 20) {
-    const apiKey = process.env.YOUTUBE_API_KEY;
+    const apiKey = setting.youtube?.apiKey || process.env.YOUTUBE_API_KEY;
     if (!apiKey) {
         throw new Error("YOUTUBE_API_KEY belum dikonfigurasi di file .env");
     }

@@ -33,6 +33,31 @@ const setting = {
         apiKey: process.env.STEAM_API_KEY || "",
     },
 
+    // ── YouTube Data API ────────────────────────────────────────────────
+    youtube: {
+        apiKey: process.env.YOUTUBE_API_KEY || "",
+    },
+
+    // ── Gemini AI ────────────────────────────────────────────────────────
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY || "",
+    },
+
+    // ── SSH Terminal (!bash) ─────────────────────────────────────────────
+    ssh: {
+        host: process.env.SSH_HOST || "103.168.146.150",
+        port: parseInt(process.env.SSH_PORT, 10) || 40015,
+        user: process.env.SSH_USER || "root",
+    },
+
+    // ── Branding & Customization ─────────────────────────────────────────
+    branding: {
+        ownerImage: process.env.OWNER_IMAGE || "https://cdn.donmai.us/sample/3a/78/__hatsune_miku_mii_and_mikudayo_vocaloid_and_2_more_drawn_by_yunkkker__sample-3a782c2a60fa7c871f6edad47fd88dc1.jpg",
+        channelUrl: process.env.CHANNEL_URL || "https://whatsapp.com/channel/0029VbB1Xqv1noz03aqgWx0s",
+        stickerPack: process.env.STICKER_PACK || "WhatsApp Bot",
+        stickerAuthor: process.env.STICKER_AUTHOR || (process.env.BOT_NAME || "Tederby"),
+    },
+
     // ── Spam Filter ─────────────────────────────────────────────────────
     spamDelay: Number(process.env.SPAM_DELAY) || 3000, // ms cooldown per chat
 };

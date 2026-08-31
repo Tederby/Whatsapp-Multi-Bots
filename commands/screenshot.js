@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import puppeteerQueue from "../services/puppeteerQueue.js";
 
 // ── SSRF Protection ─────────────────────────────────────────────────────────
 // Block requests to localhost, private IPs, and reserved ranges.
@@ -151,115 +152,117 @@ export default {
 
         const update = await message.replyUpdate(`⏳ Mengambil screenshot...\n┃ 🔗 ${url}\n┃ ${modeLabel}`);
 
-        // ── Puppeteer ───────────────────────────────────────────────────
-        let browser;
-        try {
-            browser = await puppeteer.launch({
-                headless: true,
-                args: [
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                ],
-            });
+        // ── Puppeteer with Concurrency Limiter ─────────────────────────
+        await puppeteerQueue.run(async () => {
+            let browser;
+            try {
+                browser = await puppeteer.launch({
+                    headless: true,
+                    args: [
+                        "--no-sandbox",
+                        "--disable-setuid-sandbox",
+                        "--disable-dev-shm-usage",
+                        "--disable-gpu",
+                    ],
+                });
 
-            const page = await browser.newPage();
+                const page = await browser.newPage();
 
-            // Set viewport
-            const viewport = isMobile ? { ...VIEWPORT.mobile } : { ...VIEWPORT.desktop };
-            await page.setViewport(viewport);
+                // Set viewport
+                const viewport = isMobile ? { ...VIEWPORT.mobile } : { ...VIEWPORT.desktop };
+                await page.setViewport(viewport);
 
-            // Set mobile user agent
-            if (isMobile) {
-                await page.setUserAgent(MOBILE_UA);
-            }
+                // Set mobile user agent
+                if (isMobile) {
+                    await page.setUserAgent(MOBILE_UA);
+                }
 
-            // Inject dark mode preference
-            if (isDark) {
-                await page.emulateMediaFeatures([
-                    { name: "prefers-color-scheme", value: "dark" },
-                ]);
-            }
+                // Inject dark mode preference
+                if (isDark) {
+                    await page.emulateMediaFeatures([
+                        { name: "prefers-color-scheme", value: "dark" },
+                    ]);
+                }
 
-            // Navigate
-            await page.goto(url, {
-                waitUntil: "networkidle2",
-                timeout: NAVIGATION_TIMEOUT,
-            });
+                // Navigate
+                await page.goto(url, {
+                    waitUntil: "networkidle2",
+                    timeout: NAVIGATION_TIMEOUT,
+                });
 
-            // Extra wait for JS-heavy pages to finish rendering
-            if (extraWaitMs > 0) {
-                await new Promise(r => setTimeout(r, extraWaitMs));
-            }
+                // Extra wait for JS-heavy pages to finish rendering
+                if (extraWaitMs > 0) {
+                    await new Promise(r => setTimeout(r, extraWaitMs));
+                }
 
-            // Take screenshot
-            const screenshotOptions = {
-                type: "png",
-                fullPage: isFullPage,
-            };
+                // Take screenshot
+                const screenshotOptions = {
+                    type: "png",
+                    fullPage: isFullPage,
+                };
 
-            // If full-page, cap max height to prevent enormous images
-            if (isFullPage) {
-                const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
-                if (bodyHeight > SCREENSHOT_MAX_HEIGHT) {
-                    // Set a clip instead of fullPage to cap it
-                    screenshotOptions.fullPage = false;
-                    screenshotOptions.clip = {
-                        x: 0,
-                        y: 0,
-                        width: viewport.width,
-                        height: SCREENSHOT_MAX_HEIGHT,
-                    };
+                // If full-page, cap max height to prevent enormous images
+                if (isFullPage) {
+                    const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
+                    if (bodyHeight > SCREENSHOT_MAX_HEIGHT) {
+                        // Set a clip instead of fullPage to cap it
+                        screenshotOptions.fullPage = false;
+                        screenshotOptions.clip = {
+                            x: 0,
+                            y: 0,
+                            width: viewport.width,
+                            height: SCREENSHOT_MAX_HEIGHT,
+                        };
+                    }
+                }
+
+                const buffer = await page.screenshot(screenshotOptions);
+
+                // Capture title before closing the browser
+                const pageTitle = await page.title().catch(() => "");
+
+                await browser.close();
+                browser = null;
+
+                // ── Send Image ──────────────────────────────────────────────
+
+                let caption = `╭━━━〔 📸 SCREENSHOT 〕━━━\n`;
+                caption += `┃ 🔗 URL   : ${url}\n`;
+                caption += `┃ 📐 Mode  : ${modeLabel}\n`;
+                if (pageTitle) {
+                    caption += `┃ 📄 Title : ${pageTitle}\n`;
+                }
+                caption += `╰━━━━━━━━━━━━━━━━━━━━━━━`;
+
+                await sock.sendMessage(message.chat, {
+                    image: buffer,
+                    caption,
+                }, { quoted: message });
+
+                await update("✅ Screenshot berhasil dikirim!");
+
+            } catch (err) {
+                console.error("[SCREENSHOT]", err);
+
+                // Provide user-friendly error messages
+                let errMsg = "Terjadi kesalahan saat mengambil screenshot.";
+                if (err.message?.includes("net::ERR_NAME_NOT_RESOLVED")) {
+                    errMsg = "Domain tidak ditemukan. Pastikan URL benar.";
+                } else if (err.message?.includes("net::ERR_CONNECTION_REFUSED")) {
+                    errMsg = "Koneksi ditolak oleh server.";
+                } else if (err.message?.includes("net::ERR_CONNECTION_TIMED_OUT") || err.name === "TimeoutError") {
+                    errMsg = "Koneksi timeout. Website terlalu lama merespons.";
+                } else if (err.message?.includes("net::ERR_CERT")) {
+                    errMsg = "Sertifikat SSL website tidak valid.";
+                }
+
+                await update(`❌ ${errMsg}`);
+            } finally {
+                // Safety: always close browser if still open
+                if (browser) {
+                    try { await browser.close(); } catch { /* ignore */ }
                 }
             }
-
-            const buffer = await page.screenshot(screenshotOptions);
-
-            // Capture title before closing the browser
-            const pageTitle = await page.title().catch(() => "");
-
-            await browser.close();
-            browser = null;
-
-            // ── Send Image ──────────────────────────────────────────────
-
-            let caption = `╭━━━〔 📸 SCREENSHOT 〕━━━\n`;
-            caption += `┃ 🔗 URL   : ${url}\n`;
-            caption += `┃ 📐 Mode  : ${modeLabel}\n`;
-            if (pageTitle) {
-                caption += `┃ 📄 Title : ${pageTitle}\n`;
-            }
-            caption += `╰━━━━━━━━━━━━━━━━━━━━━━━`;
-
-            await sock.sendMessage(message.chat, {
-                image: buffer,
-                caption,
-            }, { quoted: message });
-
-            await update("✅ Screenshot berhasil dikirim!");
-
-        } catch (err) {
-            console.error("[SCREENSHOT]", err);
-
-            // Provide user-friendly error messages
-            let errMsg = "Terjadi kesalahan saat mengambil screenshot.";
-            if (err.message?.includes("net::ERR_NAME_NOT_RESOLVED")) {
-                errMsg = "Domain tidak ditemukan. Pastikan URL benar.";
-            } else if (err.message?.includes("net::ERR_CONNECTION_REFUSED")) {
-                errMsg = "Koneksi ditolak oleh server.";
-            } else if (err.message?.includes("net::ERR_CONNECTION_TIMED_OUT") || err.name === "TimeoutError") {
-                errMsg = "Koneksi timeout. Website terlalu lama merespons.";
-            } else if (err.message?.includes("net::ERR_CERT")) {
-                errMsg = "Sertifikat SSL website tidak valid.";
-            }
-
-            await update(`❌ ${errMsg}`);
-        } finally {
-            // Safety: always close browser if still open
-            if (browser) {
-                try { await browser.close(); } catch { /* ignore */ }
-            }
-        }
+        });
     }
 };

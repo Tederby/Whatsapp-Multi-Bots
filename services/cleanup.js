@@ -78,7 +78,7 @@ function purgeAllTemp(tempDir) {
             logger.info("CLEANUP", `Startup purge: ${files.length} temp file(s)`);
         }
     } catch (e) {
-        console.error(color("[CLEANUP ERROR]", "red"), e.message);
+        logger.error("CLEANUP", `Startup purge error: ${e.message}`);
     }
 }
 
@@ -102,7 +102,7 @@ function cleanupTempFiles(tempDir, maxAgeMs) {
             }
         }
     } catch (e) {
-        console.error("[CLEANUP]", e.message);
+        logger.warn("CLEANUP", `Temp files cleanup error: ${e.message}`);
     }
     return count;
 }

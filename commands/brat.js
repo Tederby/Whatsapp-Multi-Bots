@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Sticker, StickerTypes } from "wa-sticker-formatter";
+import setting from "../setting.js";
 
 export default {
   name: "bratsticker",
@@ -36,7 +37,7 @@ export default {
 
 
       const sticker = new Sticker(response.data, {
-        pack: "Tederby",
+        pack: setting.branding?.stickerPack || "WhatsApp Bot",
         author: `Ⓒ ${pushname || "User"}`,
         type: StickerTypes.FULL,
         quality: 100,

@@ -12,6 +12,7 @@
 // If you encounter SSL errors during development, set it per-request or use a custom agent.
 
 import fs from "fs";
+import path from "path";
 import {
   makeWASocket,
   fetchLatestBaileysVersion,
@@ -33,6 +34,7 @@ import { upsertBotRegistry, getUser, saveUser, banUser } from "./lib/database.js
 import { resolveTarget } from "./lib/jidHelper.js";
 import setting from "./setting.js";
 import { logger as log } from "./lib/logger.js";
+import { runDiagnostics } from "./lib/diagnostics.js";
 
 // ── Initialize command registry (must happen after all static imports settle) ─
 await initCommands();
@@ -42,6 +44,7 @@ let { msgHandler } = await import("./handler.js");
 
 // ── Start services ──────────────────────────────────────────────────────────
 initCleanup();
+runDiagnostics();
 
 // ── Baileys logger ──────────────────────────────────────────────────────────
 const logger = Pino({ level: "silent" });
@@ -82,7 +85,7 @@ try {
 function saveCycleCount(count) {
   try {
     fs.writeFileSync(CYCLE_FILE, JSON.stringify({ count }));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 const MAX_CYCLES = 3;
@@ -110,7 +113,7 @@ function suspendProgram(reason) {
   isSuspended = true;
   console.log(`${TAG} | 🛑 SUSPENDED: ${reason}`);
   console.log(`${TAG} | Untuk melanjutkan, jalankan: pm2 restart ${BOT_ID}`);
-  setInterval(() => {}, 1000 * 60 * 60);
+  setInterval(() => { }, 1000 * 60 * 60);
 }
 
 // ── Graceful Shutdown ───────────────────────────────────────────────────────
@@ -203,7 +206,7 @@ function handleConnectionUpdate(update, sock) {
           let number = setting.pairingNumber.replace(/[^0-9]/g, "");
           if (number.startsWith("08")) number = "628" + number.slice(2);
           else if (number.startsWith("8")) number = "628" + number.slice(1);
-          
+
           const code = await sock.requestPairingCode(number);
           console.log(`\n======================================================`);
           console.log(`${TAG} | 📱 PAIRING CODE: ${code}`);
@@ -306,7 +309,7 @@ function handleConnectionUpdate(update, sock) {
       setTimeout(connectToWhatsApp, delay);
     }
 
-  // ── Connection Open ─────────────────────────────────────────
+    // ── Connection Open ─────────────────────────────────────────
   } else if (connection === "open") {
     // Reset semua counter karena berhasil connect
     reconnectAttempts = 0;
@@ -316,15 +319,15 @@ function handleConnectionUpdate(update, sock) {
       cycleCount = 0;
       saveCycleCount(0);
     }
-    
+
     console.log(`${TAG} | ✅ Connected: ${jidDecode(sock?.user?.id)?.user}`);
-    
+
     // ── Auto-Discovery Heartbeat ─────────────────────────────
     if (registryInterval) clearInterval(registryInterval);
     const myJid = sock.user.id.includes(":") ? sock.user.id.split(":")[0] + "@s.whatsapp.net" : sock.user.id;
     upsertBotRegistry(BOT_ID, myJid);
     registryInterval = setInterval(() => {
-        upsertBotRegistry(BOT_ID, myJid);
+      upsertBotRegistry(BOT_ID, myJid);
     }, 60000);
   }
 }
@@ -361,17 +364,17 @@ setInterval(() => {
 async function handleIncomingCall(callEvent, sock) {
   const call = callEvent[0];
   if (!call) return;
-  
+
   const { id, chatId, isGroup, status } = call;
   if (isGroup) return;
 
   // Tolak panggilan
-  await sock.rejectCall(id, chatId).catch(() => {});
+  await sock.rejectCall(id, chatId).catch(() => { });
 
   // Cegah spam event call dari Baileys (biasanya event muncul berkali-kali untuk 1 panggilan)
   // Hanya proses jika statusnya 'offer' atau ID belum pernah diproses
   if (status && status !== "offer") return;
-  
+
   if (processedCalls.has(id)) return;
   processedCalls.set(id, Date.now());
 
@@ -396,7 +399,7 @@ async function handleIncomingCall(callEvent, sock) {
     await sock.sendMessage(
       chatId,
       { text: "🚫 Kamu telah di-ban secara global karena menelpon bot berulang kali." }
-    ).catch(() => {});
+    ).catch(() => { });
   } else {
     let warningText = `⚠️ Bot tidak bisa menerima panggilan suara/video.`;
     if (user.meta.callCount === 3) {
@@ -404,11 +407,11 @@ async function handleIncomingCall(callEvent, sock) {
     } else {
       warningText += `\n\n_Peringatan ${user.meta.callCount}/3. Setelah 3x peringatan, otomatis global ban._`;
     }
-    
+
     await sock.sendMessage(
       chatId,
       { text: warningText }
-    ).catch(() => {});
+    ).catch(() => { });
   }
 }
 
@@ -448,7 +451,7 @@ const commandWatcher = chokidar.watch(commandsDir, {
 commandWatcher.on("add", async (filePath) => {
   // New command file added
   if (!filePath.endsWith(".js")) return;
-  log.info("HOT-RELOAD", `New command: ${filePath.split("/").pop()}`);
+  log.info("HOT-RELOAD", `New command: ${path.basename(filePath)}`);
   await reloadCommand(filePath);
 });
 

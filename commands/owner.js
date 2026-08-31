@@ -34,7 +34,7 @@ export default {
             // resolveUserId: convert LID→PN if mapping exists
             let normalized = resolveUserId(jidNormalizedUser(jid));
             if (!normalized) normalized = jid;
-            
+
             if (!normalized.includes("@")) {
                 normalized += "@s.whatsapp.net";
             }
@@ -44,12 +44,12 @@ export default {
         if (uniqueAdmins.size > 0) {
             adminText += `╭━━━〔 🛡️ Bot Admins 〕━━━\n`;
             adminText += `┃ Admin yang bertugas moderasi bot.\n`;
-            
+
             let adminIndex = 1;
             uniqueAdmins.forEach((jid) => {
                 const num = jid.split("@")[0];
                 adminMentions.push(jid);
-                
+
                 adminText += `┃ ⋄ Admin ${adminIndex}  : @${num}\n`;
                 adminIndex++;
             });
@@ -58,11 +58,11 @@ export default {
 
         text += adminText;
         text = text.trim();
-        
+
         // Remove duplicates between owner and admins just in case
         const allMentions = [...new Set([...ownerNumbers, ...adminMentions])];
 
-        const imageUrl = "https://cdn.donmai.us/sample/3a/78/__hatsune_miku_mii_and_mikudayo_vocaloid_and_2_more_drawn_by_yunkkker__sample-3a782c2a60fa7c871f6edad47fd88dc1.jpg"; // Ganti URL ini dengan link gambar Anda
+        const imageUrl = setting.branding?.ownerImage;
 
         // Kirim gambar beserta teks dan mention, fallback ke text jika gagal
         try {

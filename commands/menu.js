@@ -219,12 +219,4 @@ async function replyHandler({ message, sock, state }) {
     deleteReplyHandler(messageKey.id);
 
     await sock.sendMessage(message.chat, { text: newMenuText, edit: messageKey });
-
-    const newTimeoutId = setTimeout(async () => {
-        try {
-            await sock.sendMessage(message.chat, { text: "❌ *Command timeout*", edit: messageKey });
-        } catch (err) {
-            // Message too old or already edited — ignore
-        }
-    }, 60000);
 }

@@ -29,9 +29,13 @@ module.exports = {
         OWNER_NUMBER: "628xxxxxxxxxxx",
         PREFIXES: "!.#/-",
         SPAM_DELAY: "5000",
-        // YOUTUBE_API_KEY: "YOUR_YOUTUBE_API_KEY",  If use different API
+        // YOUTUBE_API_KEY: "YOUR_YOUTUBE_API_KEY",
         // STEAM_API_KEY: "YOUR_STEAM_API_KEY",
-        PAIRING_NUMBER: "628xxxxxxxxxxx", // Opsional: Isi dengan nomor bot untuk login via Pairing Code (tanpa scan QR)
+        // GEMINI_API_KEY: "YOUR_GEMINI_API_KEY",
+        // SSH_HOST: "103.168.146.150",
+        // SSH_PORT: "40015",
+        // SSH_USER: "root",
+        PAIRING_NUMBER: "628xxxxxxxxxxx", // Optional: Fill with bot number to login via Pairing Code (no QR scan)
       },
     },
     {
@@ -47,7 +51,7 @@ module.exports = {
         // PAIRING_NUMBER: "628xxxxxxxxxxx",
       },
     },
-    // ── Template (uncomment untuk mengaktifkan) ──────────────
+    // ── Template (uncomment to activate) ──────────────────────
     // {
     //   name: "bot3",
     //   script: "./index.js",

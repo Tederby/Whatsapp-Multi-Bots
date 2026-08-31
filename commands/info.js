@@ -93,7 +93,9 @@ export default {
             text += `╰──────────────\n\n`;
 
             text += `╭───「 📢 Update & Info 」\n`;
-            text += `│ ⋄ Channel : https://whatsapp.com/channel/0029VbB1Xqv1noz03aqgWx0s\n`;
+            if (setting.branding?.channelUrl) {
+                text += `│ ⋄ Channel : ${setting.branding.channelUrl}\n`;
+            }
             text += `│ ⋄ Error   : \`${prefix}saran\` / \`${prefix}report\`\n`;
             text += `╰──────────────`;
 
