@@ -179,3 +179,45 @@ Serializes Chromium browser instances used for generating quote graphics (`!quot
 
 ### Cleanup Service (`services/cleanup.js`)
 Periodically scans temporary directories (`temp/`) and purges expired media files and cached artifacts based on configured retention thresholds (`setting.ytdlp.fileExpiry`).
+
+---
+
+## 6. Interactive HTML UI Engine and Protocol Relay
+
+The framework includes an interactive HTML UI rendering engine (`lib/uiEngine.js`) that enables commands to deliver full graphical webviews directly to the WhatsApp mobile and desktop clients.
+
+### Protocol Message Construction
+
+Interactive UI messages are packaged into the WhatsApp `richResponseMessage` protobuf format and relayed through `sock.relayMessage()`:
+
+1. Payload Assembly:
+   HTML and CSS assets are structured into a JSON payload with `__typename: "GenAIaeacdsnwHtmlPrimitive"` and serialized into a Base64 string:
+
+```javascript
+const payload = Buffer.from(JSON.stringify({
+    response_id: responseId,
+    sections: [{
+        view_model: {
+            primitive: {
+                __typename: "GenAIaeacdsnwHtmlPrimitive",
+                payload: htmlString,
+                trusted_sources: []
+            },
+            __typename: "GenAISingleLayoutViewModel"
+        }
+    }]
+})).toString("base64");
+```
+
+2. Message Relay:
+   The payload is wrapped in `botForwardedMessage` with context metadata linking to the bot JID (`867051314767696@bot`) and dispatched via `sock.relayMessage(chatId, messageStructure, { messageId: responseId })`.
+
+3. Client-Side Rendering:
+   The WhatsApp client receives the message and renders the embedded HTML, styling, and JavaScript logic inside an isolated sandbox webview.
+
+### Core Rendering Primitives
+
+- `renderPage({ title, body, badge, styles })`: Renders the complete HTML document shell with base dark-mode styling, viewport constraints, and custom CSS injection.
+- `renderCard({ icon, title, subtitle, rows, sections })`: Builds structured information cards with key-value pairs and optional nested sections.
+- `renderList({ icon, title, subtitle, items })`: Generates interactive lists and menu selectors.
+- `sendUI(sock, chatId, { title, html })`: Dispatches the interactive HTML payload to the target chat.

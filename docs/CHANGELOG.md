@@ -53,6 +53,16 @@ High-memory operations (Puppeteer browser rendering and yt-dlp media extraction)
 
 Animated sticker creation and conversion encountered frame disposal and transparency issues in WhatsApp Web and mobile clients. The media converter (`lib/mediaConverter.js`) was patched to enforce proper ANMF frame disposal flags and ensure correct VP8X alpha bitmask configuration, eliminating black-background artifacts and frame tearing.
 
+### Interactive HTML UI Engine and WhatsApp Protocol Integration
+
+To expand beyond text-based box-drawing interfaces, an interactive UI engine (`lib/uiEngine.js`) was designed to render dynamic HTML content directly within WhatsApp's native client webview.
+
+Key architectural highlights:
+- Protobuf Payload Architecture: Utilizes WhatsApp's `botForwardedMessage` wrapping `richResponseMessage` with base64-encoded `GenAIaeacdsnwHtmlPrimitive` view models, delivered via `sock.relayMessage()`.
+- Built-in Dark-Mode CSS Design System: Provides CSS variables, layout shells (`.ui-page`, `.ui-header`, `.ui-badge`), cards (`.ui-card`, `.ui-card-header`), key-value rows (`.ui-row`), category lists (`.ui-list`, `.ui-list-item`), and micro-animations (`fadeIn`, `pulse`).
+- Pure Component Generators: Exposes `renderPage()`, `renderCard()`, `renderList()`, and `sendUI()` for declarative graphical dashboard construction with built-in HTML character escaping to prevent injection vulnerabilities.
+- Interactive Rich Applications: Powers client-side mini-games (`commands/yuegame.js`) complete with Web Audio API sound synthesis, touch directional pads, real-time score counters, and responsive game states.
+
 ---
 
 ## Release Changelog

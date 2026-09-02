@@ -158,3 +158,69 @@ const lines = [
 
 await message.reply(lines.join("\n"));
 ```
+
+---
+
+## 7. Interactive HTML UI Responses
+
+For commands requiring visual interfaces, menus, or mini-games, use `lib/uiEngine.js` to deliver rich HTML webview messages:
+
+### Example: Rendering a Profile Card
+
+```javascript
+import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
+
+// Inside command handler:
+const cardHtml = renderCard({
+    icon: "[P]",
+    title: pushname || "User Profile",
+    subtitle: `ID: ${sender}`,
+    rows: [
+        { label: "Role", value: isOwner ? "Owner" : "Member" },
+        { label: "Status", value: isRegistered ? "Registered" : "Guest" }
+    ],
+    sections: [
+        {
+            title: "Statistics",
+            rows: [
+                { label: "Messages", value: "142" }
+            ]
+        }
+    ]
+});
+
+const pageHtml = renderPage({
+    title: "User Profile",
+    badge: isOwner ? "OWNER" : "USER",
+    body: cardHtml
+});
+
+await sendUI(sock, message.chat, {
+    title: "User Profile",
+    html: pageHtml
+});
+```
+
+### Example: Rendering Interactive Menus / Category Lists
+
+```javascript
+import { sendUI, renderPage, renderList } from "../lib/uiEngine.js";
+
+const listHtml = renderList({
+    title: "Command Categories",
+    subtitle: "Select a module to view available commands",
+    items: [
+        { icon: "[G]", title: "General", desc: "Basic information and utilities" },
+        { icon: "[M]", title: "Media", desc: "Sticker and image processing" },
+        { icon: "[D]", title: "Downloader", desc: "High-speed media extraction" }
+    ]
+});
+
+await sendUI(sock, message.chat, {
+    title: "Bot Menu",
+    html: renderPage({
+        title: "Navigation Menu",
+        body: listHtml
+    })
+});
+```
