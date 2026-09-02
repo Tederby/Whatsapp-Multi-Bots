@@ -63,6 +63,15 @@ Key architectural highlights:
 - Pure Component Generators: Exposes `renderPage()`, `renderCard()`, `renderList()`, and `sendUI()` for declarative graphical dashboard construction with built-in HTML character escaping to prevent injection vulnerabilities.
 - Interactive Rich Applications: Powers client-side mini-games (`commands/yuegame.js`) complete with Web Audio API sound synthesis, touch directional pads, real-time score counters, and responsive game states.
 
+### User Display Preference Architecture (UI vs Text Mode)
+
+With the introduction of the interactive HTML UI engine (`lib/uiEngine.js`), commands can render rich webviews directly inside supported WhatsApp clients. However, user environments vary (some devices or clients may prefer lightweight, text-first messages or lack webview support).
+
+A user preference setting (`meta.displayMode` with values `"ui"` or `"text"`) was introduced:
+- Zero-Migration Fallback: By leveraging the in-code nullish coalescing pattern (`userData.meta?.displayMode ?? "ui"`), all existing database records default seamlessly to `"ui"` mode without requiring schema changes or database migration runs.
+- Preference Controls: Users can configure their preference via `!register mode <ui|text>` (or via the interactive registration reply menu) and view their active mode via `!profile`.
+- Adaptive Command Rendering: Implemented in `commands/anime.js` (`!anime`), dynamically rendering interactive cards (`renderCard`, `renderPage`, `sendUI`) for UI mode and fallback poster image with formatted caption for Text mode. Includes on-the-fly override flags (`--ui` and `--text`).
+
 ---
 
 ## Release Changelog
@@ -96,3 +105,4 @@ Key architectural highlights:
 - Tools and Utilities: Reminder engine (`!remind`, `!unremind`), Puppeteer quote card maker (`!quote`), webpage screenshot tool (`!screenshot`), and registration system (`!register`, `!profile`, `!groupprofile`).
 - Owner and Administration: Remote terminal shell execution (`!bash`), database repair utilities (`!dbfix`), ID scanner (`!scanids`), and bot administrator delegation (`!addbotadmin`, `!delbotadmin`).
 - Interactive Experiments: Added interactive text-based engine tests (`commands/yuegame.js`).
+- User Interface and Display Modes: Added user display preference (`meta.displayMode`) with default `"ui"`, `!register mode <ui|text>`, profile status indicator, and adaptive rendering in `!anime`.

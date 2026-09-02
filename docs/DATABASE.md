@@ -40,7 +40,7 @@ Stores user profile information, registration status, ban state, and metadata.
 | `banned_at` | `INTEGER` | `NULL` | Unix timestamp of ban enforcement. |
 | `banned_by` | `TEXT` | `NULL` | JID of administrator who issued the ban. |
 | `ban_reason` | `TEXT` | `NULL` | Ban explanation note. |
-| `meta` | `TEXT` | `'{}'` | JSON serialized string for arbitrary user data extensions. |
+| `meta` | `TEXT` | `'{}'` | JSON serialized string for arbitrary user data extensions (e.g., `isBotAdmin`, `steamId`, `malUsername`, `displayMode`). |
 
 ### `groups`
 Stores group chat configurations, greeting triggers, and local ban status.

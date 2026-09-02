@@ -75,7 +75,7 @@ export default {
     aliases: ["reg", "daftar", "registrasi"],
     category: "general",
     description: "Mendaftarkan diri ke database bot dan mengatur profil.",
-    usage: "!register [name/unreg/mal/steam/unlink] [value]",
+    usage: "!register [name/unreg/mal/steam/unlink/mode] [value]",
 
     async handler({ message, args, sender, pushname, prefix, sock }) {
         try {
@@ -130,6 +130,20 @@ export default {
                     saveUser(sender, user);
                     return message.reply(`✅ Tautan akun ${service.toUpperCase()} telah dilepas.`);
                 }
+
+                // !register mode <ui/text>
+                if (cmd === "mode" || cmd === "display") {
+                    const mode = (args[1] || "").toLowerCase();
+                    if (mode !== "ui" && mode !== "text") {
+                        return message.reply(`❌ Pilih mode yang valid:\n• \`${prefix}register mode ui\` (Tampilan interaktif)\n• \`${prefix}register mode text\` (Teks biasa)`);
+                    }
+                    if (!isRegistered(sender)) registerUser(sender, pushname);
+                    const user = getUser(sender);
+                    user.meta = user.meta || {};
+                    user.meta.displayMode = mode;
+                    saveUser(sender, user);
+                    return message.reply(`✅ Preferensi tampilan berhasil diubah menjadi: *${mode === "ui" ? "UI Interaktif" : "Teks Biasa"}*.`);
+                }
             }
 
             // ── No sub-command: tampilkan info + menu ───────────────
@@ -149,6 +163,9 @@ export default {
                 })
                 : "Tidak diketahui";
 
+            const displayMode = user.meta?.displayMode ?? "ui";
+            const displayModeLabel = displayMode === "ui" ? "UI Interaktif (Default)" : "Teks Biasa";
+
             let caption = `╭━━━〔 📝 Registrasi 〕━━━\n`;
             if (isNewUser) {
                 caption += `┃ ✅ *Registrasi Berhasil!*\n`;
@@ -157,8 +174,9 @@ export default {
                 caption += `┃ ℹ️ *Informasi Akun*\n`;
             }
             caption += `┣━━━━━━━━━━━━━━━━━━━━\n`;
-            caption += `┃ 📛 Nama   : ${user.name || "Tidak diketahui"}\n`;
-            caption += `┃ 📅 Tanggal: ${regDate}\n`;
+            caption += `┃ 📛 Nama    : ${user.name || "Tidak diketahui"}\n`;
+            caption += `┃ 🖥️ Tampilan: ${displayModeLabel}\n`;
+            caption += `┃ 📅 Tanggal : ${regDate}\n`;
             caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
             caption += `╭━━━〔 ⚙️ Menu Pengaturan 〕━━━\n`;
@@ -168,6 +186,10 @@ export default {
             caption += `┃ ⋄ \`name <nama baru>\` ganti nama\n`;
             caption += `┃ ⋄ \`unreg\` hapus registrasi\n`;
             caption += `┃\n`;
+            caption += `┃ 🖥️ *Tampilan*\n`;
+            caption += `┃ ⋄ \`mode ui\` tampilan interaktif (default)\n`;
+            caption += `┃ ⋄ \`mode text\` tampilan teks biasa\n`;
+            caption += `┃\n`;
             caption += `┃ 🔗 *Link Akun*\n`;
             caption += `┃ ⋄ \`mal <username>\` tautkan MAL\n`;
             caption += `┃ ⋄ \`steam <custom_url/steamid>\` tautkan Steam\n`;
@@ -175,7 +197,7 @@ export default {
             caption += `┃ ⋄ \`unlink steam\` lepas Steam\n`;
             caption += `┃\n`;
             caption += `┃ 💡 _Bisa juga langsung:_\n`;
-            caption += "┃ _`" + prefix + "register name Tederby`_\n";
+            caption += "┃ _`" + prefix + "register mode ui`_\n";
             caption += `╰━━━━━━━━━━━━━━━━━━━━`;
 
             const sentMsg = await sock.sendMessage(message.chat, { text: caption }, { quoted: message });
@@ -227,6 +249,25 @@ async function replyHandler({ message, sock, state }) {
         return;
     }
 
+    // ── Display Mode ────────────────────────────────────────────────
+    if (cmd === "mode" || cmd === "display") {
+        const mode = (args[1] || "").toLowerCase();
+        if (mode !== "ui" && mode !== "text") {
+            await message.reply("❌ Pilih mode yang valid:\n• `mode ui` (Tampilan interaktif)\n• `mode text` (Teks biasa)");
+            return;
+        }
+
+        const user = getUser(userId);
+        user.meta = user.meta || {};
+        user.meta.displayMode = mode;
+        saveUser(userId, user);
+
+        deleteReplyHandler(messageKey.id);
+        await sock.sendMessage(message.chat, { text: `>> *Updating display mode*`, edit: messageKey });
+        await message.reply(`✅ Preferensi tampilan berhasil diubah menjadi: *${mode === "ui" ? "UI Interaktif" : "Teks Biasa"}*.`);
+        return;
+    }
+
     // ── Account Linking: MAL & Steam ────────────────────────────────────────
     if (cmd === "mal" || cmd === "steam") {
         const value = args.slice(1).join(" ").trim();
@@ -266,6 +307,7 @@ async function replyHandler({ message, sock, state }) {
         "❌ Perintah tidak dikenali.\n\n" +
         "Pilihan yang tersedia:\n" +
         "⋄ `name <nama baru>` — ganti nama\n" +
+        "⋄ `mode <ui/text>` — atur preferensi tampilan\n" +
         "⋄ `unreg` — hapus registrasi\n" +
         "⋄ `mal <username>` — tautkan MAL\n" +
         "⋄ `steam <id>` — tautkan Steam\n" +

@@ -1,6 +1,8 @@
 import axios from "axios";
 import https from "https";
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
+import { getUser, resolveUserId } from "../lib/database.js";
+import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -46,20 +48,26 @@ export default {
     aliases: ["myanimelist"],
     category: "anime",
     description: "Mencari daftar anime dari MyAnimeList",
-    usage: "!anime <judul>",
+    usage: "!anime <judul> [--top/-1] [--ui/--text]",
     async handler({ message, args, sock, sender }) {
         if (args.length === 0) {
-            await message.reply("❌ Berikan judul anime yang ingin dicari.\nContoh: `!anime naruto`\n\n💡 *Tip:* Tambahkan `-1` atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list. Contoh: `!anime naruto -1`");
+            await message.reply("❌ Berikan judul anime yang ingin dicari.\nContoh: `!anime naruto`\n\n💡 *Tip:* Tambahkan `-1` atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list. Contoh: `!anime naruto -1`\n💡 *Mode:* Tambahkan `--ui` untuk paksa UI interaktif atau `--text` untuk teks biasa.");
             return;
         }
 
         let isDirect = false;
+        let forcedMode = null;
         const cleanArgs = [];
         const directFlags = ["--top", "-t", "-1", "--direct", "top"];
 
         for (const arg of args) {
-            if (directFlags.includes(arg.toLowerCase())) {
+            const lower = arg.toLowerCase();
+            if (directFlags.includes(lower)) {
                 isDirect = true;
+            } else if (lower === "--ui") {
+                forcedMode = "ui";
+            } else if (lower === "--text" || lower === "--txt") {
+                forcedMode = "text";
             } else {
                 cleanArgs.push(arg);
             }
@@ -89,7 +97,7 @@ export default {
             const results = response.data.data;
 
             if (isDirect || results.length === 1) {
-                await sendAnimeDetail(results[0], message, sock);
+                await sendAnimeDetail(results[0], message, sock, sender, forcedMode);
                 return;
             }
 
@@ -104,7 +112,8 @@ export default {
                 query,
                 userId: sender,
                 messageKey: sentMsg.key,
-                commandName: "anime"
+                commandName: "anime",
+                forcedMode
             });
 
         } catch (err) {
@@ -163,12 +172,12 @@ async function replyHandler({ message, sock, state }) {
         deleteReplyHandler(messageKey.id);
         await sock.sendMessage(message.chat, { text: `>> *${anime.title}*`, edit: messageKey });
 
-        await sendAnimeDetail(anime, message, sock);
+        await sendAnimeDetail(anime, message, sock, state.userId, state.forcedMode);
         return;
     }
 }
 
-async function sendAnimeDetail(anime, message, sock) {
+async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) {
     const title = anime.title || "N/A";
     const titleEng = anime.title_english ? ` (${anime.title_english})` : "";
     const status = anime.status || "N/A";
@@ -197,6 +206,66 @@ async function sendAnimeDetail(anime, message, sock) {
         imageUrl = anime.images.jpg.large_image_url;
     } else if (anime.images?.jpg?.image_url) {
         imageUrl = anime.images.jpg.image_url;
+    }
+
+    // Tentukan mode tampilan: flag eksplisit > preferensi user di DB > fallback default "ui"
+    const normalizedSender = resolveUserId(sender);
+    const userData = getUser(normalizedSender);
+    const displayMode = forcedMode || (userData.meta?.displayMode ?? "ui");
+
+    if (displayMode === "ui") {
+        try {
+            let cardBody = "";
+            if (imageUrl) {
+                cardBody += `<div style="text-align:center;margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border);">` +
+                    `<img src="${imageUrl}" alt="${title}" style="width:100%;max-height:260px;object-fit:cover;display:block;" onerror="this.style.display='none'" />` +
+                    `</div>`;
+            }
+
+            const cardHtml = renderCard({
+                icon: "🎌",
+                title: title,
+                subtitle: titleEng ? `${titleEng.replace(/[()]/g, '').trim()} • ${type}` : type,
+                rows: [
+                    { label: "Score", value: `⭐ ${score}` },
+                    { label: "Rank", value: `#${rank} (Pop #${popularity})` },
+                    { label: "Episodes", value: `${episodes} Eps (${duration})` },
+                    { label: "Status", value: status },
+                    { label: "Season", value: seasonYear },
+                    { label: "Studio", value: studios },
+                    { label: "Rating", value: rating }
+                ],
+                sections: [
+                    {
+                        title: "🎭 Genres",
+                        rows: [
+                            { label: "List", value: genres }
+                        ]
+                    },
+                    {
+                        title: "📝 Synopsis",
+                        rows: [
+                            { label: "Summary", value: synopsis.length > 320 ? synopsis.slice(0, 317) + "..." : synopsis }
+                        ]
+                    }
+                ]
+            });
+
+            const pageHtml = renderPage({
+                title: "🎌 Anime Information",
+                badge: score !== "N/A" ? `⭐ ${score}` : "MAL",
+                body: cardBody + cardHtml
+            });
+
+            await sendUI(sock, message.chat, {
+                title: `🎌 ${title} (${score !== "N/A" ? "⭐ " + score : type})`,
+                html: pageHtml
+            });
+            return;
+        } catch (uiErr) {
+            console.error("[Anime UI Error - Fallback to Text]", uiErr);
+            // Fallback ke mode teks di bawah jika sendUI gagal
+        }
     }
 
     let captionText = `🎌 *${title}*${titleEng}\n\n`;

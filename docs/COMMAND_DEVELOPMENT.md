@@ -224,3 +224,34 @@ await sendUI(sock, message.chat, {
     })
 });
 ```
+
+### Adaptive UI vs Text Mode Pattern
+
+When building commands that support rich HTML UI, respect the user's `meta.displayMode` preference with default fallback to `"ui"`, and allow on-the-fly override flags (`--ui` / `--text`):
+
+```javascript
+import { getUser, resolveUserId } from "../lib/database.js";
+import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
+
+// Determine active mode: flag override > DB preference > default "ui"
+const userData = getUser(resolveUserId(sender));
+const displayMode = forcedMode || (userData.meta?.displayMode ?? "ui");
+
+if (displayMode === "ui") {
+    try {
+        const cardHtml = renderCard({ ... });
+        await sendUI(sock, message.chat, {
+            title: "Result Title",
+            html: renderPage({ title: "Header", body: cardHtml })
+        });
+        return;
+    } catch (err) {
+        console.error("[UI Fallback]", err);
+        // Fallback to text below
+    }
+}
+
+// Fallback / Text Mode
+await message.reply(captionText);
+```
+

@@ -101,6 +101,9 @@ export default {
 
             caption += `┃ 🏷️ User  : @${targetBaseId}\n`;
             caption += `┃ 🎖️ Role  : ${roles.join(", ")}\n`;
+            const displayMode = userData.meta?.displayMode ?? "ui";
+            const displayModeLabel = displayMode === "ui" ? "UI Interaktif" : "Teks Biasa";
+            caption += `┃ 🖥️ Mode  : ${displayModeLabel}\n`;
             caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
             // Registration status
