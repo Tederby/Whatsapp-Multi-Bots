@@ -2,7 +2,7 @@ import axios from "axios";
 import https from "https";
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 import { getUser, resolveUserId } from "../lib/database.js";
-import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
+import { sendUI, renderPage, renderCard, renderList } from "../lib/uiEngine.js";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -43,6 +43,40 @@ function generateListText(results, page, query) {
     return text.trim();
 }
 
+function generateListUI(results, page, query) {
+    const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
+    const start = page * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const currentItems = results.slice(start, end);
+
+    const items = currentItems.map((anime, index) => {
+        let year = anime.year || (anime.aired?.prop?.from?.year) || "N/A";
+        return {
+            icon: "🎌",
+            title: `${start + index + 1}. ${anime.title}`,
+            desc: `${anime.type || "TV"} • ⭐ ${anime.score || "N/A"} • ${anime.episodes || "?"} Eps • ${year}`
+        };
+    });
+
+    const listHtml = renderList({
+        icon: "🔍",
+        title: "Daftar Anime",
+        subtitle: `Pencarian: "${query}" (Halaman ${page + 1}/${totalPages})`,
+        items
+    });
+
+    const helpCard = `<div class="ui-card ui-mt-sm" style="padding:10px 14px;text-align:center;font-size:11px;color:var(--text-accent);">` +
+        `💡 Balas pesan ini dengan angka (1-${currentItems.length}) untuk melihat detail.` +
+        (totalPages > 1 ? `<br>Ketik <b>n</b> untuk next, <b>b</b> untuk back.` : "") +
+        `</div>`;
+
+    return renderPage({
+        title: "🎌 Anime Search",
+        badge: `Page ${page + 1}/${totalPages}`,
+        body: listHtml + helpCard
+    });
+}
+
 export default {
     name: "anime",
     aliases: ["myanimelist"],
@@ -80,6 +114,13 @@ export default {
             return;
         }
 
+        const normalizedSender = resolveUserId(sender);
+        const userData = getUser(normalizedSender);
+        const userPref = userData.meta?.displayMode ?? "ui";
+        const displayMode = forcedMode || userPref;
+
+        console.log(`[Anime] Query: "${query}" | Sender: ${normalizedSender} | Flag: ${forcedMode || "none"} | UserDB: ${userPref} | Mode: ${displayMode} | Direct: ${isDirect}`);
+
         try {
             const response = await axios.get(`https://api.tenrai.org/v1/anime?q=${encodeURIComponent(query)}&limit=20`, {
                 timeout: 15000, // Timeout 15 detik
@@ -90,22 +131,51 @@ export default {
             });
 
             if (!response.data || !response.data.data || response.data.data.length === 0) {
+                console.log(`[Anime] No results found for query: "${query}"`);
                 await message.reply(`❌ Anime dengan kata kunci *${query}* tidak ditemukan di database.`);
                 return;
             }
 
             const results = response.data.data;
+            console.log(`[Anime] Found ${results.length} results for "${query}"`);
 
             if (isDirect || results.length === 1) {
+                console.log(`[Anime] Directly rendering detail for "${results[0].title}" (Mode: ${displayMode})`);
                 await sendAnimeDetail(results[0], message, sock, sender, forcedMode);
                 return;
             }
 
-            const text = generateListText(results, 0, query);
+            if (displayMode === "ui") {
+                console.log(`[Anime UI] Dispatching search list UI for "${query}" (Page 1)`);
+                try {
+                    const html = generateListUI(results, 0, query);
+                    const sent = await sendUI(sock, message.chat, {
+                        title: `🎌 Anime Search: "${query}"`,
+                        html
+                    });
+                    console.log(`[Anime UI] Search list UI successfully dispatched. Message ID: ${sent?.messageId}`);
 
+                    registerReplyHandler(sent.messageId, replyHandler, {
+                        results,
+                        page: 0,
+                        query,
+                        userId: sender,
+                        messageKey: sent.key,
+                        commandName: "anime",
+                        forcedMode,
+                        displayMode: "ui"
+                    });
+                    return;
+                } catch (uiErr) {
+                    console.error("[Anime UI Error] Failed to send search list UI, falling back to text:", uiErr);
+                    // Fallback to text below
+                }
+            }
+
+            console.log(`[Anime Text] Dispatching search list as text for "${query}" (Page 1)`);
+            const text = generateListText(results, 0, query);
             const sentMsg = await sock.sendMessage(message.chat, { text }, { quoted: message });
 
-            // Register reply handler for pagination and detail selection
             registerReplyHandler(sentMsg.key.id, replyHandler, {
                 results,
                 page: 0,
@@ -113,20 +183,19 @@ export default {
                 userId: sender,
                 messageKey: sentMsg.key,
                 commandName: "anime",
-                forcedMode
+                forcedMode,
+                displayMode: "text"
             });
 
         } catch (err) {
             let errorMsg = err.message || "Unknown error";
             if (err.response) {
-                // Server merespon dengan status code selain 2xx
                 errorMsg = `HTTP ${err.response.status}: ${err.response.statusText}`;
-                console.error("Anime Command Error (Response):", errorMsg, err.response.data);
+                console.error("[Anime Command Error (Response)]:", errorMsg, err.response.data);
             } else if (err.request) {
-                // Request terkirim tapi tidak ada respon (timeout/network error)
-                console.error("Anime Command Error (Request):", errorMsg);
+                console.error("[Anime Command Error (Request)]:", errorMsg);
             } else {
-                console.error("Anime Command Error:", err);
+                console.error("[Anime Command Error]:", err);
             }
 
             if (err.code === 'ETIMEDOUT' || err.code === 'ECONNABORTED') {
@@ -144,12 +213,30 @@ export default {
 
 async function replyHandler({ message, sock, state }) {
     const text = message.text.toLowerCase().trim();
-    const { results, page, query, messageKey } = state;
+    const { results, page, query, messageKey, displayMode, forcedMode } = state;
     const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
 
     if (text === "n" || text === "next") {
         if (page < totalPages - 1) {
             state.page += 1;
+            console.log(`[Anime Reply] Pagination next -> Page ${state.page + 1}/${totalPages} (Mode: ${displayMode})`);
+
+            if (displayMode === "ui") {
+                try {
+                    const html = generateListUI(results, state.page, query);
+                    const sent = await sendUI(sock, message.chat, {
+                        title: `🎌 Anime Search: "${query}"`,
+                        html
+                    });
+                    deleteReplyHandler(messageKey.id);
+                    state.messageKey = sent.key;
+                    registerReplyHandler(sent.messageId, replyHandler, state);
+                    return;
+                } catch (err) {
+                    console.error("[Anime Reply UI Error] Failed to update UI page, falling back to text:", err);
+                }
+            }
+
             const newText = generateListText(results, state.page, query);
             await sock.sendMessage(message.chat, { text: newText, edit: messageKey });
         }
@@ -159,6 +246,24 @@ async function replyHandler({ message, sock, state }) {
     if (text === "b" || text === "back") {
         if (page > 0) {
             state.page -= 1;
+            console.log(`[Anime Reply] Pagination back -> Page ${state.page + 1}/${totalPages} (Mode: ${displayMode})`);
+
+            if (displayMode === "ui") {
+                try {
+                    const html = generateListUI(results, state.page, query);
+                    const sent = await sendUI(sock, message.chat, {
+                        title: `🎌 Anime Search: "${query}"`,
+                        html
+                    });
+                    deleteReplyHandler(messageKey.id);
+                    state.messageKey = sent.key;
+                    registerReplyHandler(sent.messageId, replyHandler, state);
+                    return;
+                } catch (err) {
+                    console.error("[Anime Reply UI Error] Failed to update UI page, falling back to text:", err);
+                }
+            }
+
             const newText = generateListText(results, state.page, query);
             await sock.sendMessage(message.chat, { text: newText, edit: messageKey });
         }
@@ -170,7 +275,11 @@ async function replyHandler({ message, sock, state }) {
         const anime = results[num - 1];
 
         deleteReplyHandler(messageKey.id);
-        await sock.sendMessage(message.chat, { text: `>> *${anime.title}*`, edit: messageKey });
+        console.log(`[Anime Reply] User selected #${num} "${anime.title}" (ForcedMode: ${forcedMode || "none"})`);
+
+        if (displayMode !== "ui") {
+            await sock.sendMessage(message.chat, { text: `>> *${anime.title}*`, edit: messageKey });
+        }
 
         await sendAnimeDetail(anime, message, sock, state.userId, state.forcedMode);
         return;
@@ -211,10 +320,14 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
     // Tentukan mode tampilan: flag eksplisit > preferensi user di DB > fallback default "ui"
     const normalizedSender = resolveUserId(sender);
     const userData = getUser(normalizedSender);
-    const displayMode = forcedMode || (userData.meta?.displayMode ?? "ui");
+    const userPref = userData.meta?.displayMode ?? "ui";
+    const displayMode = forcedMode || userPref;
+
+    console.log(`[Anime Detail] Rendering "${title}" | Sender: ${normalizedSender} | Flag: ${forcedMode || "none"} | UserDB: ${userPref} | Mode: ${displayMode}`);
 
     if (displayMode === "ui") {
         try {
+            console.log(`[Anime UI] Building detail card for "${title}"...`);
             let cardBody = "";
             if (imageUrl) {
                 cardBody += `<div style="text-align:center;margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border);">` +
@@ -257,17 +370,19 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
                 body: cardBody + cardHtml
             });
 
-            await sendUI(sock, message.chat, {
+            const sent = await sendUI(sock, message.chat, {
                 title: `🎌 ${title} (${score !== "N/A" ? "⭐ " + score : type})`,
                 html: pageHtml
             });
+            console.log(`[Anime UI] Detail card successfully sent to ${message.chat}. ID: ${sent?.messageId}`);
             return;
         } catch (uiErr) {
-            console.error("[Anime UI Error - Fallback to Text]", uiErr);
+            console.error("[Anime UI Error] Failed to send detail card, falling back to text. Error:", uiErr);
             // Fallback ke mode teks di bawah jika sendUI gagal
         }
     }
 
+    console.log(`[Anime Text] Sending detail as text + media for "${title}"`);
     let captionText = `🎌 *${title}*${titleEng}\n\n`;
     captionText += `🔗 *MyAnimeList:* ${url}\n\n`;
     captionText += `⭐ *Score:* ${score}\n`;
