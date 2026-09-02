@@ -16,9 +16,22 @@ A scalable, high-performance, multi-instance WhatsApp bot built with [Baileys](h
 
 ---
 
+## 📚 Documentation
+
+Detailed technical documentation, architectural deep-dives, and guides are available in the [`docs/`](docs/) directory:
+
+- 📖 [**Documentation Hub**](docs/README.md) — Index and overview of all guides.
+- 📝 [**Development Journal & Changelog**](docs/CHANGELOG.md) — Release notes, architectural evolution, and technical journal entries.
+- 🏗️ [**System Architecture**](docs/ARCHITECTURE.md) — Message processing pipeline, multi-bot concurrency model, and hot-reloading.
+- 🧩 [**Command Development**](docs/COMMAND_DEVELOPMENT.md) — Authoring commands, permission flags, context builder, and UI formatting standard.
+- 🗄️ [**Database & Storage**](docs/DATABASE.md) — SQLite WAL schema, table breakdown, and LID/PN identity mapping.
+- 🚀 [**Configuration & Deployment**](docs/CONFIGURATION_DEPLOYMENT.md) — Multi-instance PM2 setup, pairing code guide, and VPS prerequisites.
+
+---
+
 ## 📋 Command Categories
 
-The bot comes with **54+ built-in commands** organized into clean categories:
+The bot comes with **55+ built-in commands** organized into clean categories:
 
 | Category | Description | Examples |
 |:---|:---|:---|
@@ -28,6 +41,7 @@ The bot comes with **54+ built-in commands** organized into clean categories:
 | 🎨 **Media & Maker** | Sticker creation, image conversion, Brat stickers, media resending | `!sticker`, `!toimg`, `!brat <text>`, `!resend` |
 | 🌸 **Anime** | Anime/manga search via MyAnimeList, Danbooru search & recent feed | `!anime <title>`, `!manga <title>`, `!d <tag>`, `!dnew` |
 | 🔍 **Search** | Steam game search & user profile lookup, YouTube search | `!steam <game>`, `!steamprofile <id>`, `!yts <query>` |
+| 🎮 **Games & Fun** | Text-based interactive adventure games | `!yuegame` |
 | 🛠️ **Tools** | User registration, reminders, AI translation, website screenshot, quote cards | `!register`, `!remind`, `!translate`, `!ss <url>`, `!quote` |
 | 🛡️ **Bot Admin** | Bot administrator management and global user bans | `!addbotadmin`, `!gban`, `!gunban` |
 | 💻 **System & Owner** | Database repair, ID scanner, remote terminal (SSH) | `!dbfix`, `!scanids`, `!bash` |
