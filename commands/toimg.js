@@ -10,7 +10,7 @@ export default {
     name: 'toimg',
     aliases: ['toimage', 'tovideo'],
     category: 'media',
-    description: '[UNSTABLE] Mengubah stiker menjadi gambar atau video',
+    description: 'Mengubah stiker menjadi gambar atau video',
     usage: '!toimg (reply to a sticker)',
     async handler({ message, sock }) {
         try {
@@ -40,10 +40,9 @@ export default {
             // Deteksi isAnimated secara lebih akurat dari metadata buffer jika properti bawaan tidak ada
             const isAnimated = stickerMsg.isAnimated || buffer.includes(Buffer.from('ANIM'));
 
-            const warningText = '\n\n_⚠️ Info: Fitur ini mungkin sedang tidak stabil karena kendala server/jaringan._';
             await message.reply(isAnimated 
-                ? '⏳ Sedang mengonversi stiker animasi ke video...' + warningText 
-                : '⏳ Sedang mengonversi stiker ke gambar...' + warningText);
+                ? '⏳ Sedang mengonversi stiker animasi ke video...' 
+                : '⏳ Sedang mengonversi stiker ke gambar...');
 
             // Write to temp file
             const tempDir = path.resolve('./temp');
