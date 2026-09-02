@@ -255,3 +255,8 @@ if (displayMode === "ui") {
 await message.reply(captionText);
 ```
 
+#### Guidelines for Webview UI Commands
+1. **Media Assets**: Always convert remote images into Base64 Data URIs (`data:image/...;base64,...`) on the server before embedding in the webview to bypass sandbox network restrictions.
+2. **Poster Proportions**: Use vertical rectangular ratios (~2:3 portrait, e.g. `width: 175px; height: 250px; object-fit: cover;`) for covers/posters rather than wide full-width banners.
+3. **Immersive Navigation**: For paginated or multi-screen commands, embed the dataset into `<script>` and provide client-side controls (`.ui-screen.active`, `‹ Prev` / `Next ›` buttons) so users do not have to break immersion by typing chat replies.
+
