@@ -1,6 +1,6 @@
-import { Sticker, StickerTypes, Exif } from 'wa-sticker-formatter';
+import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 import { downloadContentFromMessage } from 'baileys';
-import { convertVideoToWebp } from '../lib/mediaConverter.js';
+import { convertVideoToWebp, injectWebpExif } from '../lib/mediaConverter.js';
 import setting from '../setting.js';
 
 export default {
@@ -91,13 +91,12 @@ export default {
             // Build sticker
             let stickerBuffer;
             if (isVideo) {
-                // Direct FFmpeg WebP conversion to fix glitchy animation on WhatsApp Web / Desktop
+                // Direct FFmpeg WebP conversion + clean EXIF & frame disposal injection
                 const rawWebpBuffer = await convertVideoToWebp(buffer, { fps: 10, maxDuration: 10 });
-                const exif = new Exif({
+                stickerBuffer = injectWebpExif(rawWebpBuffer, {
                     pack: packName,
                     author: authorName
                 });
-                stickerBuffer = await exif.add(rawWebpBuffer);
             } else {
                 // Static images use existing wa-sticker-formatter flow (unmodified, high quality & non-stretched)
                 const sticker = new Sticker(buffer, {
