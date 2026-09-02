@@ -54,7 +54,8 @@ function generateListUI(results, page, query) {
         return {
             icon: "🎌",
             title: `${start + index + 1}. ${anime.title}`,
-            desc: `${anime.type || "TV"} • ⭐ ${anime.score || "N/A"} • ${anime.episodes || "?"} Eps • ${year}`
+            desc: `${anime.type || "TV"} • ⭐ ${anime.score || "N/A"} • ${anime.episodes || "?"} Eps • ${year}`,
+            onClick: `showAnimeDetail(${start + index})`
         };
     });
 
@@ -66,14 +67,139 @@ function generateListUI(results, page, query) {
     });
 
     const helpCard = `<div class="ui-card ui-mt-sm" style="padding:10px 14px;text-align:center;font-size:11px;color:var(--text-accent);">` +
-        `💡 Balas pesan ini dengan angka (1-${currentItems.length}) untuk melihat detail.` +
-        (totalPages > 1 ? `<br>Ketik <b>n</b> untuk next, <b>b</b> untuk back.` : "") +
+        `👆 <b>Ketuk anime di atas</b> untuk membuka detail langsung.` +
+        (totalPages > 1 ? `<br><span style="color:var(--text-muted);font-size:10px;">Atau balas chat dengan <b>n</b> / <b>b</b> untuk ganti halaman.</span>` : "") +
         `</div>`;
+
+    const detailScreenHtml = `
+<div id="screenDetail" class="ui-screen">
+  <div style="margin-bottom:12px;">
+    <button type="button" class="ui-btn" onclick="backToList()" style="width:auto;padding:8px 14px;">
+      ‹ Kembali ke Daftar
+    </button>
+  </div>
+  <div id="detailImgContainer" style="text-align:center;margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border);display:none;">
+    <img id="detailImg" src="" alt="Poster" style="width:100%;max-height:260px;object-fit:cover;display:block;" onerror="this.style.display='none'" />
+  </div>
+  <div class="ui-card">
+    <div class="ui-card-header">
+      <div class="ui-card-icon">🎌</div>
+      <div class="ui-card-title" id="detailTitle"></div>
+      <div class="ui-card-subtitle" id="detailSubtitle"></div>
+    </div>
+    <div class="ui-row"><div class="ui-row-icon">⭐</div><div class="ui-row-label">Score</div><div class="ui-row-value" id="rowScore"></div></div>
+    <div class="ui-row"><div class="ui-row-icon">🏆</div><div class="ui-row-label">Rank</div><div class="ui-row-value" id="rowRank"></div></div>
+    <div class="ui-row"><div class="ui-row-icon">🎬</div><div class="ui-row-label">Episodes</div><div class="ui-row-value" id="rowEpisodes"></div></div>
+    <div class="ui-row"><div class="ui-row-icon">⏳</div><div class="ui-row-label">Status</div><div class="ui-row-value" id="rowStatus"></div></div>
+    <div class="ui-row"><div class="ui-row-icon">📅</div><div class="ui-row-label">Season</div><div class="ui-row-value" id="rowSeason"></div></div>
+    <div class="ui-row"><div class="ui-row-icon">🎥</div><div class="ui-row-label">Studio</div><div class="ui-row-value" id="rowStudio"></div></div>
+    <div class="ui-row"><div class="ui-row-icon">⚠️</div><div class="ui-row-label">Rating</div><div class="ui-row-value" id="rowRating"></div></div>
+    <div class="ui-section">
+      <div class="ui-section-title">🎭 Genres</div>
+      <div class="ui-row"><div class="ui-row-icon">🏷️</div><div class="ui-row-label">List</div><div class="ui-row-value" id="rowGenres"></div></div>
+    </div>
+    <div class="ui-section">
+      <div class="ui-section-title">📝 Synopsis</div>
+      <div style="padding:12px 14px;font-size:12px;line-height:1.5;color:var(--text-value);" id="rowSynopsis"></div>
+    </div>
+  </div>
+  <a id="detailMalBtn" href="#" target="_blank" class="ui-btn ui-mt-sm" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;text-align:center;padding:12px;display:none;">
+    🔗 Buka di MyAnimeList
+  </a>
+</div>`;
+
+    const safeAnimeData = JSON.stringify(results.map(a => {
+        let year = a.year || (a.aired?.prop?.from?.year) || "N/A";
+        let season = a.season ? a.season.charAt(0).toUpperCase() + a.season.slice(1) : "";
+        let seasonYear = season && year ? `${season} ${year}` : (season || year || "N/A");
+        return {
+            title: a.title || "N/A",
+            titleEng: a.title_english || "",
+            type: a.type || "N/A",
+            score: a.score ? String(a.score) : "N/A",
+            rank: a.rank ? String(a.rank) : "N/A",
+            popularity: a.popularity ? String(a.popularity) : "N/A",
+            episodes: a.episodes ? String(a.episodes) : "?",
+            duration: a.duration || "N/A",
+            status: a.status || "N/A",
+            seasonYear: seasonYear,
+            studios: a.studios && a.studios.length > 0 ? a.studios.map(s => s.name).join(", ") : "N/A",
+            rating: a.rating || "N/A",
+            genres: a.genres && a.genres.length > 0 ? a.genres.map(g => g.name).join(", ") : "N/A",
+            synopsis: (a.synopsis ? a.synopsis.replace(/\[Written by MAL Rewrite\]/i, "").trim() : "Tidak ada sinopsis."),
+            image: a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || null,
+            url: a.url || ""
+        };
+    })).replace(/</g, '\\u003c');
+
+    const clientScript = `
+<script>
+var animeData = ${safeAnimeData};
+
+function showAnimeDetail(idx) {
+    var a = animeData[idx];
+    if (!a) return;
+
+    document.getElementById('detailTitle').innerText = a.title;
+    document.getElementById('detailSubtitle').innerText = (a.titleEng ? a.titleEng + ' • ' : '') + a.type;
+
+    var badge = document.querySelector('.ui-header .ui-badge');
+    if (badge) badge.innerText = a.score !== 'N/A' ? '⭐ ' + a.score : a.type;
+
+    var imgContainer = document.getElementById('detailImgContainer');
+    var imgEl = document.getElementById('detailImg');
+    if (a.image) {
+        imgEl.src = a.image;
+        imgEl.style.display = 'block';
+        imgContainer.style.display = 'block';
+    } else {
+        imgContainer.style.display = 'none';
+    }
+
+    document.getElementById('rowScore').innerText = '⭐ ' + a.score;
+    document.getElementById('rowRank').innerText = '#' + a.rank + ' (Pop #' + a.popularity + ')';
+    document.getElementById('rowEpisodes').innerText = a.episodes + ' Eps (' + a.duration + ')';
+    document.getElementById('rowStatus').innerText = a.status;
+    document.getElementById('rowSeason').innerText = a.seasonYear;
+    document.getElementById('rowStudio').innerText = a.studios;
+    document.getElementById('rowRating').innerText = a.rating;
+    document.getElementById('rowGenres').innerText = a.genres;
+    document.getElementById('rowSynopsis').innerText = a.synopsis;
+
+    var malBtn = document.getElementById('detailMalBtn');
+    if (a.url) {
+        malBtn.href = a.url;
+        malBtn.style.display = 'flex';
+    } else {
+        malBtn.style.display = 'none';
+    }
+
+    document.getElementById('screenList').classList.remove('active');
+    document.getElementById('screenDetail').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function backToList() {
+    var badge = document.querySelector('.ui-header .ui-badge');
+    if (badge) badge.innerText = 'Page ${page + 1}/${totalPages}';
+    document.getElementById('screenDetail').classList.remove('active');
+    document.getElementById('screenList').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>`;
+
+    const bodyHtml = `
+<div id="screenList" class="ui-screen active">
+  ${listHtml}
+  ${helpCard}
+</div>
+${detailScreenHtml}
+${clientScript}`;
 
     return renderPage({
         title: "🎌 Anime Search",
         badge: `Page ${page + 1}/${totalPages}`,
-        body: listHtml + helpCard
+        body: bodyHtml
     });
 }
 
@@ -367,7 +493,7 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
             const pageHtml = renderPage({
                 title: "🎌 Anime Information",
                 badge: score !== "N/A" ? `⭐ ${score}` : "MAL",
-                body: cardBody + cardHtml
+                body: cardBody + cardHtml + (url ? `<a href="${url}" target="_blank" class="ui-btn ui-mt-sm" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;text-align:center;padding:12px;">🔗 Buka di MyAnimeList</a>` : "")
             });
 
             const sent = await sendUI(sock, message.chat, {
