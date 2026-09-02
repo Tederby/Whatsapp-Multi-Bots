@@ -6,6 +6,29 @@ import { sendUI, renderPage, renderCard, renderList } from "../lib/uiEngine.js";
 
 const ITEMS_PER_PAGE = 5;
 
+/**
+ * Fetch remote image and convert it to a self-contained Base64 Data URI.
+ * This guarantees the image displays inside WhatsApp's sandboxed webview
+ * without being blocked by CSP or cross-origin network policies.
+ */
+async function fetchImageAsBase64(url) {
+    if (!url) return null;
+    try {
+        const res = await axios.get(url, {
+            responseType: "arraybuffer",
+            timeout: 4000,
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+        });
+        const contentType = res.headers["content-type"] || "image/jpeg";
+        return `data:${contentType};base64,${Buffer.from(res.data).toString("base64")}`;
+    } catch (err) {
+        console.warn(`[Anime Image] Failed to convert image to Base64 for ${url}:`, err.message);
+        return null;
+    }
+}
+
 function generatePaginator(page, totalPages) {
     if (totalPages <= 1) return `[ 📄 Page 1/1 ] ─── ━━━━━━━━━━━━━━━━`;
     let items = [];
@@ -51,8 +74,11 @@ function generateListUI(results, page, query) {
 
     const items = currentItems.map((anime, index) => {
         let year = anime.year || (anime.aired?.prop?.from?.year) || "N/A";
+        const iconHtml = anime.imageBase64
+            ? `<img src="${anime.imageBase64}" alt="thumb" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;" />`
+            : "🎌";
         return {
-            icon: "🎌",
+            icon: iconHtml,
             title: `${start + index + 1}. ${anime.title}`,
             desc: `${anime.type || "TV"} • ⭐ ${anime.score || "N/A"} • ${anime.episodes || "?"} Eps • ${year}`,
             onClick: `showAnimeDetail(${start + index})`
@@ -79,7 +105,7 @@ function generateListUI(results, page, query) {
     </button>
   </div>
   <div id="detailImgContainer" style="text-align:center;margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border);display:none;">
-    <img id="detailImg" src="" alt="Poster" style="width:100%;max-height:260px;object-fit:cover;display:block;" onerror="this.style.display='none'" />
+    <img id="detailImg" alt="Poster" referrerpolicy="no-referrer" style="width:100%;max-height:260px;object-fit:cover;display:block;" />
   </div>
   <div class="ui-card">
     <div class="ui-card-header">
@@ -127,7 +153,7 @@ function generateListUI(results, page, query) {
             rating: a.rating || "N/A",
             genres: a.genres && a.genres.length > 0 ? a.genres.map(g => g.name).join(", ") : "N/A",
             synopsis: (a.synopsis ? a.synopsis.replace(/\[Written by MAL Rewrite\]/i, "").trim() : "Tidak ada sinopsis."),
-            image: a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || null,
+            image: a.imageBase64 || a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || null,
             url: a.url || ""
         };
     })).replace(/</g, '\\u003c');
@@ -150,7 +176,6 @@ function showAnimeDetail(idx) {
     var imgEl = document.getElementById('detailImg');
     if (a.image) {
         imgEl.src = a.image;
-        imgEl.style.display = 'block';
         imgContainer.style.display = 'block';
     } else {
         imgContainer.style.display = 'none';
@@ -272,6 +297,14 @@ export default {
             }
 
             if (displayMode === "ui") {
+                console.log(`[Anime UI] Pre-fetching poster images for page 1 (${Math.min(results.length, ITEMS_PER_PAGE)} items)...`);
+                await Promise.all(results.slice(0, ITEMS_PER_PAGE).map(async (anime) => {
+                    const imgUrl = anime.images?.jpg?.image_url || anime.images?.jpg?.large_image_url;
+                    if (imgUrl && !anime.imageBase64) {
+                        anime.imageBase64 = await fetchImageAsBase64(imgUrl);
+                    }
+                }));
+
                 console.log(`[Anime UI] Dispatching search list UI for "${query}" (Page 1)`);
                 try {
                     const html = generateListUI(results, 0, query);
@@ -349,6 +382,14 @@ async function replyHandler({ message, sock, state }) {
 
             if (displayMode === "ui") {
                 try {
+                    const start = state.page * ITEMS_PER_PAGE;
+                    await Promise.all(results.slice(start, start + ITEMS_PER_PAGE).map(async (anime) => {
+                        const imgUrl = anime.images?.jpg?.image_url || anime.images?.jpg?.large_image_url;
+                        if (imgUrl && !anime.imageBase64) {
+                            anime.imageBase64 = await fetchImageAsBase64(imgUrl);
+                        }
+                    }));
+
                     const html = generateListUI(results, state.page, query);
                     const sent = await sendUI(sock, message.chat, {
                         title: `🎌 Anime Search: "${query}"`,
@@ -376,6 +417,14 @@ async function replyHandler({ message, sock, state }) {
 
             if (displayMode === "ui") {
                 try {
+                    const start = state.page * ITEMS_PER_PAGE;
+                    await Promise.all(results.slice(start, start + ITEMS_PER_PAGE).map(async (anime) => {
+                        const imgUrl = anime.images?.jpg?.image_url || anime.images?.jpg?.large_image_url;
+                        if (imgUrl && !anime.imageBase64) {
+                            anime.imageBase64 = await fetchImageAsBase64(imgUrl);
+                        }
+                    }));
+
                     const html = generateListUI(results, state.page, query);
                     const sent = await sendUI(sock, message.chat, {
                         title: `🎌 Anime Search: "${query}"`,
@@ -453,11 +502,14 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
 
     if (displayMode === "ui") {
         try {
-            console.log(`[Anime UI] Building detail card for "${title}"...`);
+            console.log(`[Anime UI] Pre-fetching image as Base64 for "${title}"...`);
+            const imageBase64 = anime.imageBase64 || await fetchImageAsBase64(imageUrl);
+            const finalImageSrc = imageBase64 || imageUrl;
+
             let cardBody = "";
-            if (imageUrl) {
+            if (finalImageSrc) {
                 cardBody += `<div style="text-align:center;margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border);">` +
-                    `<img src="${imageUrl}" alt="${title}" style="width:100%;max-height:260px;object-fit:cover;display:block;" onerror="this.style.display='none'" />` +
+                    `<img src="${finalImageSrc}" alt="${title}" referrerpolicy="no-referrer" style="width:100%;max-height:260px;object-fit:cover;display:block;" />` +
                     `</div>`;
             }
 
