@@ -105,4 +105,4 @@ A user preference setting (`meta.displayMode` with values `"ui"` or `"text"`) wa
 - Tools and Utilities: Reminder engine (`!remind`, `!unremind`), Puppeteer quote card maker (`!quote`), webpage screenshot tool (`!screenshot`), and registration system (`!register`, `!profile`, `!groupprofile`).
 - Owner and Administration: Remote terminal shell execution (`!bash`), database repair utilities (`!dbfix`), ID scanner (`!scanids`), and bot administrator delegation (`!addbotadmin`, `!delbotadmin`).
 - Interactive Experiments: Added interactive text-based engine tests (`commands/yuegame.js`).
-- User Interface and Display Modes: Added user display preference (`meta.displayMode`) with default `"ui"`, `!register mode <ui|text>`, profile status indicator, and adaptive rendering in `!anime`.
+- User Interface and Display Modes: Added user display preference (`meta.displayMode`) with default `"ui"`, `!register mode <ui|text>`, profile status indicator, adaptive rendering in `!anime`, Base64 Data URI poster embedding for sandbox bypass, 2:3 vertical poster proportions, and in-webview client-side pagination buttons.

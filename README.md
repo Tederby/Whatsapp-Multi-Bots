@@ -7,6 +7,8 @@ A scalable, high-performance, multi-instance WhatsApp bot built with [Baileys](h
 ## ✨ Key Highlights
 
 - **Multi-Bot Concurrency** — Run multiple bot instances simultaneously via PM2. Each instance maintains its own auth session, temp files, and identity while sharing a concurrent-safe database.
+- **Interactive In-App Webview UI Engine** — Built-in `uiEngine.js` for delivering rich graphical cards, lists, and interactive dashboards with dark-mode styling directly inside WhatsApp's native client webview via Meta AI protobuf messaging.
+- **Adaptive User Display Preferences** — Users can choose between interactive graphical UI (`!register mode ui`) and traditional formatted text (`!register mode text`) with zero-migration database fallbacks.
 - **SQLite with WAL Mode** — Centralized `better-sqlite3` database engine running in WAL mode with cached prepared statements for zero-corruption concurrent access.
 - **Hot-Reload Architecture** — Edit message pipelines or command files at runtime without restarting the process. Changes take effect instantly.
 - **Robust LID & PN Resolution** — Built-in `jidHelper.js` resolves WhatsApp Multi-Device addressing modes (LID vs PN) so user tagging, moderation, and database lookups never break.
@@ -39,10 +41,10 @@ The bot comes with **55+ built-in commands** organized into clean categories:
 | 🛡️ **Group** | Moderation tools: add, kick, promote, demote, welcome/goodbye greetings, group registration, sider tracking | `!kick @user`, `!promote @user`, `!welcome`, `!track` |
 | 📥 **Downloader** | High-speed media downloads via `yt-dlp` | `!ytdl <url>`, `!ytdlf <url>`, `!download` |
 | 🎨 **Media & Maker** | Sticker creation, image conversion, Brat stickers, media resending | `!sticker`, `!toimg`, `!brat <text>`, `!resend` |
-| 🌸 **Anime** | Anime/manga search via MyAnimeList, Danbooru search & recent feed | `!anime <title>`, `!manga <title>`, `!d <tag>`, `!dnew` |
+| 🌸 **Anime** | Anime/manga search via MyAnimeList, Danbooru search & recent feed | `!anime <title> [--top/-1] [--ui/--text]`, `!manga <title>`, `!d <tag>`, `!dnew` |
 | 🔍 **Search** | Steam game search & user profile lookup, YouTube search | `!steam <game>`, `!steamprofile <id>`, `!yts <query>` |
 | 🎮 **Games & Fun** | Text-based interactive adventure games | `!yuegame` |
-| 🛠️ **Tools** | User registration, reminders, AI translation, website screenshot, quote cards | `!register`, `!remind`, `!translate`, `!ss <url>`, `!quote` |
+| 🛠️ **Tools** | User registration, reminders, AI translation, website screenshot, quote cards | `!register [mode <ui|text>]`, `!remind`, `!translate`, `!ss <url>`, `!quote` |
 | 🛡️ **Bot Admin** | Bot administrator management and global user bans | `!addbotadmin`, `!gban`, `!gunban` |
 | 💻 **System & Owner** | Database repair, ID scanner, remote terminal (SSH) | `!dbfix`, `!scanids`, `!bash` |
 

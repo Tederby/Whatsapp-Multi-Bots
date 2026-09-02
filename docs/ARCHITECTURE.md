@@ -212,12 +212,15 @@ const payload = Buffer.from(JSON.stringify({
 2. Message Relay:
    The payload is wrapped in `botForwardedMessage` with context metadata linking to the bot JID (`867051314767696@bot`) and dispatched via `sock.relayMessage(chatId, messageStructure, { messageId: responseId })`.
 
-3. Client-Side Rendering:
-   The WhatsApp client receives the message and renders the embedded HTML, styling, and JavaScript logic inside an isolated sandbox webview.
+3. Client-Side Rendering & Media Embedding:
+   The WhatsApp client receives the message and renders the embedded HTML, styling, and JavaScript logic inside an isolated sandbox webview. To prevent cross-origin network blocks and IP tracking restrictions enforced by the client sandbox, media assets (such as posters and thumbnails) are converted by the server into self-contained Base64 Data URIs (`data:image/jpeg;base64,...`).
+
+4. Client-Side Navigation and Interactivity:
+   Multi-screen interfaces utilize `.ui-screen` and `.ui-screen.active` toggles, client-side pagination controllers (`‹ Prev` / `Next ›`), and tactile `.ui-btn` states (`:active`) to maintain complete immersion without requiring round-trip chat messages.
 
 ### Core Rendering Primitives
 
-- `renderPage({ title, body, badge, styles })`: Renders the complete HTML document shell with base dark-mode styling, viewport constraints, and custom CSS injection.
+- `renderPage({ title, body, badge, styles })`: Renders the complete HTML document shell with base dark-mode styling, viewport constraints, referrer policies, and custom CSS injection.
 - `renderCard({ icon, title, subtitle, rows, sections })`: Builds structured information cards with key-value pairs and optional nested sections.
-- `renderList({ icon, title, subtitle, items })`: Generates interactive lists and menu selectors.
-- `sendUI(sock, chatId, { title, html })`: Dispatches the interactive HTML payload to the target chat.
+- `renderList({ icon, title, subtitle, items })`: Generates interactive lists and menu selectors supporting item `onClick` event handlers.
+- `sendUI(sock, chatId, { title, html })`: Dispatches the interactive HTML payload to the target chat and returns `{ key, messageId }` for reply tracking.
