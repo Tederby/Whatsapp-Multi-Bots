@@ -10,6 +10,7 @@ const CATEGORY_LABELS = {
     anime: "🌸 Anime",
     search: "🔍 Search",
     tools: "🛠️ Tools",
+    game: "🎮 Game",
     botadmin: "🛡️ Bot Admin",
     system: "💻 System",
     owner: "👑 Owner"
