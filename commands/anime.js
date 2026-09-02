@@ -66,46 +66,44 @@ function generateListText(results, page, query) {
     return text.trim();
 }
 
-function generateListUI(results, page, query) {
+function generateListUI(results, query) {
     const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
-    const start = page * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    const currentItems = results.slice(start, end);
 
-    const items = currentItems.map((anime, index) => {
-        let year = anime.year || (anime.aired?.prop?.from?.year) || "N/A";
-        const iconHtml = anime.imageBase64
-            ? `<img src="${anime.imageBase64}" alt="thumb" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;" />`
-            : "🎌";
+    const safeAnimeData = JSON.stringify(results.map(a => {
+        let year = a.year || (a.aired?.prop?.from?.year) || "N/A";
+        let season = a.season ? a.season.charAt(0).toUpperCase() + a.season.slice(1) : "";
+        let seasonYear = season && year ? `${season} ${year}` : (season || year || "N/A");
         return {
-            icon: iconHtml,
-            title: `${start + index + 1}. ${anime.title}`,
-            desc: `${anime.type || "TV"} • ⭐ ${anime.score || "N/A"} • ${anime.episodes || "?"} Eps • ${year}`,
-            onClick: `showAnimeDetail(${start + index})`
+            title: a.title || "N/A",
+            titleEng: a.title_english || "",
+            type: a.type || "N/A",
+            score: a.score ? String(a.score) : "N/A",
+            rank: a.rank ? String(a.rank) : "N/A",
+            popularity: a.popularity ? String(a.popularity) : "N/A",
+            episodes: a.episodes ? String(a.episodes) : "?",
+            duration: a.duration || "N/A",
+            status: a.status || "N/A",
+            seasonYear: seasonYear,
+            year: String(year),
+            studios: a.studios && a.studios.length > 0 ? a.studios.map(s => s.name).join(", ") : "N/A",
+            rating: a.rating || "N/A",
+            genres: a.genres && a.genres.length > 0 ? a.genres.map(g => g.name).join(", ") : "N/A",
+            synopsis: (a.synopsis ? a.synopsis.replace(/\[Written by MAL Rewrite\]/i, "").trim() : "Tidak ada sinopsis."),
+            image: a.imageBase64 || a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || null,
+            url: a.url || ""
         };
-    });
-
-    const listHtml = renderList({
-        icon: "🔍",
-        title: "Daftar Anime",
-        subtitle: `Pencarian: "${query}" (Halaman ${page + 1}/${totalPages})`,
-        items
-    });
-
-    const helpCard = `<div class="ui-card ui-mt-sm" style="padding:10px 14px;text-align:center;font-size:11px;color:var(--text-accent);">` +
-        `👆 <b>Ketuk anime di atas</b> untuk membuka detail langsung.` +
-        (totalPages > 1 ? `<br><span style="color:var(--text-muted);font-size:10px;">Atau balas chat dengan <b>n</b> / <b>b</b> untuk ganti halaman.</span>` : "") +
-        `</div>`;
+    })).replace(/</g, '\\u003c');
 
     const detailScreenHtml = `
 <div id="screenDetail" class="ui-screen">
-  <div style="margin-bottom:12px;">
-    <button type="button" class="ui-btn" onclick="backToList()" style="width:auto;padding:8px 14px;">
+  <div style="margin-bottom:14px;">
+    <button type="button" class="ui-btn" onclick="backToList()" style="width:auto;padding:8px 16px;font-size:12px;">
       ‹ Kembali ke Daftar
     </button>
   </div>
-  <div id="detailImgContainer" style="text-align:center;margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border);display:none;">
-    <img id="detailImg" alt="Poster" referrerpolicy="no-referrer" style="width:100%;max-height:260px;object-fit:cover;display:block;" />
+  <!-- Vertical rectangular poster (2:3 MAL standard aspect ratio) -->
+  <div id="detailImgContainer" style="text-align:center;margin-bottom:16px;display:none;">
+    <img id="detailImg" alt="Poster" referrerpolicy="no-referrer" style="width:175px;height:250px;object-fit:cover;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.5);display:inline-block;" />
   </div>
   <div class="ui-card">
     <div class="ui-card-header">
@@ -134,33 +132,72 @@ function generateListUI(results, page, query) {
   </a>
 </div>`;
 
-    const safeAnimeData = JSON.stringify(results.map(a => {
-        let year = a.year || (a.aired?.prop?.from?.year) || "N/A";
-        let season = a.season ? a.season.charAt(0).toUpperCase() + a.season.slice(1) : "";
-        let seasonYear = season && year ? `${season} ${year}` : (season || year || "N/A");
-        return {
-            title: a.title || "N/A",
-            titleEng: a.title_english || "",
-            type: a.type || "N/A",
-            score: a.score ? String(a.score) : "N/A",
-            rank: a.rank ? String(a.rank) : "N/A",
-            popularity: a.popularity ? String(a.popularity) : "N/A",
-            episodes: a.episodes ? String(a.episodes) : "?",
-            duration: a.duration || "N/A",
-            status: a.status || "N/A",
-            seasonYear: seasonYear,
-            studios: a.studios && a.studios.length > 0 ? a.studios.map(s => s.name).join(", ") : "N/A",
-            rating: a.rating || "N/A",
-            genres: a.genres && a.genres.length > 0 ? a.genres.map(g => g.name).join(", ") : "N/A",
-            synopsis: (a.synopsis ? a.synopsis.replace(/\[Written by MAL Rewrite\]/i, "").trim() : "Tidak ada sinopsis."),
-            image: a.imageBase64 || a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || null,
-            url: a.url || ""
-        };
-    })).replace(/</g, '\\u003c');
-
     const clientScript = `
 <script>
 var animeData = ${safeAnimeData};
+var currentPage = 0;
+var itemsPerPage = 5;
+var totalPages = Math.ceil(animeData.length / itemsPerPage);
+
+function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function renderPageItems(page) {
+    currentPage = page;
+    var start = page * itemsPerPage;
+    var end = Math.min(start + itemsPerPage, animeData.length);
+    var container = document.getElementById('listItemsContainer');
+    if (!container) return;
+
+    var html = '';
+    for (var i = start; i < end; i++) {
+        var anime = animeData[i];
+        var iconHtml = anime.image
+            ? '<img src="' + anime.image + '" alt="thumb" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;" />'
+            : '🎌';
+
+        html += '<div class="ui-list-item" onclick="showAnimeDetail(' + i + ')" role="button" tabindex="0">';
+        html += '<div class="ui-list-icon">' + iconHtml + '</div>';
+        html += '<div class="ui-list-content">';
+        html += '<div class="ui-list-title">' + (i + 1) + '. ' + escHtml(anime.title) + '</div>';
+        html += '<div class="ui-list-desc">' + escHtml(anime.type) + ' • ⭐ ' + escHtml(anime.score) + ' • ' + escHtml(anime.episodes) + ' Eps • ' + escHtml(anime.year) + '</div>';
+        html += '</div>';
+        html += '<div class="ui-list-arrow">›</div>';
+        html += '</div>';
+    }
+
+    container.innerHTML = html;
+
+    var indicator = document.getElementById('pageIndicator');
+    if (indicator) indicator.innerText = 'Page ' + (currentPage + 1) + ' / ' + (totalPages || 1);
+
+    var topBadge = document.querySelector('.ui-header .ui-badge');
+    if (topBadge) topBadge.innerText = 'Page ' + (currentPage + 1) + '/' + (totalPages || 1);
+
+    var prevBtn = document.getElementById('prevPageBtn');
+    if (prevBtn) {
+        prevBtn.disabled = (currentPage === 0);
+    }
+
+    var nextBtn = document.getElementById('nextPageBtn');
+    if (nextBtn) {
+        nextBtn.disabled = (currentPage >= totalPages - 1);
+    }
+}
+
+function changePage(delta) {
+    var newPage = currentPage + delta;
+    if (newPage >= 0 && newPage < totalPages) {
+        renderPageItems(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
 
 function showAnimeDetail(idx) {
     var a = animeData[idx];
@@ -206,24 +243,49 @@ function showAnimeDetail(idx) {
 
 function backToList() {
     var badge = document.querySelector('.ui-header .ui-badge');
-    if (badge) badge.innerText = 'Page ${page + 1}/${totalPages}';
+    if (badge) badge.innerText = 'Page ' + (currentPage + 1) + '/' + (totalPages || 1);
     document.getElementById('screenDetail').classList.remove('active');
     document.getElementById('screenList').classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// Initial render of page 0 items
+renderPageItems(0);
 </script>`;
 
     const bodyHtml = `
 <div id="screenList" class="ui-screen active">
-  ${listHtml}
-  ${helpCard}
+  <div class="ui-card">
+    <div class="ui-card-header">
+      <div class="ui-card-icon">🔍</div>
+      <div class="ui-card-title">Daftar Anime</div>
+      <div class="ui-card-subtitle">Pencarian: "${query}"</div>
+    </div>
+  </div>
+  <div class="ui-list ui-mt-sm" id="listItemsContainer">
+    <!-- Diisi secara dinamis oleh renderPageItems() -->
+  </div>
+  <div class="ui-pagination" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;">
+    <button type="button" class="ui-btn" id="prevPageBtn" onclick="changePage(-1)" style="width:auto;flex:1;padding:10px 14px;font-size:12px;" disabled>
+      ‹ Prev
+    </button>
+    <div id="pageIndicator" style="font-size:11px;font-weight:700;color:var(--text-secondary);white-space:nowrap;padding:0 8px;">
+      Page 1 / ${totalPages || 1}
+    </div>
+    <button type="button" class="ui-btn" id="nextPageBtn" onclick="changePage(1)" style="width:auto;flex:1;padding:10px 14px;font-size:12px;" ${totalPages <= 1 ? "disabled" : ""}>
+      Next ›
+    </button>
+  </div>
+  <div class="ui-card ui-mt-sm" style="padding:10px 14px;text-align:center;font-size:11px;color:var(--text-accent);">
+    👆 <b>Ketuk anime di atas</b> untuk membuka detail langsung.
+  </div>
 </div>
 ${detailScreenHtml}
 ${clientScript}`;
 
     return renderPage({
         title: "🎌 Anime Search",
-        badge: `Page ${page + 1}/${totalPages}`,
+        badge: `Page 1/${totalPages || 1}`,
         body: bodyHtml
     });
 }
@@ -297,23 +359,25 @@ export default {
             }
 
             if (displayMode === "ui") {
-                console.log(`[Anime UI] Pre-fetching poster images for page 1 (${Math.min(results.length, ITEMS_PER_PAGE)} items)...`);
-                await Promise.all(results.slice(0, ITEMS_PER_PAGE).map(async (anime) => {
+                const preloadCount = Math.min(results.length, 10);
+                console.log(`[Anime UI] Pre-fetching poster images for top ${preloadCount} items...`);
+                await Promise.all(results.slice(0, preloadCount).map(async (anime) => {
                     const imgUrl = anime.images?.jpg?.image_url || anime.images?.jpg?.large_image_url;
                     if (imgUrl && !anime.imageBase64) {
                         anime.imageBase64 = await fetchImageAsBase64(imgUrl);
                     }
                 }));
 
-                console.log(`[Anime UI] Dispatching search list UI for "${query}" (Page 1)`);
+                console.log(`[Anime UI] Dispatching interactive search list UI for "${query}"`);
                 try {
-                    const html = generateListUI(results, 0, query);
+                    const html = generateListUI(results, query);
                     const sent = await sendUI(sock, message.chat, {
                         title: `🎌 Anime Search: "${query}"`,
                         html
                     });
                     console.log(`[Anime UI] Search list UI successfully dispatched. Message ID: ${sent?.messageId}`);
 
+                    // Chat reply fallback is still registered for text-based reply
                     registerReplyHandler(sent.messageId, replyHandler, {
                         results,
                         page: 0,
@@ -380,30 +444,6 @@ async function replyHandler({ message, sock, state }) {
             state.page += 1;
             console.log(`[Anime Reply] Pagination next -> Page ${state.page + 1}/${totalPages} (Mode: ${displayMode})`);
 
-            if (displayMode === "ui") {
-                try {
-                    const start = state.page * ITEMS_PER_PAGE;
-                    await Promise.all(results.slice(start, start + ITEMS_PER_PAGE).map(async (anime) => {
-                        const imgUrl = anime.images?.jpg?.image_url || anime.images?.jpg?.large_image_url;
-                        if (imgUrl && !anime.imageBase64) {
-                            anime.imageBase64 = await fetchImageAsBase64(imgUrl);
-                        }
-                    }));
-
-                    const html = generateListUI(results, state.page, query);
-                    const sent = await sendUI(sock, message.chat, {
-                        title: `🎌 Anime Search: "${query}"`,
-                        html
-                    });
-                    deleteReplyHandler(messageKey.id);
-                    state.messageKey = sent.key;
-                    registerReplyHandler(sent.messageId, replyHandler, state);
-                    return;
-                } catch (err) {
-                    console.error("[Anime Reply UI Error] Failed to update UI page, falling back to text:", err);
-                }
-            }
-
             const newText = generateListText(results, state.page, query);
             await sock.sendMessage(message.chat, { text: newText, edit: messageKey });
         }
@@ -414,30 +454,6 @@ async function replyHandler({ message, sock, state }) {
         if (page > 0) {
             state.page -= 1;
             console.log(`[Anime Reply] Pagination back -> Page ${state.page + 1}/${totalPages} (Mode: ${displayMode})`);
-
-            if (displayMode === "ui") {
-                try {
-                    const start = state.page * ITEMS_PER_PAGE;
-                    await Promise.all(results.slice(start, start + ITEMS_PER_PAGE).map(async (anime) => {
-                        const imgUrl = anime.images?.jpg?.image_url || anime.images?.jpg?.large_image_url;
-                        if (imgUrl && !anime.imageBase64) {
-                            anime.imageBase64 = await fetchImageAsBase64(imgUrl);
-                        }
-                    }));
-
-                    const html = generateListUI(results, state.page, query);
-                    const sent = await sendUI(sock, message.chat, {
-                        title: `🎌 Anime Search: "${query}"`,
-                        html
-                    });
-                    deleteReplyHandler(messageKey.id);
-                    state.messageKey = sent.key;
-                    registerReplyHandler(sent.messageId, replyHandler, state);
-                    return;
-                } catch (err) {
-                    console.error("[Anime Reply UI Error] Failed to update UI page, falling back to text:", err);
-                }
-            }
 
             const newText = generateListText(results, state.page, query);
             await sock.sendMessage(message.chat, { text: newText, edit: messageKey });
@@ -508,8 +524,9 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
 
             let cardBody = "";
             if (finalImageSrc) {
-                cardBody += `<div style="text-align:center;margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border);">` +
-                    `<img src="${finalImageSrc}" alt="${title}" referrerpolicy="no-referrer" style="width:100%;max-height:260px;object-fit:cover;display:block;" />` +
+                // Vertical rectangular poster (2:3 aspect ratio)
+                cardBody += `<div style="text-align:center;margin-bottom:16px;">` +
+                    `<img src="${finalImageSrc}" alt="${title}" referrerpolicy="no-referrer" style="width:175px;height:250px;object-fit:cover;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.5);display:inline-block;" />` +
                     `</div>`;
             }
 
