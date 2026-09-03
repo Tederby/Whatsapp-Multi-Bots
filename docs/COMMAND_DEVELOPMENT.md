@@ -235,6 +235,7 @@ Because the webview is instantiated every time the message enters the client's v
    const uiMsg = await sendUI(sock, message.chat, { title: "Menu", html: listHtml });
 
    // Auto-delete after 2 minutes to prevent client lag
+   // Note: uiMsg.key from sendUI includes fromMe: true so revocation works in both groups and 1-on-1 chats
    setTimeout(() => {
        sock.sendMessage(message.chat, { delete: uiMsg.key }).catch(() => {});
    }, 120000);

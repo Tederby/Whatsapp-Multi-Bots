@@ -408,7 +408,7 @@ export default {
                     // Auto-delete HTML webview payload after 2 minutes to prevent viewport lag spikes
                     if (sent?.key) {
                         setTimeout(() => {
-                            sock.sendMessage(message.chat, { delete: sent.key }).catch(() => {});
+                            sock.sendMessage(message.chat, { delete: { ...sent.key, fromMe: true } }).catch(() => {});
                         }, 120000);
                     }
                     return;
@@ -615,7 +615,7 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
             // Auto-delete HTML webview payload after 2 minutes to prevent viewport lag spikes
             if (sent?.key) {
                 setTimeout(() => {
-                    sock.sendMessage(message.chat, { delete: sent.key }).catch(() => {});
+                    sock.sendMessage(message.chat, { delete: { ...sent.key, fromMe: true } }).catch(() => {});
                 }, 120000);
             }
             return;
