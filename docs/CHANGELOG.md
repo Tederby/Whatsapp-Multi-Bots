@@ -76,6 +76,7 @@ A user preference setting (`meta.displayMode` with values `"ui"` or `"text"`) wa
 - Sandbox Lifecycle & Memory Hygiene: Established UI-exclusive auto-deletion (120s timer) to eliminate viewport re-mount lag spikes in client chat history. Eliminated redundant `registerReplyHandler` registrations in memory for self-contained webview interfaces, keeping server memory completely leak-free.
 - Pseudo-Buttons & Interaction Modeling: Documented sandbox clipboard limitations, native WhatsApp long-press auto-paste behavior, and direct tokenized command patterns for external bot interactions without nested condition checks.
 - External Navigation Prohibition: Pruned non-functional outbound anchor links ("View on MyAnimeList", "View on Steam Store") across webview templates and codified the rule that external hyperlinks are strictly blocked by WhatsApp's sandbox.
+- Webview Asset Inlining: Enforced Base64 Data URI conversion for detail banners in `commands/steam.js` and added defensive `onerror` handling to prevent browser broken-image icons under WhatsApp's network-blocking webview sandbox.
 
 ---
 

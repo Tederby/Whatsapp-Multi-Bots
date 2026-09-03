@@ -125,7 +125,7 @@ function generateListUI(items, query) {
 <div id="screenDetail" class="ui-screen">
   <button type="button" class="s-back" onclick="backToList()">← Kembali</button>
   <div id="detailImgContainer" class="s-banner" style="display:none;">
-    <img id="detailImg" alt="Banner" referrerpolicy="no-referrer" />
+    <img id="detailImg" alt="Banner" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'" />
   </div>
   <div class="s-detail-title" id="detailTitle"></div>
   <div class="s-detail-sub" id="detailSubtitle"></div>
@@ -173,8 +173,8 @@ function renderPageItems(page) {
     var html = '';
     for (var i = start; i < end; i++) {
         var game = gameData[i];
-        var thumbHtml = game.image
-            ? '<img src="' + game.image + '" alt="" referrerpolicy="no-referrer" />'
+        var thumbHtml = (game.image && game.image.indexOf('data:image') === 0)
+            ? '<img src="' + game.image + '" alt="" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'" />'
             : '<div class="s-thumb-empty">—</div>';
 
         html += '<div class="s-item" onclick="showGameDetail(' + i + ')" role="button" tabindex="0">';
@@ -258,10 +258,11 @@ function showGameDetail(idx) {
     var imgContainer = document.getElementById('detailImgContainer');
     var imgEl = document.getElementById('detailImg');
     var detailImgSrc = g.headerImage || g.image;
-    if (detailImgSrc) {
+    if (detailImgSrc && detailImgSrc.indexOf('data:image') === 0) {
         imgEl.src = detailImgSrc;
         imgContainer.style.display = 'flex';
     } else {
+        imgEl.src = '';
         imgContainer.style.display = 'none';
     }
 
@@ -445,19 +446,22 @@ export default {
                     else if (ctrlVal) controller = "Partial Controller";
 
                     // Images
-                    const tinyImgUrl = item.tiny_image || `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${item.id}/capsule_231x87.jpg`;
                     const headerImgUrl = detailData?.header_image || `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${item.id}/header.jpg`;
+                    const tinyImgUrl = item.tiny_image || `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${item.id}/capsule_231x87.jpg`;
 
-                    let imageBase64 = null;
+                    let headerBase64 = null;
                     if (index < preloadCount) {
-                        imageBase64 = await fetchImageAsBase64(tinyImgUrl);
+                        headerBase64 = await fetchImageAsBase64(headerImgUrl);
+                        if (!headerBase64 && tinyImgUrl) {
+                            headerBase64 = await fetchImageAsBase64(tinyImgUrl);
+                        }
                     }
 
                     return {
                         id: item.id,
                         name: detailData?.name || item.name || "N/A",
-                        image: imageBase64 || tinyImgUrl,
-                        headerImage: headerImgUrl,
+                        image: headerBase64 || null,
+                        headerImage: headerBase64 || null,
                         isFree,
                         discountPercent,
                         initialPrice,
