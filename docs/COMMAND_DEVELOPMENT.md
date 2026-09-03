@@ -257,6 +257,7 @@ await message.reply(captionText);
 
 #### Guidelines for Webview UI Commands
 1. **Media Assets**: Always convert remote images into Base64 Data URIs (`data:image/...;base64,...`) on the server before embedding in the webview to bypass sandbox network restrictions.
-2. **Poster Proportions**: Use vertical rectangular ratios (~2:3 portrait, e.g. `width: 175px; height: 250px; object-fit: cover;`) for covers/posters rather than wide full-width banners.
-3. **Immersive Navigation**: For paginated or multi-screen commands, embed the dataset into `<script>` and provide client-side controls (`.ui-screen.active`, `‹ Prev` / `Next ›` buttons) so users do not have to break immersion by typing chat replies.
+2. **Per-Command CSS Overrides**: Use `renderPage({ styles: '...' })` to inject command-specific CSS that overrides the base design system when the default look doesn't fit. See `commands/anime.js` for a full example using custom `a-*` prefixed classes.
+3. **Design Philosophy**: Keep UI flat and minimal. Avoid gradients, glassmorphism, heavy shadows, excessive emoji icons, and entrance animations. Use the neutral zinc/gray palette from the base design system.
+4. **Immersive Navigation**: For paginated or multi-screen commands, embed the dataset into `<script>` and provide client-side controls (`.ui-screen.active`, `← Prev` / `Next →` buttons) so users do not have to break immersion by typing chat replies.
 

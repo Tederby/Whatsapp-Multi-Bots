@@ -59,7 +59,7 @@ To expand beyond text-based box-drawing interfaces, an interactive UI engine (`l
 
 Key architectural highlights:
 - Protobuf Payload Architecture: Utilizes WhatsApp's `botForwardedMessage` wrapping `richResponseMessage` with base64-encoded `GenAIaeacdsnwHtmlPrimitive` view models, delivered via `sock.relayMessage()`.
-- Built-in Dark-Mode CSS Design System: Provides CSS variables, layout shells (`.ui-page`, `.ui-header`, `.ui-badge`), cards (`.ui-card`, `.ui-card-header`), key-value rows (`.ui-row`), category lists (`.ui-list`, `.ui-list-item`), and micro-animations (`fadeIn`, `pulse`).
+- Built-in Dark-Mode CSS Design System: Flat, minimal design using neutral zinc/gray palette. Provides CSS variables, layout shells (`.ui-page`, `.ui-header`, `.ui-badge`), cards (`.ui-card`, `.ui-card-header`), key-value rows (`.ui-row`), and category lists (`.ui-list`, `.ui-list-item`). Per-command CSS overrides supported via `renderPage({ styles })`. No gradients, glassmorphism, or entrance animations.
 - Pure Component Generators: Exposes `renderPage()`, `renderCard()`, `renderList()`, and `sendUI()` for declarative graphical dashboard construction with built-in HTML character escaping to prevent injection vulnerabilities.
 - Interactive Rich Applications: Powers client-side mini-games (`commands/yuegame.js`) complete with Web Audio API sound synthesis, touch directional pads, real-time score counters, and responsive game states.
 
@@ -70,7 +70,7 @@ With the introduction of the interactive HTML UI engine (`lib/uiEngine.js`), com
 A user preference setting (`meta.displayMode` with values `"ui"` or `"text"`) was introduced:
 - Zero-Migration Fallback: By leveraging the in-code nullish coalescing pattern (`userData.meta?.displayMode ?? "ui"`), all existing database records default seamlessly to `"ui"` mode without requiring schema changes or database migration runs.
 - Preference Controls: Users can configure their preference via `!register mode <ui|text>` (or via the interactive registration reply menu) and view their active mode via `!profile`.
-- Adaptive Command Rendering: Implemented in `commands/anime.js` (`!anime`), dynamically rendering interactive cards (`renderCard`, `renderPage`, `sendUI`) for UI mode and fallback poster image with formatted caption for Text mode. Includes on-the-fly override flags (`--ui` and `--text`).
+- Adaptive Command Rendering: Implemented in `commands/anime.js` (`!anime`), dynamically rendering custom flat HTML layouts with per-command CSS overrides (`renderPage({ styles })`) for UI mode and fallback poster image with formatted caption for Text mode. Includes on-the-fly override flags (`--ui` and `--text`).
 
 ---
 
@@ -105,4 +105,4 @@ A user preference setting (`meta.displayMode` with values `"ui"` or `"text"`) wa
 - Tools and Utilities: Reminder engine (`!remind`, `!unremind`), Puppeteer quote card maker (`!quote`), webpage screenshot tool (`!screenshot`), and registration system (`!register`, `!profile`, `!groupprofile`).
 - Owner and Administration: Remote terminal shell execution (`!bash`), database repair utilities (`!dbfix`), ID scanner (`!scanids`), and bot administrator delegation (`!addbotadmin`, `!delbotadmin`).
 - Interactive Experiments: Added interactive text-based engine tests (`commands/yuegame.js`).
-- User Interface and Display Modes: Added user display preference (`meta.displayMode`) with default `"ui"`, `!register mode <ui|text>`, profile status indicator, adaptive rendering in `!anime`, Base64 Data URI poster embedding for sandbox bypass, 2:3 vertical poster proportions, and in-webview client-side pagination buttons.
+- User Interface and Display Modes: Added user display preference (`meta.displayMode`) with default `"ui"`, `!register mode <ui|text>`, profile status indicator, adaptive rendering in `!anime`, Base64 Data URI poster embedding for sandbox bypass, in-webview client-side pagination, and flat minimal design system (no gradients/glassmorphism).
