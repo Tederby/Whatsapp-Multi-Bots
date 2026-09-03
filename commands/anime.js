@@ -2,7 +2,7 @@ import axios from "axios";
 import https from "https";
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 import { getUser, resolveUserId } from "../lib/database.js";
-import { sendUI, renderPage, renderCard, renderList } from "../lib/uiEngine.js";
+import { sendUI, renderPage } from "../lib/uiEngine.js";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -87,49 +87,91 @@ function generateListUI(results, query) {
             year: String(year),
             studios: a.studios && a.studios.length > 0 ? a.studios.map(s => s.name).join(", ") : "N/A",
             rating: a.rating || "N/A",
-            genres: a.genres && a.genres.length > 0 ? a.genres.map(g => g.name).join(", ") : "N/A",
+            genres: a.genres && a.genres.length > 0 ? a.genres.map(g => g.name) : [],
             synopsis: (a.synopsis ? a.synopsis.replace(/\[Written by MAL Rewrite\]/i, "").trim() : "Tidak ada sinopsis."),
             image: a.imageBase64 || a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || null,
             url: a.url || ""
         };
     })).replace(/</g, '\\u003c');
 
+    // Minimal, flat CSS overrides scoped to anime UI
+    const animeStyles = `
+.ui-page{background:#0d0f13;border:none;box-shadow:none;border-radius:0;padding:16px}
+.ui-header{border-bottom:1px solid #1e2028;padding-bottom:12px;margin-bottom:16px}
+.ui-header-title{font-size:15px;font-weight:700;letter-spacing:0;color:#e4e4e7}
+.ui-badge{background:none;border:1px solid #2a2d37;border-radius:4px;font-size:10px;color:#71717a;font-weight:600;letter-spacing:0;text-transform:none;padding:3px 8px}
+
+/* Search list */
+.a-search-label{font-size:11px;color:#71717a;margin-bottom:12px;font-weight:500}
+.a-list{display:flex;flex-direction:column;gap:1px;background:#18191f;border-radius:6px;overflow:hidden}
+.a-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#0d0f13;cursor:pointer;transition:background .1s}
+.a-item:active{background:#18191f}
+.a-thumb{width:38px;height:54px;border-radius:3px;overflow:hidden;flex-shrink:0;background:#18191f}
+.a-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.a-thumb-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:16px;color:#3f3f46}
+.a-info{flex:1;min-width:0}
+.a-title{font-size:13px;font-weight:600;color:#e4e4e7;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a-meta{font-size:10px;color:#71717a;margin-top:2px}
+.a-score{font-size:11px;color:#a1a1aa;font-weight:600;flex-shrink:0;text-align:right}
+.a-score span{color:#facc15;font-size:10px}
+
+/* Pagination */
+.a-pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px}
+.a-pager-btn{background:none;border:1px solid #2a2d37;border-radius:4px;color:#a1a1aa;font-size:11px;font-weight:600;padding:6px 14px;cursor:pointer;transition:border-color .1s}
+.a-pager-btn:active{border-color:#52525b}
+.a-pager-btn[disabled]{opacity:.25;pointer-events:none}
+.a-pager-info{font-size:10px;color:#52525b;font-weight:500}
+
+/* Detail screen */
+.a-back{background:none;border:none;color:#71717a;font-size:12px;font-weight:500;cursor:pointer;padding:0;margin-bottom:16px;display:inline-flex;align-items:center;gap:4px}
+.a-back:active{color:#a1a1aa}
+.a-poster{display:flex;justify-content:center;margin-bottom:16px}
+.a-poster img{width:140px;height:200px;object-fit:cover;border-radius:4px;display:block}
+.a-detail-title{font-size:16px;font-weight:700;color:#e4e4e7;line-height:1.3;text-align:center}
+.a-detail-sub{font-size:11px;color:#71717a;text-align:center;margin-top:4px}
+.a-detail-score{text-align:center;margin-top:10px;font-size:20px;font-weight:700;color:#e4e4e7}
+.a-detail-score small{font-size:11px;color:#52525b;font-weight:500;margin-left:4px}
+
+.a-table{width:100%;margin-top:16px;border-top:1px solid #1e2028}
+.a-table-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1e2028;font-size:12px}
+.a-table-label{color:#71717a;font-weight:500}
+.a-table-value{color:#a1a1aa;font-weight:500;text-align:right;max-width:60%}
+
+.a-section-label{font-size:10px;color:#52525b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:16px;margin-bottom:8px}
+.a-tags{display:flex;flex-wrap:wrap;gap:4px}
+.a-tag{font-size:10px;color:#a1a1aa;background:#18191f;border:1px solid #1e2028;border-radius:3px;padding:2px 8px;font-weight:500}
+.a-synopsis{font-size:12px;color:#a1a1aa;line-height:1.6;margin-top:4px}
+.a-mal-link{display:inline-block;margin-top:16px;font-size:11px;color:#71717a;text-decoration:underline;text-underline-offset:2px}
+.a-mal-link:active{color:#a1a1aa}
+`;
+
     const detailScreenHtml = `
 <div id="screenDetail" class="ui-screen">
-  <div style="margin-bottom:14px;">
-    <button type="button" class="ui-btn" onclick="backToList()" style="width:auto;padding:8px 16px;font-size:12px;">
-      ‹ Kembali ke Daftar
-    </button>
+  <button type="button" class="a-back" onclick="backToList()">← Kembali</button>
+  <div id="detailImgContainer" class="a-poster" style="display:none;">
+    <img id="detailImg" alt="Poster" referrerpolicy="no-referrer" />
   </div>
-  <!-- Vertical rectangular poster (2:3 MAL standard aspect ratio) -->
-  <div id="detailImgContainer" style="text-align:center;margin-bottom:16px;display:none;">
-    <img id="detailImg" alt="Poster" referrerpolicy="no-referrer" style="width:175px;height:250px;object-fit:cover;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.5);display:inline-block;" />
+  <div class="a-detail-title" id="detailTitle"></div>
+  <div class="a-detail-sub" id="detailSubtitle"></div>
+  <div class="a-detail-score" id="detailScore"></div>
+
+  <div class="a-table">
+    <div class="a-table-row"><span class="a-table-label">Type</span><span class="a-table-value" id="rowType"></span></div>
+    <div class="a-table-row"><span class="a-table-label">Episodes</span><span class="a-table-value" id="rowEpisodes"></span></div>
+    <div class="a-table-row"><span class="a-table-label">Status</span><span class="a-table-value" id="rowStatus"></span></div>
+    <div class="a-table-row"><span class="a-table-label">Season</span><span class="a-table-value" id="rowSeason"></span></div>
+    <div class="a-table-row"><span class="a-table-label">Studio</span><span class="a-table-value" id="rowStudio"></span></div>
+    <div class="a-table-row"><span class="a-table-label">Rank</span><span class="a-table-value" id="rowRank"></span></div>
+    <div class="a-table-row"><span class="a-table-label">Rating</span><span class="a-table-value" id="rowRating"></span></div>
   </div>
-  <div class="ui-card">
-    <div class="ui-card-header">
-      <div class="ui-card-icon">🎌</div>
-      <div class="ui-card-title" id="detailTitle"></div>
-      <div class="ui-card-subtitle" id="detailSubtitle"></div>
-    </div>
-    <div class="ui-row"><div class="ui-row-icon">⭐</div><div class="ui-row-label">Score</div><div class="ui-row-value" id="rowScore"></div></div>
-    <div class="ui-row"><div class="ui-row-icon">🏆</div><div class="ui-row-label">Rank</div><div class="ui-row-value" id="rowRank"></div></div>
-    <div class="ui-row"><div class="ui-row-icon">🎬</div><div class="ui-row-label">Episodes</div><div class="ui-row-value" id="rowEpisodes"></div></div>
-    <div class="ui-row"><div class="ui-row-icon">⏳</div><div class="ui-row-label">Status</div><div class="ui-row-value" id="rowStatus"></div></div>
-    <div class="ui-row"><div class="ui-row-icon">📅</div><div class="ui-row-label">Season</div><div class="ui-row-value" id="rowSeason"></div></div>
-    <div class="ui-row"><div class="ui-row-icon">🎥</div><div class="ui-row-label">Studio</div><div class="ui-row-value" id="rowStudio"></div></div>
-    <div class="ui-row"><div class="ui-row-icon">⚠️</div><div class="ui-row-label">Rating</div><div class="ui-row-value" id="rowRating"></div></div>
-    <div class="ui-section">
-      <div class="ui-section-title">🎭 Genres</div>
-      <div class="ui-row"><div class="ui-row-icon">🏷️</div><div class="ui-row-label">List</div><div class="ui-row-value" id="rowGenres"></div></div>
-    </div>
-    <div class="ui-section">
-      <div class="ui-section-title">📝 Synopsis</div>
-      <div style="padding:12px 14px;font-size:12px;line-height:1.5;color:var(--text-value);" id="rowSynopsis"></div>
-    </div>
-  </div>
-  <a id="detailMalBtn" href="#" target="_blank" class="ui-btn ui-mt-sm" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;text-align:center;padding:12px;display:none;">
-    🔗 Buka di MyAnimeList
-  </a>
+
+  <div class="a-section-label">Genres</div>
+  <div class="a-tags" id="rowGenres"></div>
+
+  <div class="a-section-label">Synopsis</div>
+  <div class="a-synopsis" id="rowSynopsis"></div>
+
+  <a id="detailMalBtn" href="#" target="_blank" class="a-mal-link" style="display:none;">View on MyAnimeList →</a>
 </div>`;
 
     const clientScript = `
@@ -158,37 +200,35 @@ function renderPageItems(page) {
     var html = '';
     for (var i = start; i < end; i++) {
         var anime = animeData[i];
-        var iconHtml = anime.image
-            ? '<img src="' + anime.image + '" alt="thumb" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;" />'
-            : '🎌';
+        var thumbHtml = anime.image
+            ? '<img src="' + anime.image + '" alt="" referrerpolicy="no-referrer" />'
+            : '<div class="a-thumb-empty">—</div>';
 
-        html += '<div class="ui-list-item" onclick="showAnimeDetail(' + i + ')" role="button" tabindex="0">';
-        html += '<div class="ui-list-icon">' + iconHtml + '</div>';
-        html += '<div class="ui-list-content">';
-        html += '<div class="ui-list-title">' + (i + 1) + '. ' + escHtml(anime.title) + '</div>';
-        html += '<div class="ui-list-desc">' + escHtml(anime.type) + ' • ⭐ ' + escHtml(anime.score) + ' • ' + escHtml(anime.episodes) + ' Eps • ' + escHtml(anime.year) + '</div>';
+        html += '<div class="a-item" onclick="showAnimeDetail(' + i + ')" role="button" tabindex="0">';
+        html += '<div class="a-thumb">' + thumbHtml + '</div>';
+        html += '<div class="a-info">';
+        html += '<div class="a-title">' + escHtml(anime.title) + '</div>';
+        html += '<div class="a-meta">' + escHtml(anime.type) + ' · ' + escHtml(anime.episodes) + ' eps · ' + escHtml(anime.year) + '</div>';
         html += '</div>';
-        html += '<div class="ui-list-arrow">›</div>';
+        if (anime.score !== 'N/A') {
+            html += '<div class="a-score"><span>★</span> ' + escHtml(anime.score) + '</div>';
+        }
         html += '</div>';
     }
 
     container.innerHTML = html;
 
     var indicator = document.getElementById('pageIndicator');
-    if (indicator) indicator.innerText = 'Page ' + (currentPage + 1) + ' / ' + (totalPages || 1);
+    if (indicator) indicator.innerText = (currentPage + 1) + ' / ' + (totalPages || 1);
 
     var topBadge = document.querySelector('.ui-header .ui-badge');
-    if (topBadge) topBadge.innerText = 'Page ' + (currentPage + 1) + '/' + (totalPages || 1);
+    if (topBadge) topBadge.innerText = (currentPage + 1) + '/' + (totalPages || 1);
 
     var prevBtn = document.getElementById('prevPageBtn');
-    if (prevBtn) {
-        prevBtn.disabled = (currentPage === 0);
-    }
+    if (prevBtn) prevBtn.disabled = (currentPage === 0);
 
     var nextBtn = document.getElementById('nextPageBtn');
-    if (nextBtn) {
-        nextBtn.disabled = (currentPage >= totalPages - 1);
-    }
+    if (nextBtn) nextBtn.disabled = (currentPage >= totalPages - 1);
 }
 
 function changePage(delta) {
@@ -204,34 +244,51 @@ function showAnimeDetail(idx) {
     if (!a) return;
 
     document.getElementById('detailTitle').innerText = a.title;
-    document.getElementById('detailSubtitle').innerText = (a.titleEng ? a.titleEng + ' • ' : '') + a.type;
+    var subParts = [];
+    if (a.titleEng) subParts.push(a.titleEng);
+    subParts.push(a.type);
+    document.getElementById('detailSubtitle').innerText = subParts.join(' · ');
+
+    var scoreEl = document.getElementById('detailScore');
+    if (a.score !== 'N/A') {
+        scoreEl.innerHTML = a.score + '<small> / 10</small>';
+    } else {
+        scoreEl.innerHTML = '—';
+    }
 
     var badge = document.querySelector('.ui-header .ui-badge');
-    if (badge) badge.innerText = a.score !== 'N/A' ? '⭐ ' + a.score : a.type;
+    if (badge) badge.innerText = a.score !== 'N/A' ? '★ ' + a.score : a.type;
 
     var imgContainer = document.getElementById('detailImgContainer');
     var imgEl = document.getElementById('detailImg');
     if (a.image) {
         imgEl.src = a.image;
-        imgContainer.style.display = 'block';
+        imgContainer.style.display = 'flex';
     } else {
         imgContainer.style.display = 'none';
     }
 
-    document.getElementById('rowScore').innerText = '⭐ ' + a.score;
-    document.getElementById('rowRank').innerText = '#' + a.rank + ' (Pop #' + a.popularity + ')';
-    document.getElementById('rowEpisodes').innerText = a.episodes + ' Eps (' + a.duration + ')';
+    document.getElementById('rowType').innerText = a.type;
+    document.getElementById('rowEpisodes').innerText = a.episodes + ' eps · ' + a.duration;
     document.getElementById('rowStatus').innerText = a.status;
     document.getElementById('rowSeason').innerText = a.seasonYear;
     document.getElementById('rowStudio').innerText = a.studios;
+    document.getElementById('rowRank').innerText = '#' + a.rank + ' (Popularity #' + a.popularity + ')';
     document.getElementById('rowRating').innerText = a.rating;
-    document.getElementById('rowGenres').innerText = a.genres;
+
+    // Render genres as tags
+    var genresContainer = document.getElementById('rowGenres');
+    var genres = Array.isArray(a.genres) ? a.genres : (a.genres ? a.genres.split(', ') : []);
+    genresContainer.innerHTML = genres.map(function(g) {
+        return '<span class="a-tag">' + escHtml(g) + '</span>';
+    }).join('');
+
     document.getElementById('rowSynopsis').innerText = a.synopsis;
 
     var malBtn = document.getElementById('detailMalBtn');
     if (a.url) {
         malBtn.href = a.url;
-        malBtn.style.display = 'flex';
+        malBtn.style.display = 'inline-block';
     } else {
         malBtn.style.display = 'none';
     }
@@ -243,50 +300,33 @@ function showAnimeDetail(idx) {
 
 function backToList() {
     var badge = document.querySelector('.ui-header .ui-badge');
-    if (badge) badge.innerText = 'Page ' + (currentPage + 1) + '/' + (totalPages || 1);
+    if (badge) badge.innerText = (currentPage + 1) + '/' + (totalPages || 1);
     document.getElementById('screenDetail').classList.remove('active');
     document.getElementById('screenList').classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Initial render of page 0 items
 renderPageItems(0);
 </script>`;
 
     const bodyHtml = `
 <div id="screenList" class="ui-screen active">
-  <div class="ui-card">
-    <div class="ui-card-header">
-      <div class="ui-card-icon">🔍</div>
-      <div class="ui-card-title">Daftar Anime</div>
-      <div class="ui-card-subtitle">Pencarian: "${query}"</div>
-    </div>
-  </div>
-  <div class="ui-list ui-mt-sm" id="listItemsContainer">
-    <!-- Diisi secara dinamis oleh renderPageItems() -->
-  </div>
-  <div class="ui-pagination" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;">
-    <button type="button" class="ui-btn" id="prevPageBtn" onclick="changePage(-1)" style="width:auto;flex:1;padding:10px 14px;font-size:12px;" disabled>
-      ‹ Prev
-    </button>
-    <div id="pageIndicator" style="font-size:11px;font-weight:700;color:var(--text-secondary);white-space:nowrap;padding:0 8px;">
-      Page 1 / ${totalPages || 1}
-    </div>
-    <button type="button" class="ui-btn" id="nextPageBtn" onclick="changePage(1)" style="width:auto;flex:1;padding:10px 14px;font-size:12px;" ${totalPages <= 1 ? "disabled" : ""}>
-      Next ›
-    </button>
-  </div>
-  <div class="ui-card ui-mt-sm" style="padding:10px 14px;text-align:center;font-size:11px;color:var(--text-accent);">
-    👆 <b>Ketuk anime di atas</b> untuk membuka detail langsung.
+  <div class="a-search-label">Hasil pencarian "${query}" · ${results.length} ditemukan</div>
+  <div class="a-list" id="listItemsContainer"></div>
+  <div class="a-pager">
+    <button type="button" class="a-pager-btn" id="prevPageBtn" onclick="changePage(-1)" disabled>← Prev</button>
+    <span class="a-pager-info" id="pageIndicator">1 / ${totalPages || 1}</span>
+    <button type="button" class="a-pager-btn" id="nextPageBtn" onclick="changePage(1)" ${totalPages <= 1 ? "disabled" : ""}>Next →</button>
   </div>
 </div>
 ${detailScreenHtml}
 ${clientScript}`;
 
     return renderPage({
-        title: "🎌 Anime Search",
-        badge: `Page 1/${totalPages || 1}`,
-        body: bodyHtml
+        title: "Anime Search",
+        badge: `${results.length} results`,
+        body: bodyHtml,
+        styles: animeStyles
     });
 }
 
@@ -522,51 +562,75 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
             const imageBase64 = anime.imageBase64 || await fetchImageAsBase64(imageUrl);
             const finalImageSrc = imageBase64 || imageUrl;
 
-            let cardBody = "";
+            // Same minimal CSS as generateListUI
+            const animeStyles = `
+.ui-page{background:#0d0f13;border:none;box-shadow:none;border-radius:0;padding:16px}
+.ui-header{border-bottom:1px solid #1e2028;padding-bottom:12px;margin-bottom:16px}
+.ui-header-title{font-size:15px;font-weight:700;letter-spacing:0;color:#e4e4e7}
+.ui-badge{background:none;border:1px solid #2a2d37;border-radius:4px;font-size:10px;color:#71717a;font-weight:600;letter-spacing:0;text-transform:none;padding:3px 8px}
+.a-poster{display:flex;justify-content:center;margin-bottom:16px}
+.a-poster img{width:140px;height:200px;object-fit:cover;border-radius:4px;display:block}
+.a-detail-title{font-size:16px;font-weight:700;color:#e4e4e7;line-height:1.3;text-align:center}
+.a-detail-sub{font-size:11px;color:#71717a;text-align:center;margin-top:4px}
+.a-detail-score{text-align:center;margin-top:10px;font-size:20px;font-weight:700;color:#e4e4e7}
+.a-detail-score small{font-size:11px;color:#52525b;font-weight:500;margin-left:4px}
+.a-table{width:100%;margin-top:16px;border-top:1px solid #1e2028}
+.a-table-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1e2028;font-size:12px}
+.a-table-label{color:#71717a;font-weight:500}
+.a-table-value{color:#a1a1aa;font-weight:500;text-align:right;max-width:60%}
+.a-section-label{font-size:10px;color:#52525b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:16px;margin-bottom:8px}
+.a-tags{display:flex;flex-wrap:wrap;gap:4px}
+.a-tag{font-size:10px;color:#a1a1aa;background:#18191f;border:1px solid #1e2028;border-radius:3px;padding:2px 8px;font-weight:500}
+.a-synopsis{font-size:12px;color:#a1a1aa;line-height:1.6;margin-top:4px}
+.a-mal-link{display:inline-block;margin-top:16px;font-size:11px;color:#71717a;text-decoration:underline;text-underline-offset:2px}
+.a-mal-link:active{color:#a1a1aa}
+`;
+
+            const genreList = anime.genres && anime.genres.length > 0
+                ? anime.genres.map(g => g.name)
+                : [];
+
+            let bodyHtml = "";
+
             if (finalImageSrc) {
-                // Vertical rectangular poster (2:3 aspect ratio)
-                cardBody += `<div style="text-align:center;margin-bottom:16px;">` +
-                    `<img src="${finalImageSrc}" alt="${title}" referrerpolicy="no-referrer" style="width:175px;height:250px;object-fit:cover;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.5);display:inline-block;" />` +
-                    `</div>`;
+                bodyHtml += `<div class="a-poster"><img src="${finalImageSrc}" alt="${title}" referrerpolicy="no-referrer" /></div>`;
             }
 
-            const cardHtml = renderCard({
-                icon: "🎌",
-                title: title,
-                subtitle: titleEng ? `${titleEng.replace(/[()]/g, '').trim()} • ${type}` : type,
-                rows: [
-                    { label: "Score", value: `⭐ ${score}` },
-                    { label: "Rank", value: `#${rank} (Pop #${popularity})` },
-                    { label: "Episodes", value: `${episodes} Eps (${duration})` },
-                    { label: "Status", value: status },
-                    { label: "Season", value: seasonYear },
-                    { label: "Studio", value: studios },
-                    { label: "Rating", value: rating }
-                ],
-                sections: [
-                    {
-                        title: "🎭 Genres",
-                        rows: [
-                            { label: "List", value: genres }
-                        ]
-                    },
-                    {
-                        title: "📝 Synopsis",
-                        rows: [
-                            { label: "Summary", value: synopsis.length > 320 ? synopsis.slice(0, 317) + "..." : synopsis }
-                        ]
-                    }
-                ]
-            });
+            bodyHtml += `<div class="a-detail-title">${title}</div>`;
+            bodyHtml += `<div class="a-detail-sub">${titleEng ? titleEng.replace(/[()]/g, '').trim() + ' · ' : ''}${type}</div>`;
+            bodyHtml += `<div class="a-detail-score">${score !== "N/A" ? score + '<small> / 10</small>' : '—'}</div>`;
+
+            bodyHtml += `<div class="a-table">`;
+            bodyHtml += `<div class="a-table-row"><span class="a-table-label">Type</span><span class="a-table-value">${type}</span></div>`;
+            bodyHtml += `<div class="a-table-row"><span class="a-table-label">Episodes</span><span class="a-table-value">${episodes} eps · ${duration}</span></div>`;
+            bodyHtml += `<div class="a-table-row"><span class="a-table-label">Status</span><span class="a-table-value">${status}</span></div>`;
+            bodyHtml += `<div class="a-table-row"><span class="a-table-label">Season</span><span class="a-table-value">${seasonYear}</span></div>`;
+            bodyHtml += `<div class="a-table-row"><span class="a-table-label">Studio</span><span class="a-table-value">${studios}</span></div>`;
+            bodyHtml += `<div class="a-table-row"><span class="a-table-label">Rank</span><span class="a-table-value">#${rank} (Popularity #${popularity})</span></div>`;
+            bodyHtml += `<div class="a-table-row"><span class="a-table-label">Rating</span><span class="a-table-value">${rating}</span></div>`;
+            bodyHtml += `</div>`;
+
+            if (genreList.length > 0) {
+                bodyHtml += `<div class="a-section-label">Genres</div>`;
+                bodyHtml += `<div class="a-tags">${genreList.map(g => `<span class="a-tag">${g}</span>`).join('')}</div>`;
+            }
+
+            bodyHtml += `<div class="a-section-label">Synopsis</div>`;
+            bodyHtml += `<div class="a-synopsis">${synopsis}</div>`;
+
+            if (url) {
+                bodyHtml += `<a href="${url}" target="_blank" class="a-mal-link">View on MyAnimeList →</a>`;
+            }
 
             const pageHtml = renderPage({
-                title: "🎌 Anime Information",
-                badge: score !== "N/A" ? `⭐ ${score}` : "MAL",
-                body: cardBody + cardHtml + (url ? `<a href="${url}" target="_blank" class="ui-btn ui-mt-sm" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;text-align:center;padding:12px;">🔗 Buka di MyAnimeList</a>` : "")
+                title: "Anime",
+                badge: score !== "N/A" ? `★ ${score}` : "MAL",
+                body: bodyHtml,
+                styles: animeStyles
             });
 
             const sent = await sendUI(sock, message.chat, {
-                title: `🎌 ${title} (${score !== "N/A" ? "⭐ " + score : type})`,
+                title: `${title} (${score !== "N/A" ? "★ " + score : type})`,
                 html: pageHtml
             });
             console.log(`[Anime UI] Detail card successfully sent to ${message.chat}. ID: ${sent?.messageId}`);
