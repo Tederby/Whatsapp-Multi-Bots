@@ -237,6 +237,17 @@ export async function sendSteamGameDetail(appId, message, sock, isAutoDetect = f
             }
         }
 
+        let captionText = `🎮 *${name}*\n\n`;
+        captionText += `🔗 *Link Steam:* https://store.steampowered.com/app/${appId}\n\n`;
+        captionText += `🏷️ *Genre:* ${genres}\n`;
+        captionText += `📅 *Rilis:* ${releaseDate}\n`;
+        captionText += `🛠️ *Developer:* ${developers}\n`;
+        captionText += `🏢 *Publisher:* ${publishers}\n`;
+        captionText += `🌟 *Metacritic:* ${metacritic}\n\n`;
+        captionText += `💰 *Harga:* ${priceText}\n\n`;
+        captionText += `📝 *Deskripsi:*\n${shortDesc}\n\n`;
+        captionText += `🌐 *Bahasa didukung:*\n${supportedLanguages}`;
+
         if (headerImage) {
             await sock.sendMessage(
                 message.chat,
