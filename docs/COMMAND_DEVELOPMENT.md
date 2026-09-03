@@ -225,6 +225,29 @@ await sendUI(sock, message.chat, {
 });
 ```
 
+### UI Best Practices: Auto-Deletion & Pseudo-Buttons
+
+Because the webview is instantiated every time the message enters the client's viewport, persistent HTML UI messages can cause severe lag for some users. To mitigate this and work around sandbox limitations:
+
+1. **Auto-Deletion (UI Payloads Only)**:
+   Always delete HTML UI payloads after a set duration (e.g., 2 minutes for read-only info like `!anime`) or immediately after a user resolves an interaction (e.g., selecting a media item to download). Standard text messages do NOT require auto-deletion.
+   ```javascript
+   const uiMsg = await sendUI(sock, message.chat, { title: "Menu", html: listHtml });
+
+   // Auto-delete after 2 minutes to prevent client lag
+   setTimeout(() => {
+       sock.sendMessage(message.chat, { delete: uiMsg.key }).catch(() => {});
+   }, 120000);
+   ```
+
+2. **Pseudo-Buttons & Direct Commands**:
+   - **Clipboard API Limitations**: In the sandboxed iframe/webview, standard `navigator.clipboard.writeText` calls fail due to missing clipboard permissions and lack of top-level document focus.
+   - **Native WhatsApp Long-Press**: When a user long-presses an HTML anchor tag (`<a href="...">`), the native WhatsApp client intercepts the gesture and automatically extracts the link or inner text directly into the user's text composer bar (*auto-paste*).
+   - **Tokenized Command Pattern**: Structure pseudo-buttons as standalone, executable bot commands (e.g., `<a href="#" class="a-btn">!anime --id 12345</a>` or `<a href="#" class="a-btn">!ytp dQw4w9WgXcQ</a>`). When released, the command appears in the chat bar ready to send with one tap. This avoids requiring manual quoted replies and eliminates complex nested condition checks in the message pipeline.
+
+3. **State-Free Self-Contained UI**:
+   If a command renders a multi-screen UI where navigation (pagination, detail drill-down) is handled entirely client-side via JavaScript, **do not register a `replyHandler` in server memory**. Registering unused reply handlers for webview messages causes memory leaks since users interact on-screen rather than sending quoted chat replies.
+
 ### Adaptive UI vs Text Mode Pattern
 
 When building commands that support rich HTML UI, respect the user's `meta.displayMode` preference with default fallback to `"ui"`, and allow on-the-fly override flags (`--ui` / `--text`):
@@ -254,6 +277,16 @@ if (displayMode === "ui") {
 // Fallback / Text Mode
 await message.reply(captionText);
 ```
+
+#### Lifecycle & Architecture: UI Mode vs Text Mode
+
+| Dimension | UI Mode (`"ui"`) | Text Mode (`"text"`) |
+|:---|:---|:---|
+| **Payload Type** | `GenAIaeacdsnwHtmlPrimitive` (Webview) | Plain text (Box-drawing characters) |
+| **Client Impact** | Re-mount lag spike when entering viewport | Zero lag, native message list |
+| **Interactivity** | In-webview client-side DOM (pagination, screens) | Quoted chat replies via `registerReplyHandler` |
+| **Auto-Deletion** | **Mandatory** (120s timer) to prune laggy payloads | **Disabled** (persists in chat history) |
+| **Server State** | **State-free** (no reply handlers in memory) | Cleaned up on response or 15m background purge |
 
 #### Guidelines for Webview UI Commands
 1. **Media Assets**: Always convert remote images into Base64 Data URIs (`data:image/...;base64,...`) on the server before embedding in the webview to bypass sandbox network restrictions.

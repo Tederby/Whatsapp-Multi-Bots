@@ -71,6 +71,8 @@ A user preference setting (`meta.displayMode` with values `"ui"` or `"text"`) wa
 - Zero-Migration Fallback: By leveraging the in-code nullish coalescing pattern (`userData.meta?.displayMode ?? "ui"`), all existing database records default seamlessly to `"ui"` mode without requiring schema changes or database migration runs.
 - Preference Controls: Users can configure their preference via `!register mode <ui|text>` (or via the interactive registration reply menu) and view their active mode via `!profile`.
 - Adaptive Command Rendering: Implemented in `commands/anime.js` (`!anime`), dynamically rendering custom flat HTML layouts with per-command CSS overrides (`renderPage({ styles })`) for UI mode and fallback poster image with formatted caption for Text mode. Includes on-the-fly override flags (`--ui` and `--text`).
+- Sandbox Lifecycle & Memory Hygiene: Established UI-exclusive auto-deletion (120s timer) to eliminate viewport re-mount lag spikes in client chat history. Eliminated redundant `registerReplyHandler` registrations in memory for self-contained webview interfaces, keeping server memory completely leak-free.
+- Pseudo-Buttons & Interaction Modeling: Documented sandbox clipboard limitations, native WhatsApp long-press auto-paste behavior, and direct tokenized command patterns for external bot interactions without nested condition checks.
 
 ---
 

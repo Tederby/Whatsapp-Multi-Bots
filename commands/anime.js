@@ -417,17 +417,12 @@ export default {
                     });
                     console.log(`[Anime UI] Search list UI successfully dispatched. Message ID: ${sent?.messageId}`);
 
-                    // Chat reply fallback is still registered for text-based reply
-                    registerReplyHandler(sent.messageId, replyHandler, {
-                        results,
-                        page: 0,
-                        query,
-                        userId: sender,
-                        messageKey: sent.key,
-                        commandName: "anime",
-                        forcedMode,
-                        displayMode: "ui"
-                    });
+                    // Auto-delete HTML webview payload after 2 minutes to prevent viewport lag spikes
+                    if (sent?.key) {
+                        setTimeout(() => {
+                            sock.sendMessage(message.chat, { delete: sent.key }).catch(() => {});
+                        }, 120000);
+                    }
                     return;
                 } catch (uiErr) {
                     console.error("[Anime UI Error] Failed to send search list UI, falling back to text:", uiErr);
@@ -634,6 +629,13 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
                 html: pageHtml
             });
             console.log(`[Anime UI] Detail card successfully sent to ${message.chat}. ID: ${sent?.messageId}`);
+
+            // Auto-delete HTML webview payload after 2 minutes to prevent viewport lag spikes
+            if (sent?.key) {
+                setTimeout(() => {
+                    sock.sendMessage(message.chat, { delete: sent.key }).catch(() => {});
+                }, 120000);
+            }
             return;
         } catch (uiErr) {
             console.error("[Anime UI Error] Failed to send detail card, falling back to text. Error:", uiErr);

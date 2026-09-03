@@ -218,6 +218,15 @@ const payload = Buffer.from(JSON.stringify({
 4. Client-Side Navigation and Interactivity:
    Multi-screen interfaces utilize `.ui-screen` and `.ui-screen.active` toggles, client-side pagination controllers (`‹ Prev` / `Next ›`), and tactile `.ui-btn` states (`:active`) to maintain complete immersion without requiring round-trip chat messages.
 
+### Client-Side Sandbox Behaviors & Limitations
+
+1. **Initial Download Gate**: Because `GenAIaeacdsnwHtmlPrimitive` carries heavy interactive payloads, the WhatsApp client enforces a download safety gate requiring the user to explicitly tap a blue "Download" label before instantiating the webview. This protects bandwidth and avoids unsolicited webview rendering.
+2. **Viewport Re-mount & Lag Spikes**: The webview is re-mounted from scratch every time the message enters the client viewport (e.g. opening the chat or scrolling past the message). Persistent or accumulated webview payloads in chat history cause severe memory spikes and lag on mid/low-end devices.
+3. **One-Way Sandbox & Complete Pre-baking**: The webview sandbox operates strictly one-way without an inbound channel (`fetch`, WebSocket, or IPC) back to the bot process. All dataset records, pagination pages, and detail views must be pre-baked and bundled directly into inline DOM/JSON payloads upfront.
+4. **Link Blocking vs DOM Click Interactivity**:
+   - **Internal DOM Events**: Client-side JavaScript click events, pagination, and multi-screen toggles (`showAnimeDetail()`, `.ui-screen.active`) execute normally inside the local webview.
+   - **External Navigation**: Outbound anchor tags (`<a href="...">`), `window.open`, and `window.location` are strictly blocked by the client sandbox container and will not launch external browsers or open external links.
+
 ### Core Rendering Primitives
 
 - `renderPage({ title, body, badge, styles })`: Renders the complete HTML document shell with base dark-mode styling, viewport constraints, referrer policies, and custom CSS injection.
