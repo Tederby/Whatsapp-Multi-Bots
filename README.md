@@ -1,244 +1,185 @@
 # 🤖 WhatsApp Multi-Bots
 
-A scalable, high-performance, multi-instance WhatsApp bot built with [Baileys](https://github.com/WhiskeySockets/Baileys) and Node.js (ES Modules). Designed to run multiple bot instances concurrently from a single unified codebase with shared SQLite storage.
+A scalable, high-performance, multi-instance WhatsApp bot built with [Baileys](https://github.com/WhiskeySockets/Baileys) and Node.js (ES Modules). Designed to run multiple bot instances concurrently from a single unified codebase with shared SQLite storage, runtime hot-reloading, and an in-app interactive HTML webview UI engine.
+
+---
+
+## 📚 Documentation Suite
+
+This `README.md` serves as a high-level summary. Detailed technical documentation, architecture deep-dives, and implementation guides are maintained in the [`docs/`](docs/) directory:
+
+| Document | Focus & Contents |
+|:---|:---|
+| 📖 [**Documentation Hub**](docs/README.md) | Master index and project specifications overview. |
+| 📝 [**Development Journal & Changelog**](docs/CHANGELOG.md) | Chronological rolling release notes, architectural milestones, and git-verified changelog. |
+| 🏗️ [**System Architecture**](docs/ARCHITECTURE.md) | 13-stage message pipeline, multi-bot concurrency model, and webview protocol relay. |
+| 🧩 [**Command Development Guide**](docs/COMMAND_DEVELOPMENT.md) | Full 55-command guide, permission flags, context builder, UI standards, and pseudo-buttons. |
+| 🗄️ [**Database & Storage Architecture**](docs/DATABASE.md) | SQLite WAL configuration, table schemas, LID/PN identity mapping, and helper methods. |
+| 🚀 [**Configuration & Deployment**](docs/CONFIGURATION_DEPLOYMENT.md) | Environment variables reference, PM2 multi-instance setup, headless pairing code, and OS prerequisites. |
 
 ---
 
 ## ✨ Key Highlights
 
-- **Multi-Bot Concurrency** — Run multiple bot instances simultaneously via PM2. Each instance maintains its own auth session, temp files, and identity while sharing a concurrent-safe database.
-- **Interactive In-App Webview UI Engine** — Built-in `uiEngine.js` for delivering rich graphical cards, lists, and interactive dashboards with dark-mode styling directly inside WhatsApp's native client webview via Meta AI protobuf messaging.
-- **Adaptive User Display Preferences** — Users can choose between interactive graphical UI (`!register mode ui`) and traditional formatted text (`!register mode text`) with zero-migration database fallbacks.
-- **SQLite with WAL Mode** — Centralized `better-sqlite3` database engine running in WAL mode with cached prepared statements for zero-corruption concurrent access.
-- **Hot-Reload Architecture** — Edit message pipelines or command files at runtime without restarting the process. Changes take effect instantly.
-- **Robust LID & PN Resolution** — Built-in `jidHelper.js` resolves WhatsApp Multi-Device addressing modes (LID vs PN) so user tagging, moderation, and database lookups never break.
-- **Background Auto-Detection** — Pattern matching engine that automatically detects and previews URLs (Danbooru, Steam, GitHub, Group Auto-Replies) without requiring command prefixes.
-- **Startup Diagnostics** — Automatically validates environment binaries (`ffmpeg`, `yt-dlp`) and API keys on boot, printing a clear diagnostic dashboard in the terminal.
-- **Resource Protection** — Built-in concurrency queues for `yt-dlp` downloads and `Puppeteer` browser rendering to prevent VPS memory exhaustion.
+- **Multi-Bot Concurrency & Zero-Duplicate Claiming** — Run multiple bot instances simultaneously via PM2. Each instance maintains its own auth session, temp storage, and Baileys socket while sharing a concurrent-safe SQLite database. An atomic `message_claims` table guarantees exactly one bot executes a command in shared groups, while `!ping` synchronizes across all active instances.
+- **Interactive In-App Webview UI Engine** — Deliver graphical cards, interactive lists, and multi-screen dashboards directly inside WhatsApp's native client webview using Meta AI protobuf messaging (`GenAIaeacdsnwHtmlPrimitive`). Features a minimal dark-mode zinc/gray aesthetic, embedded Base64 media (bypassing sandbox network restrictions), client-side filtering, and tactile transitions.
+- **Adaptive Display Modes (`UI` vs `Text`)** — Users choose their preferred output format globally via `!register mode <ui|text>` (viewable via `!profile`), or override on the fly with `--ui` / `--text` flags on supported commands (`!anime`, `!steam`, `!menu`).
+- **Lifecycle & Memory Hygiene** — Rich webview messages automatically self-delete after 120 seconds with explicit `fromMe` keys to eliminate viewport re-mount lag and memory spikes on mobile devices.
+- **Native Long-Press Pseudo-Buttons** — Overcomes webview sandbox clipboard restrictions: long-pressing an anchor tag like `<a href="param">!cmd</a>` leverages native WhatsApp text extraction to auto-paste the command directly into the chat composer bar.
+- **SQLite with WAL Mode** — Centralized `better-sqlite3` database engine running in Write-Ahead Logging (WAL) mode with cached prepared statements, a 5000ms busy timeout, and automated schema migrations.
+- **LID & PN Addressing Resolution** — Built-in `jidHelper.js` dynamically reconciles WhatsApp Multi-Device Linked Identity Descriptors (`@lid`) and Phone Numbers (`@s.whatsapp.net`) via the `identity_map` table so moderation, mentions, and database queries never break.
+- **Modular 13-Stage Pipeline** — Decoupled message handling in `handler.js` covering replay protection, sider tracking, early ban checks, multi-bot claiming, spam rate limiting, and declarative permission validation.
+- **Runtime Hot-Reloading** — Live command re-importing via Chokidar file watching with cache-busting dynamic imports—modify commands without restarting the process or dropping socket connections.
+- **Resource Guardians** — Dedicated concurrency queues for media extraction (`downloadQueue.js`, max 4 concurrent downloads) and browser rendering (`puppeteerQueue.js`, serialized Chromium instances) to protect low-tier VPS environments.
 
 ---
 
-## 📚 Documentation
+## 🏗️ Architecture & Pipeline Overview
 
-Detailed technical documentation, architectural deep-dives, and guides are available in the [`docs/`](docs/) directory:
+Incoming messages pass through a 13-stage sequential pipeline in `handler.js`:
 
-- 📖 [**Documentation Hub**](docs/README.md) — Index and overview of all guides.
-- 📝 [**Development Journal & Changelog**](docs/CHANGELOG.md) — Release notes, architectural evolution, and technical journal entries.
-- 🏗️ [**System Architecture**](docs/ARCHITECTURE.md) — Message processing pipeline, multi-bot concurrency model, and hot-reloading.
-- 🧩 [**Command Development**](docs/COMMAND_DEVELOPMENT.md) — Authoring commands, permission flags, context builder, and UI formatting standard.
-- 🗄️ [**Database & Storage**](docs/DATABASE.md) — SQLite WAL schema, table breakdown, and LID/PN identity mapping.
-- 🚀 [**Configuration & Deployment**](docs/CONFIGURATION_DEPLOYMENT.md) — Multi-instance PM2 setup, pairing code guide, and VPS prerequisites.
+```text
+Incoming Message
+  └─► 1. Guard Check          (Filter empty/malformed senders)
+  └─► 2. Sider Tracker        (Record group activity before replay filter)
+  └─► 3. Replay Protection    (Drop messages older than 120 seconds)
+  └─► 4. Context Builder      (Normalize JID, resolve LID/PN, evaluate privileges)
+  └─► 5. Early Ban Checks     (Drop banned users/groups before heavy ops)
+  └─► 6. Command Parser       (Strip prefix, extract command name & arguments)
+  └─► 7. Blocklist Check      (Check in-memory blocked contact cache)
+  └─► 8. Message Claiming     (Atomic claim in message_claims table)
+  └─► 9. Reply Handlers       (Route follow-up replies to interactive sessions)
+  └─► 10. Auto-Detection      (Match passive Danbooru, Steam, or GitHub URLs)
+  └─► 11. Spam Cooldown       (Enforce per-chat rate limiting)
+  └─► 12. Permissions Check   (Validate adminOnly, ownerOnly, groupOnly flags)
+  └─► 13. Command Execution   (Execute command handler within try-catch boundary)
+```
+
+> For full architectural specifications, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
-## 📋 Command Categories
+## 📱 Interactive Webview UI & Display Modes
 
-The bot comes with **55+ built-in commands** organized into clean categories:
+WhatsApp Multi-Bots supports two distinct presentation modes to accommodate both rich graphical interaction and ultra-lightweight text environments:
 
-| Category | Description | Examples |
+```text
+# Configure personal preference
+!register mode ui      # Rich graphical webview (default)
+!register mode text    # Clean plain-text with box-drawing formatting
+
+# Check current preference and user stats
+!profile
+
+# Temporary per-command flag overrides
+!anime Naruto --text
+!steam Elden Ring --text
+!menu --text
+```
+
+| Feature | UI Mode (`"ui"`) | Text Mode (`"text"`) |
 |:---|:---|:---|
-| 🌟 **General** | Bot info, interactive menu, ping, owner contact, user feedback | `!menu`, `!info`, `!ping`, `!owner` |
-| 🛡️ **Group** | Moderation tools: add, kick, promote, demote, welcome/goodbye greetings, group registration, sider tracking | `!kick @user`, `!promote @user`, `!welcome`, `!track` |
-| 📥 **Downloader** | High-speed media downloads via `yt-dlp` | `!ytdl <url>`, `!ytdlf <url>`, `!download` |
-| 🎨 **Media & Maker** | Sticker creation, image conversion, Brat stickers, media resending | `!sticker`, `!toimg`, `!brat <text>`, `!resend` |
-| 🌸 **Anime** | Anime/manga search via MyAnimeList, Danbooru search & recent feed | `!anime <title> [--top/-1] [--ui/--text]`, `!manga <title>`, `!d <tag>`, `!dnew` |
-| 🔍 **Search** | Steam game search & user profile lookup, YouTube search | `!steam <game>`, `!steamprofile <id>`, `!yts <query>` |
-| 🎮 **Games & Fun** | Text-based interactive adventure games | `!yuegame` |
-| 🛠️ **Tools** | User registration, reminders, AI translation, website screenshot, quote cards | `!register [mode <ui|text>]`, `!remind`, `!translate`, `!ss <url>`, `!quote` |
-| 🛡️ **Bot Admin** | Bot administrator management and global user bans | `!addbotadmin`, `!gban`, `!gunban` |
-| 💻 **System & Owner** | Database repair, ID scanner, remote terminal (SSH) | `!dbfix`, `!scanids`, `!bash` |
+| **Format** | In-app HTML webview (`GenAIaeacdsnwHtmlPrimitive`) | Standard WhatsApp message with box-drawing chars |
+| **Interactivity** | In-webview client-side DOM (pagination, tabs, search) | Quoted chat replies via temporary reply handlers |
+| **Lifecycle** | **Auto-deleted after 120s** to prevent mobile viewport lag | **Permanent** in chat history |
+| **Media Handling** | Embedded as Base64 Data URIs to bypass sandbox restrictions | Direct image/document attachments |
 
 ---
 
-## ⚙️ System Requirements & OS Prerequisites
+## 📋 Command Categories Overview
 
-### 1. Requirements
+The bot includes **55 built-in command modules** organized across 10 functional categories. Below is an overview of each category with representative examples:
+
+| Category | Description | Representative Commands |
+|:---|:---|:---|
+| 🌟 **General & Profile** | User onboarding, system diagnostics, display preferences, latency synchronization | `!menu`, `!info`, `!ping`, `!profile`, `!register`, `!feedback` |
+| 🛡️ **Group Moderation** | Participant management, greeting triggers, keyword auto-replies, sider lurker tracking | `!kick`, `!promote`, `!welcome`, `!track`, `!autoreply`, `!tag` |
+| 📥 **Media Downloader** | Multi-platform video and audio extractions backed by yt-dlp concurrency queue | `!ytdl`, `!ytdlf`, `!download`, `!ytsearch` |
+| 🎨 **Media & Maker** | Sticker creation, Brat-styled typography stickers, view-once media extraction | `!sticker`, `!toimg`, `!brat`, `!resend`, `!watermark` |
+| 🌸 **Anime & Manga** | MyAnimeList queries with 2:3 vertical posters and Danbooru tag exploration | `!anime`, `!manga`, `!danbooru`, `!danbooru-new` |
+| 🔍 **Search & Lookup** | Steam store/community search with 460/215 banners, GitHub repos, KBBI dictionary | `!steam`, `!steamprofile`, `!github`, `!kbbi` |
+| 🎮 **Games & Fun** | In-app Webview RPG mini-game with Web Audio API sound synthesis and touch controls | `!yuegame` |
+| 🛠️ **Tools & Utilities** | Scheduled alert reminders, Gemini AI translation, quote cards, web screenshots | `!remind`, `!translate`, `!screenshot`, `!quote` |
+| 🛡️ **Bot Admin** | Cross-instance global user bans and bot profile configuration | `!gban`, `!gunban`, `!setname` |
+| 💻 **System & Owner** | Bot administrator delegation, remote SSH shell, SQLite database maintenance | `!bash`, `!dbfix`, `!addbotadmin`, `!scanids` |
+
+> 💡 *For the complete reference of all 55 commands, aliases, and permission flags, see [`docs/COMMAND_DEVELOPMENT.md`](docs/COMMAND_DEVELOPMENT.md) or send `!menu` in chat.*
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
 - **Node.js**: v18.0.0 or higher
-- **FFmpeg**: Required for sticker creation, audio conversion, and video processing.
-- **yt-dlp**: Required for downloading video/audio from media platforms.
+- **FFmpeg**: For sticker conversion and audio processing (`sudo apt install ffmpeg`)
+- **yt-dlp**: For media extraction ([installation guide](https://github.com/yt-dlp/yt-dlp#installation))
+- **Chromium Dependencies**: For Puppeteer rendering (`!quote`, `!screenshot`)
 
----
-
-### 2. Linux (Ubuntu / Debian) Setup
-Run this single command block to install all required OS libraries and tools:
-
+### 2. Setup
 ```bash
-# 1. Update package list & install build tools + FFmpeg
-sudo apt update && sudo apt install -y build-essential python3 ffmpeg wget curl
-
-# 2. Install latest yt-dlp binary
-sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
-sudo chmod a+rx /usr/local/bin/yt-dlp
-
-# 3. Install Chromium/Puppeteer dependencies (for !screenshot & !quote)
-sudo apt install -y \
-  libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
-  libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
-  libxrandr2 libgbm1 libasound2 libpango-1.0-0 libcairo2
-```
-
----
-
-### 3. Windows Setup
-Install FFmpeg and yt-dlp using [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) or [Scoop](https://scoop.sh/):
-
-```powershell
-# Using Winget (Built-in Windows 10/11)
-winget install Gyan.FFmpeg
-winget install yt-dlp.yt-dlp
-
-# Note for better-sqlite3: Ensure Python and Visual Studio C++ Build Tools are installed
-# If compilation fails: npm install --global --production windows-build-tools
-```
-
----
-
-## 🚀 Quick Start & Installation
-
-### Step 1: Clone and Install Dependencies
-```bash
+# Clone and install dependencies
 git clone https://github.com/Tederby/Whatsapp-Multi-Bots.git
 cd Whatsapp-Multi-Bots
 npm install
-```
 
-### Step 2: Configure Environment
-Copy `.env.example` to `.env`:
-```bash
+# Configure environment
 cp .env.example .env
 ```
-Open `.env` and edit with your settings:
+
+Edit `.env` with your primary settings:
 ```ini
+BOT_ID=default
 BOT_NAME=MyBot
 OWNER_NUMBER=6281234567890
 PREFIXES=!.#/-
 SPAM_DELAY=3000
 ```
 
----
+### 3. Run the Bot
 
-### Step 3: Run the Bot
-
-#### Option A: Single Bot Mode (Quick Test)
+**Single Instance (Testing)**:
 ```bash
 npm start
+# Scan terminal QR code with WhatsApp (Linked Devices > Link a Device)
 ```
-Scan the QR code displayed in the terminal with WhatsApp (*Linked Devices > Link a Device*).
 
-#### Option B: Multi-Bot Mode via PM2 (Production)
-1. Copy `ecosystem.config.example.cjs` to `ecosystem.config.cjs`:
-   ```bash
-   cp ecosystem.config.example.cjs ecosystem.config.cjs
-   ```
-2. Configure your bot instances in `ecosystem.config.cjs`.
-3. Start all bot instances:
-   ```bash
-   npm run pm2
-   ```
-4. View logs and scan QR for a specific bot:
-   ```bash
-   pm2 logs bot1
-   ```
-
----
-
-## 📱 Pairing Code Login (Alternative to QR Code)
-
-If your VPS terminal cannot render QR codes properly, or you are running headless without camera access:
-
-1. In `ecosystem.config.cjs` (or `.env`), set `PAIRING_NUMBER`:
-   ```javascript
-   env: {
-     BOT_ID: "bot1",
-     PAIRING_NUMBER: "6281234567890", // Start with country code without '+'
-   }
-   ```
-2. Start the bot (`npm start` or `pm2 start ecosystem.config.cjs --only bot1`).
-3. View the terminal/logs to see the **8-digit Pairing Code** (e.g. `ABC1-XYZ2`).
-4. On your phone: Open WhatsApp → **Linked Devices** → **Link with phone number instead** → Enter the 8-digit code.
-
----
-
-## 🔑 Third-Party API Keys Matrix
-
-All external API keys are **optional**. If a key is missing, only the corresponding command will be deactivated with an informative message; the rest of the bot works normally.
-
-| Command | Feature | Environment Variable | Free Registration Link |
-|:---|:---|:---|:---|
-| `!translate` | AI Translation | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/) |
-| `!yts` | YouTube Search | `YOUTUBE_API_KEY` | [Google Cloud Console](https://console.cloud.google.com/) (Enable *YouTube Data API v3*) |
-| `!steamprofile` | Steam Profile Info | `STEAM_API_KEY` | [Steam Community API](https://steamcommunity.com/dev/apikey) |
-| `!bash` | Remote Server Shell | `SSH_HOST`, `SSH_USER` | Server Owner VPS SSH |
-
----
-
-## 🎨 Branding & Customization
-
-You can customize the bot's branding directly in `.env` without modifying any code:
-
-```ini
-# Photo sent when user runs !owner
-OWNER_IMAGE=https://example.com/my-photo.jpg
-
-# WhatsApp Channel link displayed in !info
-CHANNEL_URL=https://whatsapp.com/channel/xxxxxxx
-
-# Default sticker pack name and author for !brat / !sticker
-STICKER_PACK=My Awesome Bot
-STICKER_AUTHOR=Admin
+**Multi-Instance via PM2 (Production)**:
+```bash
+cp ecosystem.config.example.cjs ecosystem.config.cjs
+npm run pm2
+pm2 logs
 ```
+
+**Headless Pairing Code (No Camera / VPS)**:
+Set `PAIRING_NUMBER=6281234567890` in `.env` or `ecosystem.config.cjs`. The bot will display an 8-character code in the terminal to enter under *WhatsApp > Linked Devices > Link with phone number instead*.
+
+> For advanced deployment guides and OS dependency installation scripts, see [`docs/CONFIGURATION_DEPLOYMENT.md`](docs/CONFIGURATION_DEPLOYMENT.md).
 
 ---
 
 ## 🧩 Adding New Commands
 
-Creating a new command is effortless. Simply create a new `.js` file inside the `commands/` directory:
+Create a new file in `commands/` exporting a default configuration:
 
 ```javascript
 // commands/hello.js
 export default {
     name: "hello",
-    aliases: ["hi", "hey"],
+    aliases: ["hi"],
     category: "general",
     description: "Send a friendly greeting",
     usage: "!hello",
-    
-    // Optional permission flags:
-    // groupOnly: true,
-    // adminOnly: true,
-    // botAdminRequired: true,
-    // ownerOnly: true,
-    // privateOnly: true,
 
-    async handler({ message, sock, args, sender, isGroup, pushname }) {
+    // Optional declarative permission flags:
+    // groupOnly: false, adminOnly: false, ownerOnly: false
+
+    async handler({ message, pushname }) {
         await message.reply(`Hello ${pushname || "there"}! 👋`);
     }
 };
 ```
-The command will be auto-registered immediately, even while the bot is running (via Hot-Reload)!
 
----
-
-## ❓ Troubleshooting & FAQ
-
-### 1. `better-sqlite3` fails to build during `npm install`
-- **Cause**: Missing C++ compiler / build tools on your machine.
-- **Fix (Linux)**: `sudo apt install -y build-essential python3`
-- **Fix (Windows)**: Run PowerShell as Administrator and run `npm install --global --production windows-build-tools` or install Visual Studio C++ Desktop Development tools.
-
-### 2. Puppeteer / Chromium fails to launch (`error while loading shared libraries`)
-- **Cause**: Headless Linux servers lack GUI rendering libraries.
-- **Fix**: Install required Chromium packages:
-  ```bash
-  sudo apt install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
-  ```
-
-### 3. `yt-dlp: command not found`
-- **Cause**: `yt-dlp` binary is not in your system's PATH.
-- **Fix**: Make sure `yt-dlp` is placed in `/usr/local/bin/yt-dlp` (Linux) or added to Windows Environment Variables. Test with `yt-dlp --version` in your terminal.
-
-### 4. Phone numbers in tags resolving incorrectly (LID Mode)
-- In community groups and channels, WhatsApp sends participant IDs in LID format (`@lid`). The bot's built-in `lib/jidHelper.js` automatically converts and learns LID ↔ PN mappings in SQLite `identity_map` on every interaction.
+Commands auto-register immediately upon file save without restarting the bot process.
 
 ---
 

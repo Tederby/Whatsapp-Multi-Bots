@@ -6,19 +6,19 @@ Welcome to the technical documentation for WhatsApp Multi-Bots, a scalable, mult
 
 The documentation is organized into the following guides:
 
-- [Development Journal and Changelog](file:///home/tederby/Code/Whatsapp-Multi-Bots/docs/CHANGELOG.md)
+- [Development Journal and Changelog](CHANGELOG.md)
   Chronological record of feature releases, architectural milestones, bug fixes, and development decisions.
 
-- [System Architecture and Pipeline](file:///home/tederby/Code/Whatsapp-Multi-Bots/docs/ARCHITECTURE.md)
+- [System Architecture and Pipeline](ARCHITECTURE.md)
   Detailed explanation of the message processing pipeline, hot-reloading architecture, multi-instance concurrency, and background services.
 
-- [Command Development Guide](file:///home/tederby/Code/Whatsapp-Multi-Bots/docs/COMMAND_DEVELOPMENT.md)
+- [Command Development Guide](COMMAND_DEVELOPMENT.md)
   Comprehensive guide for writing new commands, declarative permission flags, context builder objects, reply handlers, and UI formatting standards.
 
-- [Database and Storage Architecture](file:///home/tederby/Code/Whatsapp-Multi-Bots/docs/DATABASE.md)
+- [Database and Storage Architecture](DATABASE.md)
   Schema reference for SQLite tables, Write-Ahead Logging (WAL) configuration, identity resolution mapping (LID vs PN), and migration utilities.
 
-- [Configuration and Deployment Guide](file:///home/tederby/Code/Whatsapp-Multi-Bots/docs/CONFIGURATION_DEPLOYMENT.md)
+- [Configuration and Deployment Guide](CONFIGURATION_DEPLOYMENT.md)
   Environment variables, multi-bot PM2 configuration, headless pairing code setup, OS prerequisite installation, and diagnostic dashboard.
 
 ## Project Overview
