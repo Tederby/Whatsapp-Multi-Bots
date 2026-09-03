@@ -174,7 +174,7 @@ function renderPageItems(page) {
     for (var i = start; i < end; i++) {
         var game = gameData[i];
         var thumbHtml = (game.image && game.image.indexOf('data:image') === 0)
-            ? '<img src="' + game.image + '" alt="" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'" />'
+            ? '<img src="' + game.image + '" alt="" referrerpolicy="no-referrer" />'
             : '<div class="s-thumb-empty">—</div>';
 
         html += '<div class="s-item" onclick="showGameDetail(' + i + ')" role="button" tabindex="0">';

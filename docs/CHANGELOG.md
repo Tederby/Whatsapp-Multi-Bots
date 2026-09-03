@@ -22,7 +22,7 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 ### 2026-09-03 — `[MAJOR]` Interactive HTML Webview UI Overhaul & Sandbox Hardening
 - **User Display Preference Architecture**: Added `meta.displayMode` (`"ui"` vs `"text"`) with zero-migration fallback defaulting to UI mode. Configurable via `!register mode <ui|text>` and displayed in `!profile` (`6a693d9`).
 - **Interactive Anime Webview**: Styled posters as 2:3 vertical rectangles, embedded posters as Base64 Data URIs to bypass WhatsApp webview sandbox restrictions, and added in-webview pagination, touch transitions, and detail views (`6a693d9`, `89f76fe`, `0fd80a9`, `45a96a0`, `7826289`).
-- **Interactive Steam Webview**: Added responsive 460/215 landscape layout, inlined header banners as Base64 Data URIs to prevent broken image icons under sandbox network blocks, and added defensive fallback handling (`8068ddc`, `8d6ff28`).
+- **Interactive Steam Webview**: Added responsive 460/215 landscape layout, inlined header banners as Base64 Data URIs to prevent broken image icons under sandbox network blocks, eliminated template literal escaping collisions in client scripts, and added defensive fallback handling (`8068ddc`, `8d6ff28`).
 - **Interactive Menu Webview**: Implemented live client-side category filtering, instant search, and long-press pseudo-buttons (`a042e49`).
 - **Design System Overhaul**: Overhauled `lib/uiEngine.js` to a minimal flat dark-mode zinc/gray aesthetic without gradients or glassmorphism (`f794445`).
 - **Lifecycle & Memory Hygiene**: Implemented 120-second auto-deletion for webview messages with explicit `fromMe` key flags, eliminating viewport re-mount lag in chat history and memory leaks from redundant reply handlers (`113e984`, `1c4681c`).
