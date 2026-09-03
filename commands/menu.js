@@ -225,6 +225,8 @@ function generateMenuUI({ initialCategory = null, isAll = false, prefix = "!" } 
 .m-all-btn:active{border-color:#2a2d37;color:#e4e4e7}
 .m-section-header{font-size:12px;font-weight:700;color:#a1a1aa;padding:8px 0 6px;margin-top:8px;border-bottom:1px solid #1e2028;margin-bottom:8px}
 .m-empty{text-align:center;padding:24px 0;font-size:12px;color:#71717a}
+.m-mode-tip{text-align:center;font-size:10px;color:#71717a;margin-top:14px;padding:8px 10px;background:#141619;border:1px solid #1e2028;border-radius:6px;line-height:1.5}
+.m-mode-tip b{color:#d4d4d8}
 `;
 
     const clientScript = `
@@ -448,6 +450,9 @@ if (showAllDirect) {
   </div>
   <div id="searchListContainer"></div>
 </div>
+<div class="m-mode-tip">
+  💡 <b>Mode UI Aktif</b> · Ketik <b>${esc(prefix)}register mode text</b> untuk ganti ke teks biasa, atau gunakan flag <b>--text</b>
+</div>
 ${clientScript}`;
 
     return renderPage({
@@ -507,6 +512,10 @@ export default {
         // ── 1. Interactive Webview UI Mode ───────────────────────────────────
         if (displayMode === "ui") {
             try {
+                // Selalu beritahu pengguna bahwa mereka sedang dalam mode UI dan cara beralih ke mode teks
+                const uiNotice = `💡 *Info Mode UI*\nKamu sedang menggunakan tampilan *UI Interaktif*.\n• Ganti permanen ke teks: \`${prefix}register mode text\`\n• Mode teks sementara: tambahkan flag \`--text\` (contoh: \`${prefix}menu --text\`)`;
+                await sock.sendMessage(message.chat, { text: uiNotice }, { quoted: message });
+
                 const html = generateMenuUI({
                     initialCategory: targetCategory,
                     isAll,
