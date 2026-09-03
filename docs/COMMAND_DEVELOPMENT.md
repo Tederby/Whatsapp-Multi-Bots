@@ -248,6 +248,17 @@ Because the webview is instantiated every time the message enters the client's v
 3. **State-Free Self-Contained UI**:
    If a command renders a multi-screen UI where navigation (pagination, detail drill-down) is handled entirely client-side via JavaScript, **do not register a `replyHandler` in server memory**. Registering unused reply handlers for webview messages causes memory leaks since users interact on-screen rather than sending quoted chat replies.
 
+4. **Strict Text-Only for Auto-Detection**:
+   When a message is triggered passively by link auto-detection (`lib/autoDetect.js`), it MUST ALWAYS be sent in text mode (`displayMode = 'text'`), NEVER as an HTML Webview UI payload. Delivering floating or auto-deleting webviews on passive URL matches causes viewport clutter, race conditions, and disruption in active group/personal chats.
+
+5. **Media Artwork Proportions & Aspect Ratios**:
+   Always match CSS containers and thumbnails to the native aspect ratio of the content domain:
+   - **Anime / Manga (MAL)**: Portrait format (`~2:3` or `3:4`). Use 38×54 px for list thumbnails and 140×200 px for detail posters.
+   - **Games (Steam / Store)**: Landscape banner format (`~2.14:1` or `16:9`). Use 72×32 px for capsule thumbnails and responsive `aspect-ratio: 460/215` (max-width 380 px) for header banners. Never squeeze landscape banners into portrait frames.
+
+6. **Prohibition of External Outbound Link Buttons**:
+   Outbound hyperlinks (`<a href="https://...">`), `window.open()`, and `window.location` are **strictly blocked by the WhatsApp client webview sandbox**. Clicking external links will NOT launch the external system browser or open web pages. Never include external link buttons (such as "View on MyAnimeList", "View on Steam Store", etc.) in webview payloads as they are completely non-functional. If an interaction needs to trigger an action, format it as a tokenized pseudo-button command (`<a href="#">!cmd args</a>`) that uses native long-press text extraction into the WhatsApp composer bar.
+
 ### Adaptive UI vs Text Mode Pattern
 
 When building commands that support rich HTML UI, respect the user's `meta.displayMode` preference with default fallback to `"ui"`, and allow on-the-fly override flags (`--ui` / `--text`):

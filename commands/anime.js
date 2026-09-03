@@ -141,8 +141,6 @@ function generateListUI(results, query) {
 .a-tags{display:flex;flex-wrap:wrap;gap:4px}
 .a-tag{font-size:10px;color:#a1a1aa;background:#18191f;border:1px solid #1e2028;border-radius:3px;padding:2px 8px;font-weight:500}
 .a-synopsis{font-size:12px;color:#a1a1aa;line-height:1.6;margin-top:4px}
-.a-mal-link{display:inline-block;margin-top:16px;font-size:11px;color:#71717a;text-decoration:underline;text-underline-offset:2px}
-.a-mal-link:active{color:#a1a1aa}
 `;
 
     const detailScreenHtml = `
@@ -170,8 +168,6 @@ function generateListUI(results, query) {
 
   <div class="a-section-label">Synopsis</div>
   <div class="a-synopsis" id="rowSynopsis"></div>
-
-  <a id="detailMalBtn" href="#" target="_blank" class="a-mal-link" style="display:none;">View on MyAnimeList →</a>
 </div>`;
 
     const clientScript = `
@@ -284,14 +280,6 @@ function showAnimeDetail(idx) {
     }).join('');
 
     document.getElementById('rowSynopsis').innerText = a.synopsis;
-
-    var malBtn = document.getElementById('detailMalBtn');
-    if (a.url) {
-        malBtn.href = a.url;
-        malBtn.style.display = 'inline-block';
-    } else {
-        malBtn.style.display = 'none';
-    }
 
     document.getElementById('screenList').classList.remove('active');
     document.getElementById('screenDetail').classList.add('active');
@@ -577,8 +565,6 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
 .a-tags{display:flex;flex-wrap:wrap;gap:4px}
 .a-tag{font-size:10px;color:#a1a1aa;background:#18191f;border:1px solid #1e2028;border-radius:3px;padding:2px 8px;font-weight:500}
 .a-synopsis{font-size:12px;color:#a1a1aa;line-height:1.6;margin-top:4px}
-.a-mal-link{display:inline-block;margin-top:16px;font-size:11px;color:#71717a;text-decoration:underline;text-underline-offset:2px}
-.a-mal-link:active{color:#a1a1aa}
 `;
 
             const genreList = anime.genres && anime.genres.length > 0
@@ -612,10 +598,6 @@ async function sendAnimeDetail(anime, message, sock, sender, forcedMode = null) 
 
             bodyHtml += `<div class="a-section-label">Synopsis</div>`;
             bodyHtml += `<div class="a-synopsis">${synopsis}</div>`;
-
-            if (url) {
-                bodyHtml += `<a href="${url}" target="_blank" class="a-mal-link">View on MyAnimeList →</a>`;
-            }
 
             const pageHtml = renderPage({
                 title: "Anime",
