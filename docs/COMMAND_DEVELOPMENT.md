@@ -319,3 +319,17 @@ await message.reply(captionText);
 3. **Design Philosophy**: Keep UI flat and minimal. Avoid gradients, glassmorphism, heavy shadows, excessive emoji icons, and entrance animations. Use the neutral zinc/gray palette from the base design system.
 4. **Immersive Navigation**: For paginated or multi-screen commands, embed the dataset into `<script>` and provide client-side controls (`.ui-screen.active`, `← Prev` / `Next →` buttons) so users do not have to break immersion by typing chat replies.
 
+### WhatsApp In-App Webview Runtime & Capability Matrix
+
+HTML payloads rendered via `sendUI()` execute inside WhatsApp's native sandboxed WebView (Chromium-based on Android/Desktop). The following empirical matrix defines supported vs blocked browser APIs:
+
+| Category | Supported (`✓`) | Blocked / Unsupported (`✗`) | Developer Guidelines |
+|:---|:---|:---|:---|
+| **CSS Layout** | `display: grid`, `flex`, `subgrid`, Container Queries (`container-type`), `aspect-ratio`, `gap`, `position: sticky`, `:has()`, `:is()` | — | Full modern responsive CSS is 100% safe to use without polyfills. |
+| **CSS Visual** | `backdrop-filter`, `filter`, `clip-path`, `mix-blend-mode`, `color: oklch()`, `accent-color`, `scroll-snap-type`, `view-transition-name`, `animation-timeline` | — | High-fidelity styling, shapes, and scroll-driven CSS animations work natively. |
+| **Storage** | `IndexedDB` | `localStorage`, `sessionStorage` | **DO NOT USE `localStorage`** (throws `SecurityError` due to `about:blank` origin). Keep UI state in JS memory or `IndexedDB`. |
+| **JavaScript & CSP** | Native ES6+ syntax (`async/await`, Promises, `fetch`, `WebSocket`, `structuredClone`, `BroadcastChannel`, Web Workers) | Dynamic `eval()`, `new Function()` | CSP restricts `unsafe-eval`. Avoid dynamic string code execution. Native ES6+ in `<script>` tags executes normally. |
+| **Device & Haptics** | `navigator.vibrate`, Touch Events, Gamepad API | Clipboard API (`navigator.clipboard`), Battery Status, Device Orientation, Bluetooth, USB | Use `navigator.vibrate([15])` for haptic tap feedback. Never rely on Clipboard API (use pseudo-button `<a href="...">` long-press instead). |
+| **Media & Graphics** | WebGL, WebGL2, Web Audio API, `MediaRecorder`, Picture-in-Picture, WebRTC | `getUserMedia` (camera/mic), WebGPU | Canvas 2D/3D games and synthesized Web Audio effects work out-of-the-box. Camera and microphone access are quarantined. |
+| **System & Browser** | `prefers-color-scheme` (dark mode), `navigator.onLine`, Permissions API | Notification API, Web Share API, Wake Lock API, Idle Detection, Payment Request | Automatic theme detection works. System push dialogs, wake locks, and OS share sheets are blocked. |
+

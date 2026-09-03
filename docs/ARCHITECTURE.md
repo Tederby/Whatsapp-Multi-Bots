@@ -226,6 +226,8 @@ const payload = Buffer.from(JSON.stringify({
 4. **Link Blocking vs DOM Click Interactivity**:
    - **Internal DOM Events**: Client-side JavaScript click events, pagination, and multi-screen toggles (`showAnimeDetail()`, `.ui-screen.active`) execute normally inside the local webview.
    - **External Navigation**: Outbound anchor tags (`<a href="...">`), `window.open`, and `window.location` are strictly blocked by the client sandbox container and will not launch external browsers or open external links.
+5. **Storage & CSP Isolation**: `localStorage` and `sessionStorage` access is blocked with a `SecurityError` due to partitioned sandbox origins (`about:blank`). Dynamic string execution (`eval`, `new Function`) is blocked by CSP. UI state must be managed in JavaScript memory or `IndexedDB`.
+6. **Hardware & Media Sandbox**: WebGL 1/2, Web Audio API, and `navigator.vibrate` (haptics) are fully operational. Clipboard access, camera/microphone (`getUserMedia`), Web Share, and system dialogs are completely quarantined.
 
 ### Core Rendering Primitives
 
