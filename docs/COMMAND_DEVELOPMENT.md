@@ -243,8 +243,21 @@ Because the webview is instantiated every time the message enters the client's v
 
 2. **Pseudo-Buttons & Direct Commands**:
    - **Clipboard API Limitations**: In the sandboxed iframe/webview, standard `navigator.clipboard.writeText` calls fail due to missing clipboard permissions and lack of top-level document focus.
-   - **Native WhatsApp Long-Press**: When a user long-presses an HTML anchor tag (`<a href="...">`), the native WhatsApp client intercepts the gesture and automatically extracts the link or inner text directly into the user's text composer bar (*auto-paste*).
-   - **Tokenized Command Pattern**: Structure pseudo-buttons as standalone, executable bot commands (e.g., `<a href="#" class="a-btn">!anime --id 12345</a>` or `<a href="#" class="a-btn">!ytp dQw4w9WgXcQ</a>`). When released, the command appears in the chat bar ready to send with one tap. This avoids requiring manual quoted replies and eliminates complex nested condition checks in the message pipeline.
+   - **Native WhatsApp Long-Press Extraction Mechanics**: When a user long-presses an HTML anchor tag (`<a href="...">`), the native WhatsApp client intercepts the gesture and automatically extracts both the anchor's inner text and its resolved target link, concatenating them as: `[innerText] [href]` directly into the user's text composer bar (*auto-paste*).
+   - **Tokenized Parameterized Command Pattern (Recommended)**:
+     Structure pseudo-buttons where the **link text is the command name/prefix** and the **`href` contains the dynamic argument or target URL**:
+     ```html
+     <!-- Long-press yields: "!ytdl https://youtu.be/dQw4w9WgXcQ" in chat bar -->
+     <a href="https://youtu.be/dQw4w9WgXcQ" class="btn">!ytdl</a>
+
+     <!-- Long-press yields: "!anime --id 12345" in chat bar -->
+     <a href="12345" class="btn">!anime --id</a>
+     ```
+     When released, the complete executable command with its parameter appears directly in the chat bar ready to send with one tap. This eliminates the need for manual quoted replies, saves user friction from copying long URLs/IDs, and keeps the server pipeline stateless.
+   - **The `about:blank#` Trap (Avoid for Parameterless Commands)**:
+     Because the webview is loaded from a raw data buffer without a base URL, the document's `document.baseURI` is `about:blank`. Using a dummy relative anchor like `<a href="#">!ping</a>` will cause the browser to resolve `href` to `about:blank#`, resulting in `!ping about:blank#` (or `about:blank#`) being pasted into the chat bar.
+     - **For commands WITHOUT parameters** (e.g. `!ping` in `!menu`): Do NOT use anchor tags with dummy `href="#"`. Instead, render them as selectable chips (`user-select: all` / `user-select: text`) or simple non-anchor badges.
+     - **For commands WITH parameters** (e.g. `ytsearch`, `download`, `anime` details): Use `<a href="<param>">!cmd</a>` to leverage native concatenation and assemble the full command string automatically.
 
 3. **State-Free Self-Contained UI**:
    If a command renders a multi-screen UI where navigation (pagination, detail drill-down) is handled entirely client-side via JavaScript, **do not register a `replyHandler` in server memory**. Registering unused reply handlers for webview messages causes memory leaks since users interact on-screen rather than sending quoted chat replies.
@@ -258,7 +271,7 @@ Because the webview is instantiated every time the message enters the client's v
    - **Games (Steam / Store)**: Landscape banner format (`~2.14:1` or `16:9`). Use 72×32 px for capsule thumbnails and responsive `aspect-ratio: 460/215` (max-width 380 px) for header banners. Never squeeze landscape banners into portrait frames.
 
 6. **Prohibition of External Outbound Link Buttons**:
-   Outbound hyperlinks (`<a href="https://...">`), `window.open()`, and `window.location` are **strictly blocked by the WhatsApp client webview sandbox**. Clicking external links will NOT launch the external system browser or open web pages. Never include external link buttons (such as "View on MyAnimeList", "View on Steam Store", etc.) in webview payloads as they are completely non-functional. If an interaction needs to trigger an action, format it as a tokenized pseudo-button command (`<a href="#">!cmd args</a>`) that uses native long-press text extraction into the WhatsApp composer bar.
+   Outbound hyperlinks (`<a href="https://...">`), `window.open()`, and `window.location` are **strictly blocked by the WhatsApp client webview sandbox**. Clicking external links will NOT launch the external system browser or open web pages. Never include external link buttons (such as "View on MyAnimeList", "View on Steam Store", etc.) in webview payloads as they are completely non-functional. If an interaction needs to trigger an action, format it as a tokenized pseudo-button command (`<a href="<target_url>">!cmd</a>`) that uses native long-press text extraction to assemble the command into the WhatsApp composer bar.
 
 ### Adaptive UI vs Text Mode Pattern
 
