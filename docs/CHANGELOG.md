@@ -19,12 +19,11 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
-### 2026-09-04 — `[MINOR]` YouTube Audio, Spotify HTML Player & Webview Stanza Thresholds
-- **Interactive Spotify Music Player**: Added `!play` (`commands/play.js`) downloading YouTube audio with highest compatible AAC (`m4a`) format and rendering an authentic Spotify Mobile Webview player with interactive play/pause, timebar scrubbing, and loop/heart toggles.
-- **FFmpeg Audio Optimizer & Synthesizer**: Added `downloadAudio()`, `compressAudio()`, and `generateSyntheticAudio()` helpers to `services/ytdlp.js` for automatic bitrate tuning and test tone synthesis.
-- **Diagnostic Suite & Size Probes**: Added `!play test` (lightweight ~25KB test player) and `!play test probe` (sending calibrated 25KB–2MB stanzas) to empirically pinpoint WhatsApp delivery cutoffs.
-- **Automatic Document Fallback**: Implemented automatic fallback to `.html` Document attachment when audio payload exceeds the 750KB Webview stanza ceiling, preserving audio fidelity via CDN delivery.
-- **Webview Stanza Size Threshold Documentation**: Documented WhatsApp's silent drop threshold (> 1MB) for inline `botForwardedMessage` stanzas in `docs/COMMAND_DEVELOPMENT.md`.
+### 2026-09-04 — `[DOCS]` Empirical Webview Stanza Ceiling & HTML5 Audio Sandbox Audit
+- **Empirical Stanza Size Threshold Pinpointing**: Discovered through live size probing that WhatsApp delivery routers (`Chatd`/Edge) enforce an exact hard ceiling of **1000 KB (~1 MB)** on inline `botForwardedMessage` stanzas (`25KB`, `50KB`, `100KB`, `250KB`, `500KB`, and `1000KB` delivered successfully; `2000KB` silently dropped despite transport-level socket ACK).
+- **HTML5 `<audio>` Sandbox Quarantine**: Confirmed through empirical testing that WhatsApp's in-app webview sandbox completely quarantines HTML5 `<audio>` media decoding and output devices (audio elements and Base64 Data URIs do not emit audio or toggle playback state). Only synthesized audio via Web Audio API (`AudioContext`) is operational.
+- **Rollback of `!play` Command**: Cancelled `commands/play.js` and reverted helper changes in `services/ytdlp.js` due to the webview sandbox audio playback restrictions.
+- **Documentation**: Updated `docs/COMMAND_DEVELOPMENT.md` with the empirical capability matrix and stanza delivery thresholds.
 
 ### 2026-09-03 — `[MAJOR]` Interactive HTML Webview UI Overhaul & Sandbox Hardening
 - **User Display Preference Architecture**: Added `meta.displayMode` (`"ui"` vs `"text"`) with zero-migration fallback defaulting to UI mode. Configurable via `!register mode <ui|text>` and displayed in `!profile` (`6a693d9`).

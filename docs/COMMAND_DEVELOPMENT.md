@@ -330,21 +330,22 @@ HTML payloads rendered via `sendUI()` execute inside WhatsApp's native sandboxed
 | **Storage** | — | `localStorage`, `sessionStorage`, `IndexedDB` | **ALL CLIENT STORAGE IS BLOCKED**. `localStorage` throws `SecurityError` and `IndexedDB.open()` fails/is quarantined due to `about:blank` origin. Keep all UI and navigation state strictly in JavaScript memory variables. |
 | **JavaScript & CSP** | Native ES6+ syntax (`async/await`, Promises, `fetch`, `WebSocket`, `structuredClone`, `BroadcastChannel`) | Dynamic `eval()`, `new Function()`, Web Workers, Service Workers | CSP restricts `unsafe-eval` and worker spawning (Blob/data URL workers fail). Native ES6+ (including `async/await`) executes normally when written directly in `<script>` tags without string evaluation. |
 | **Device & Haptics** | `navigator.vibrate`, Touch Events, Gamepad API | Clipboard API (`navigator.clipboard`), Geolocation, Battery Status, Device Orientation, Bluetooth, USB | Use `navigator.vibrate([15])` for haptic tap feedback. Never rely on Clipboard API (use pseudo-button `<a href="...">` long-press instead). Hardware permissions (GPS, camera, mic, clipboard) are quarantined. |
-| **Media & Graphics** | WebGL, WebGL2, Web Audio API, `MediaRecorder`, Picture-in-Picture, WebRTC | `getUserMedia` (camera/mic), WebGPU | Canvas 2D/3D games and synthesized Web Audio effects work out-of-the-box. Camera and microphone access are quarantined. |
+| **Media & Graphics** | WebGL, WebGL2, Web Audio API (synthesized sounds), `MediaRecorder`, Picture-in-Picture, WebRTC | HTML5 `<audio>` / Base64 Audio Playback, `getUserMedia` (camera/mic), WebGPU | Canvas 2D/3D games and synthesized Web Audio effects (`AudioContext` oscillators) work out-of-the-box. **HTML5 `<audio>` elements and Base64 audio playback are quarantined/blocked** by the webview media pipeline (no audio output). |
 | **System & Browser** | `prefers-color-scheme` (dark mode), `navigator.onLine`, Permissions API | Notification API, Web Share API, Wake Lock API, Idle Detection, Payment Request | Automatic theme detection works. System push dialogs, wake locks, and OS share sheets are blocked. |
 
 ### 8. Stanza Size Constraints & Media Embedding Thresholds
 
 When delivering rich HTML Webviews via `sendUI()`, the payload is packaged as an inline protocol stanza (`botForwardedMessage` → `richResponseMessage` → `GenAIaeacdsnwHtmlPrimitive`) rather than an uploaded CDN media file:
 
-| Threshold | Size Range | Server Behavior | Client Impact | Recommended Action |
+| Threshold | Size Range | Server Behavior | Client Impact | Empirical Test Result |
 |:---|:---|:---|:---|:---|
-| **Safe Zone** | `< 250 KB` | Standard delivery | Instant render, zero lag | Recommended for all menus, cards, and game UIs. |
-| **Moderate Zone** | `250 KB – 700 KB` | Standard delivery | Slight mount pause on low-end devices | Acceptable for compressed short audio previews (32kbps mono AAC). |
-| **Danger Zone** | `750 KB – 1000 KB` | Unstable / sporadic delivery | Severe frame drops when scrolling | Avoid unless strictly necessary. |
-| **Drop Zone (Silent Drop)** | `> 1000 KB` (~1 MB+) | **SILENT DROP BY WHATSAPP ROUTER** | Message never appears on recipient devices | **STRICTLY PROHIBITED**. `relayMessage` resolves successfully with an ACK, but the WhatsApp delivery server drops the stanza. |
+| **Safe Zone** | `< 250 KB` | Standard delivery | Instant render, zero lag | Tested: 25 KB, 50 KB, 100 KB, 250 KB delivered cleanly. |
+| **Moderate Zone** | `250 KB – 700 KB` | Standard delivery | Slight mount pause on low-end devices | Tested: 500 KB delivered cleanly. |
+| **Maximum Ceiling** | `750 KB – 1000 KB` | Last delivered tier | Mount latency spike on low-end devices | Tested: **1000 KB (1010652B) delivered successfully**. |
+| **Drop Zone (Silent Drop)** | `> 1000 KB` (~1 MB+) | **SILENT DROP BY WHATSAPP ROUTER** | Message never appears on recipient devices | Tested: **2000 KB (2021000B) silently dropped** (ACKed by socket, discarded by router). |
 
-#### Webview vs Document Fallback Rule
-1. **In-Line Webview (`sendUI`)**: Strictly for lightweight payloads (`< 700 KB`). When embedding audio, transcode via FFmpeg to low-bitrate AAC (`-c:a aac -b:a 32k -ac 1`) and verify file size before relaying.
-2. **Document Fallback (`sock.sendMessage(..., { document: htmlBuffer, mimetype: "text/html" })`)**: For full-length tracks (> 3 minutes) or high-fidelity audio (> 750 KB), package the complete HTML player into a `.html` document. WhatsApp routes documents through the media CDN (supporting up to 100 MB), and users can tap to open the interactive player directly in their device browser.
+#### Empirical Conclusions for Audio / Media Player Commands
+1. **HTML5 `<audio>` Sandbox Quarantine**: HTML `<audio>` elements (including Base64 Data URIs) do not emit sound or update playback states in WhatsApp's in-app webview container due to platform-level audio output device quarantines. In-app audio synthesis is strictly restricted to the Web Audio API (`AudioContext` oscillators / sound synthesis as demonstrated in `commands/yuegame.js`).
+2. **Webview vs Document Rule**: Because in-line webviews cannot decode/play external or embedded `<audio>` streams, music players must be sent as standalone `.html` Document attachments (`sock.sendMessage(..., { document, mimetype: "text/html" })`), allowing users to open the full interactive player in their external system browser.
+
 
