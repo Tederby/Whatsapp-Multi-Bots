@@ -691,7 +691,7 @@ export default {
     groupOnly: false,
     adminOnly: false,
     botAdminRequired: false,
-    ownerOnly: false,
+    ownerOnly: true,
     privateOnly: false,
     registerRequired: false,
 

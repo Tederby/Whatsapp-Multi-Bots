@@ -22,7 +22,10 @@ The documentation is organized into the following guides:
   Environment variables, multi-bot PM2 configuration, headless pairing code setup, OS prerequisite installation, and diagnostic dashboard.
 
 - [Webview Payload and UI Engine](WEBVIEW_PAYLOAD.md)
-  Undocumented WhatsApp in-app webview protocol (`GenAIaeacdsnwHtmlPrimitive`), Baileys message envelope, empirical browser runtime capability matrix, stanza size ceilings (1 MB silent drop), and pseudo-button UX mechanics.
+  Undocumented WhatsApp in-app webview protocol (`GenAIaeacdsnwHtmlPrimitive`), Baileys message envelope, empirical browser runtime capability matrix, stanza size ceilings (1350 KB silent drop), and pseudo-button UX mechanics.
+
+- [Webview Empirical Test Results & Benchmark Log](WEBVIEW_TEST_RESULTS.md)
+  Raw empirical audit logs, calibrated stanza size probe results (950 KB – 1400 KB), protobuf envelope mutation experiments, and Web Audio API benchmarks as of September 4, 2026.
 
 ## Project Overview
 

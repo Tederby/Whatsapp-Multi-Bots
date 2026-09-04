@@ -9,9 +9,14 @@
 
 WhatsApp clients (Android, iOS, and Web/Desktop) contain a native sandboxed WebView container initially deployed for Meta AI rich interactive responses. By constructing an undocumented protobuf stanza structure, third-party bots can deliver rich, interactive HTML/CSS/JavaScript webviews directly into WhatsApp chat threads.
 
-> [!WARNING]
-> **Undocumented Protocol Primitive**:
-> This feature relies on undocumented Meta AI protobuf primitives (`GenAIaeacdsnwHtmlPrimitive` wrapped in `botForwardedMessage` and `richResponseMessage`). WhatsApp may alter or deprecate these fields in future client builds. All specifications documented here are derived from empirical testing and live reverse-engineering.
+> [!NOTE]
+> **Empirical Benchmark & Audit Metadata (September 4, 2026)**:
+> All specifications, size boundaries, and sandbox capability matrices in this document were empirically audited and verified on **September 4, 2026** using:
+> - **OS & Device**: Android 12 (Xiaomi Redmi M2003J15SC, Build `SP1A.210812.016`)
+> - **WebView Engine**: Chrome WebView `151.0.7922.199` (WebKit `537.36`)
+> - **Screen Benchmark**: `393x851` CSS px (DPR `2.75`)
+> - **Tooling**: WhatsApp Multi-Bots Empirical Testing Suite ([`commands/wvtest.js`](../commands/wvtest.js))
+> *Notice: Because this protocol utilizes undocumented Meta AI protobuf primitives, WhatsApp may alter, restrict, or deprecate these behaviors in future client builds or server-side router updates.*
 
 ---
 
@@ -41,12 +46,16 @@ Message (Stanza Root)
                     ├─► unifiedResponse
                     │     └─► data: <Base64-encoded JSON payload>
                     └─► contextInfo
-                          ├─► forwardingScore: 1
-                          ├─► isForwarded: true
-                          ├─► forwardOrigin: 4
+                          ├─► forwardingScore: 0          <-- Set 0 + isForwarded: false to hide "Forwarded" badge
+                          ├─► isForwarded: false          <-- Removes the "Forwarded" label under the title
+                          ├─► forwardOrigin: 1            <-- Clean origin
                           └─► forwardedAiBotMessageInfo
-                                └─► botJid: "867051314767696@bot"
+                                └─► botJid: "867051314767696@bot"  <-- Or custom bot JID (<number>@s.whatsapp.net)
 ```
+
+#### Envelope Field Insights (Empirically Verified as of 2026-09-04)
+- **Hiding the "Forwarded" Badge**: Setting `isForwarded: false`, `forwardingScore: 0`, and `forwardOrigin: 1` successfully removes the "Forwarded" tag above the card, producing a clean, native UI appearance.
+- **Custom `botJid` Supported**: While `"867051314767696@bot"` is the standard Meta AI bot JID, the router and client also accept your bot's own JID (e.g. `628xxx@s.whatsapp.net`). Both render identically.
 
 ### 2. JSON Payload Schema
 
@@ -70,12 +79,13 @@ The `unifiedResponse.data` field requires a Base64-encoded JSON string adhering 
 }
 ```
 
-#### Field Definitions
+#### Field Definitions & Discoveries
 - `response_id` (*string*, required): Unique UUIDv4 matching `botResponseId`.
 - `sections[].view_model.__typename` (*string*): Must be `"GenAISingleLayoutViewModel"`.
 - `sections[].view_model.primitive.__typename` (*string*): Must be `"GenAIaeacdsnwHtmlPrimitive"`.
 - `sections[].view_model.primitive.payload` (*string*): Complete HTML document markup, including `<style>` and `<script>`.
-- `sections[].view_model.primitive.trusted_sources` (*array*): Array of strings (leave empty `[]`).
+- `sections[].view_model.primitive.trusted_sources` (*array*): Array of strings. *(Empirical finding: Does **not** whitelist external image loading. Sandbox network restrictions remain strictly active even if domains are listed here).*
+- **Native Multi-Card / Stacked Layout Supported**: The `sections` array natively supports multiple section items (`sections.length > 1`). WhatsApp renders multiple cards stacked together inside a single chat bubble!
 
 ### 3. Minimal Standalone Baileys Snippet
 
@@ -168,17 +178,17 @@ export async function sendHtmlWebview(sock, chatId, { title, html }) {
 
 ## PART II: EMPIRICAL RUNTIME CAPABILITY MATRIX
 
-The WhatsApp client renders the payload inside an isolated, sandboxed WebView (`about:blank` origin). The following matrix defines verified working vs blocked web technologies:
+The WhatsApp client renders the payload inside an isolated, sandboxed WebView (`about:blank` origin). The following matrix reflects verified empirical results benchmarked on **September 4, 2026** (Android 12, Chrome WebView 151.0.7922.199):
 
-| Category | Supported (`✓`) | Blocked / Quarantined (`✗`) | Empirical Findings & Guidelines |
+| Category | Supported (`✓`) | Blocked / Quarantined (`✗`) | Empirical Findings & Technical Details |
 |:---|:---|:---|:---|
-| **CSS Layout** | `display: grid`, `flex`, `subgrid`, Container Queries (`container-type`), `aspect-ratio`, `position: sticky`, `:has()`, `:is()` | — | Full modern CSS layout is 100% functional. Responsive fluid designs work cleanly. |
-| **CSS Visuals** | `backdrop-filter`, `filter`, `clip-path`, `mix-blend-mode`, `color: oklch()`, `accent-color`, `scroll-snap-type`, scroll-driven animations | — | High-fidelity dark mode, custom shapes, glassmorphism, and smooth scroll snapping work natively. |
-| **Client Storage** | — | `localStorage`, `sessionStorage`, `IndexedDB`, `Cookies` | **ALL CLIENT STORAGE IS BLOCKED**. Accessing `localStorage` throws `SecurityError`. `IndexedDB.open()` fails. Keep all UI state, filters, and page indexes in JavaScript memory variables. |
-| **JavaScript & CSP** | Modern ES6+ syntax (`async/await`, Promises, arrow functions, `structuredClone`, `BroadcastChannel`) | Dynamic `eval()`, `new Function()`, Web Workers, Service Workers | Content Security Policy prohibits `unsafe-eval` and worker spawning (Blob/Data workers fail). Scripts inside `<script>` run normally as long as they do not invoke string evaluation. |
-| **Device & Haptics** | `navigator.vibrate([ms])`, Touch events, Gamepad API | Clipboard API (`navigator.clipboard`), Geolocation, Battery, Device Orientation, Web Bluetooth | `navigator.vibrate([15])` provides excellent tactile button feedback. Clipboard access is completely blocked due to lack of top-level document focus. |
-| **Media & Audio** | Canvas 2D, WebGL 1/2, Web Audio API (`AudioContext` oscillators), `MediaRecorder` | HTML5 `<audio>`, Base64 Audio Playback, `getUserMedia` (Camera/Mic), WebGPU | Canvas games and synthesized Web Audio effects (`AudioContext` oscillators) work out of the box. **HTML5 `<audio>` elements and Base64 audio playback are quarantined** (audio hardware output is muted/blocked). |
-| **System & Browser** | `prefers-color-scheme`, `navigator.onLine` | Outbound links (`<a href="http...">`), `window.open()`, `window.location`, Web Share API, Notifications | Outbound links are strictly intercepted and blocked by the sandbox container. External browser will NOT open. Push dialogs and OS share sheets are disabled. |
+| **CSS Layout** | `display: grid`, `flex`, `subgrid`, Container Queries (`container-type`), `aspect-ratio`, `position: sticky`, `:has()`, `:is()` | — | **100% PASS**. Full modern CSS layout is functional. Fluid responsive layouts and subgrids render flawlessly. |
+| **CSS Visuals** | `backdrop-filter`, `filter`, `clip-path`, `mix-blend-mode`, `color: oklch()`, `accent-color`, `scroll-snap-type`, scroll-driven animations | — | High-fidelity dark mode, custom shapes, and backdrop filters work natively without visual glitches. |
+| **Client Storage** | `IndexedDB` (API Factory present) | `localStorage`, `sessionStorage`, `document.cookie`, `Cache Storage`, `OPFS` | Accessing `localStorage`, `sessionStorage`, or `document.cookie` throws `SecurityError` due to the `about:blank` sandbox origin. UI state MUST reside in JavaScript memory variables. |
+| **JavaScript & CSP** | Modern ES6+, `WebAssembly`, `Worker` (Blob Workers), `BroadcastChannel`, `structuredClone` | Dynamic `eval()`, `new Function()`, `crypto.subtle` | Content Security Policy enforces: `script-src 'unsafe-inline'`. String evaluation via `eval()` or `new Function()` throws CSP violations. However, **`WebAssembly` is operational** and **Blob Workers can be spawned**. `crypto.subtle` is unavailable (non-secure context). |
+| **Device & Haptics** | `navigator.vibrate([ms])`, `document.execCommand('copy')`, `navigator.geolocation`, `requestFullscreen` | Clipboard API (`navigator.clipboard.writeText`), Screen Wake Lock, Device Orientation | `navigator.vibrate([50])` triggers device haptics. `navigator.clipboard.writeText` is blocked (lacks top-level document focus), but `document.execCommand('copy')` is supported. Fullscreen and Geolocation APIs are present. |
+| **Media & Audio** | Canvas 2D, WebGL 1/2, **Web Audio API `decodeAudioData` (ArrayBuffer)**, Web Audio Oscillators | HTML5 `<audio>` tag, Base64 `<audio src="...">`, WebGPU, Speech Synthesis | **Breakthrough Finding**: HTML5 `<audio>` tags are quarantined (play button greyed out; calling `play()` rejects with `NotSupportedError: The Element has no supported sources`). However, **Web Audio API `decodeAudioData()` successfully decodes in-memory ArrayBuffers and plays audio via `AudioBufferSourceNode`!** Oscillators work, but rapid repeated triggering may encounter audio focus throttling. |
+| **System & Links** | `prefers-color-scheme`, `navigator.onLine` | Outbound links (`https://`, `whatsapp://`, `wa.me`, `tel:`, `mailto:`, `intent:`), Web Share API | **Total Interception**: Tapping links triggers CSS active animations, but the native Android WebView container suppresses all external navigation, deep links, dialers, and intent schemes. External browsers and apps will NOT open. |
 
 ---
 
@@ -186,20 +196,26 @@ The WhatsApp client renders the payload inside an isolated, sandboxed WebView (`
 
 Because the payload is embedded directly into the WhatsApp protocol stanza (rather than uploaded to WhatsApp media servers via CDN), the router enforces strict message size limits.
 
-### 1. Stanza Ceiling Tiers (Tested Empirically)
+### 1. Stanza Ceiling Tiers (Audited Empirically on 2026-09-04)
 
-| Tier | Payload Size | Client Delivery | Latency & Performance Impact |
-|:---|:---|:---|:---|
-| **Safe Zone** | `< 250 KB` | 100% Reliable | Instant render. Zero mobile viewport stutter. |
-| **Moderate Zone** | `250 KB – 700 KB` | 100% Reliable | Brief mount delay on lower-end devices. |
-| **Maximum Ceiling** | `750 KB – 1000 KB` | Delivered | Measurable mount latency spike. Max confirmed: **1000 KB (1,010,652 Bytes)**. |
-| **Drop Zone (Silent Drop)** | `> 1000 KB` (~1 MB+) | **SILENT DROP** | **Message is acknowledged by socket, but dropped by the WhatsApp router.** The message never reaches the recipient device. Tested: **2000 KB (2,021,000 Bytes) dropped**. |
+Calibrated size probing with exact byte matching ([`commands/wvtest.js`](../commands/wvtest.js)) established the following delivery cutoffs:
+
+| Tier | Payload Size | Delivery Status | Empirical Verification & Client Impact |
+|:---|:---|:---:|:---|
+| **Safe Zone** | `< 500 KB` | **100% Reliable** | Instant render. Zero mobile viewport stutter. Recommended for all menus and interactive cards. |
+| **Moderate Zone** | `500 KB – 1000 KB` | **100% Reliable** | Reliable delivery. Brief mount pause on lower-end devices. Tested: `950KB`, `1000KB`, `1024KB` (1 MB) delivered cleanly. |
+| **Maximum Ceiling** | `1000 KB – 1350 KB` | **Delivered** | Measurable mount latency spike. Max confirmed delivered: **1350 KB (~1.38 MB)**. |
+| **Drop Zone (Silent Drop)** | `≥ 1400 KB` | **SILENT DROP** | **Message is acknowledged by transport socket, but dropped by the WhatsApp delivery router.** The recipient device never receives the stanza. Tested: **1400 KB silently dropped; 2000 KB silently dropped**. |
+
+> [!IMPORTANT]
+> **The Exact Drop Boundary**:
+> The empirical ceiling is **1350 KB**. Stanzas of 1350 KB arrive on the recipient device, while stanzas of 1400 KB are silently discarded by WhatsApp server-side routers.
 
 ### 2. Asset Inlining Rules (Base64 vs Remote URLs)
 
-- **Remote Media Blocked**: WhatsApp webview sandbox restricts cross-origin network requests (`fetch`, `<img> src="https://..."`) to prevent user IP tracking. External image URLs will render as broken image icons.
+- **Remote Media Strictly Blocked**: Whitelisting domains in `trusted_sources: [...]` does **not** bypass cross-origin network restrictions. Remote images (`<img src="https://...">`) will render broken.
 - **Server-Side Inlining Required**: The bot must download remote thumbnails/posters on the server, convert them to Base64 Data URIs (`data:image/jpeg;base64,...`), and inline them into the HTML payload.
-- **Image Budgeting**: Because of the 1000 KB ceiling, keep thumbnails compact (under 30–50 KB each) or limit list sizes to 5–10 items per payload.
+- **Payload Budgeting**: Keep images compressed (under 30–50 KB each) so the total stanza stays comfortably below the 700–1000 KB threshold.
 
 ---
 
@@ -217,23 +233,12 @@ function showScreen(screenId) {
 }
 ```
 
-### 2. Pseudo-Buttons (Native Long-Press Extraction)
-Since `navigator.clipboard.writeText` is blocked and outbound `<a href="...">` links do not open external browsers, interactive commands utilize WhatsApp's **native long-press gesture extraction**:
-
-1. **How It Works**: When a user long-presses an HTML anchor tag (`<a href="...">`), the native WhatsApp client intercepts the gesture and copies `[innerText] [href]` directly into the chat composer bar.
-2. **Parameterized Command Pattern**:
-   ```html
-   <!-- Long-pressing yields: "!ytdl https://youtu.be/..." in composer bar -->
-   <a href="https://youtu.be/dQw4w9WgXcQ" class="ui-btn">!ytdl</a>
-
-   <!-- Long-pressing yields: "!anime --id 12345" in composer bar -->
-   <a href="12345" class="ui-btn">!anime --id</a>
-   ```
-   The user simply lifts their finger and taps "Send".
-3. **The `about:blank#` Trap (Critical Gotcha)**:
-   Because the document base URI is `about:blank`, using a dummy relative anchor like `<a href="#">!ping</a>` causes the browser to resolve the link to `about:blank#`, pasting `!ping about:blank#` into the chat bar.
-   - **For commands WITHOUT parameters**: Do NOT use anchor tags. Render them as selectable chips (`user-select: all` / `user-select: text`) or simple buttons.
-   - **For commands WITH parameters**: Use `<a href="<param>">!cmd</a>`.
+### 2. Native Long-Press Gestures vs Copy Chips (Updated 2026-09-04)
+- **Anchor Tag Long-Press Deprecation**: In previous client builds, long-pressing `<a href="...">` copied `[innerText] [href]` into the chat bar. In recent WhatsApp Android versions (as of September 2026, Chrome 151+), long-pressing an anchor tag is intercepted by WhatsApp's chat view as a **message selection gesture** (for delete/star/forward), failing to extract text into the composer bar.
+- **Recommended Alternative**: Render interactive commands as copyable monospace chips with `user-select: all` or utilize `document.execCommand('copy')` on tap:
+  ```html
+  <div class="ui-chip" onclick="copyCommand('!cmd param')">!cmd param</div>
+  ```
 
 ---
 
@@ -269,9 +274,12 @@ The project follows a strict **flat, minimal, content-first** design philosophy:
        sock.sendMessage(message.chat, { delete: uiMsg.key }).catch(() => {});
    }, 120000);
    ```
-2. **No Server Reply Handlers for Pure Webviews**:
+2. **Viewport Scroll vs App Backgrounding Behavior (Empirically Verified 2026-09-04)**:
+   - **Viewport Scrolling**: Scrolling away (~15–20 messages) completely destroys the webview instance. Scrolling back re-mounts the document from scratch, resetting all in-memory variables and state counters to 0.
+   - **App Backgrounding**: Minimizing WhatsApp (going to home screen or switching apps) does **not** destroy the webview or pause JavaScript execution. Active `setInterval` timers continue ticking in the background.
+3. **No Server Reply Handlers for Pure Webviews**:
    If a command's UI is navigated client-side via JavaScript, do not register a server `registerReplyHandler()`. Doing so leaks server memory.
-3. **Strict Text-Only for Link Auto-Detection**:
+4. **Strict Text-Only for Link Auto-Detection**:
    Passive triggers in [`lib/autoDetect.js`](../lib/autoDetect.js) MUST NEVER send webviews. Only explicit user commands may send webviews.
 
 ### 4. Adaptive UI vs Text Mode Pattern
@@ -316,12 +324,40 @@ await message.reply(plainTextMessage);
 
 ## PART VI: AUDIO & MEDIA PLAYER ARCHITECTURE
 
-Because WhatsApp's in-app webview sandbox **quarantines the HTML5 `<audio>` element and Base64 audio decoding**, inline audio playback is strictly impossible inside `GenAIaeacdsnwHtmlPrimitive`.
+### 1. In-Webview Audio Capabilities vs HTML5 Quarantine
 
-### The Standalone Document Pattern
-For commands providing interactive audio players (such as music or podcast players):
-1. Construct the complete player HTML file.
-2. Send it as an attached `.html` document:
+Empirical testing on September 4, 2026 revealed a critical distinction in WhatsApp's webview audio sandbox:
+
+| Audio Method | Status | Behavior & Guidelines |
+|:---|:---:|:---|
+| **HTML5 `<audio>` Element** | **Quarantined** | Calling `audio.play()` rejects with `NotSupportedError: The Element has no supported sources`. Play buttons are disabled. Native media playback pipelines for `<audio>` tags are blocked. |
+| **Web Audio API (Oscillators)** | **Operational** | Synthesized sound effects (`ctx.createOscillator()`) work natively. If triggered rapidly in high frequency, the client may throttle audio focus. |
+| **Web Audio API `decodeAudioData`** | **Operational** | **Breakthrough**: Converting a Base64 audio string to an `ArrayBuffer` and decoding via `ctx.decodeAudioData()` successfully plays in-memory audio through `AudioBufferSourceNode`. Ideal for game sound effects, button haptic audio, or short voice cues (< 30s). |
+
+#### In-Memory Audio Playback Snippet
+```javascript
+// Valid in-webview audio playback pattern via Web Audio API
+async function playAudioBuffer(base64DataUri) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioCtx();
+    const base64Data = base64DataUri.split(",")[1];
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    const buffer = await ctx.decodeAudioData(bytes.buffer);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start();
+}
+```
+
+### 2. The Standalone Document Pattern (For Full Music & Long Audio)
+
+Because of the **1350 KB stanza size ceiling** and the lack of native background lockscreen media controls inside the webview:
+1. Long-form audio (songs, podcasts, audiobooks) should be packaged into an interactive HTML player.
+2. Send it as an attached `.html` document via WhatsApp media CDN:
    ```javascript
    await sock.sendMessage(chatId, {
        document: Buffer.from(playerHtml, "utf-8"),
@@ -330,4 +366,5 @@ For commands providing interactive audio players (such as music or podcast playe
        caption: "Tap to open interactive player in your browser"
    });
    ```
-3. When opened, the file launches in the user's external system browser (Chrome/Safari), which possesses unconstrained audio hardware decoding and background playback capabilities.
+3. When opened, the document launches in the user's external system browser (Chrome/Safari), which possesses unconstrained audio hardware decoding, lock-screen audio notification controls, and background playback capabilities.
+
