@@ -136,6 +136,75 @@ export async function downloadAudio(url, title) {
 }
 
 /**
+ * Compress an audio file using FFmpeg to reduce its file size for Webview embedding.
+ * @param {string} inputPath - Path to the source audio file
+ * @param {string} [targetBitrate="32k"] - Bitrate (e.g. "32k", "48k", "24k")
+ * @returns {Promise<string>} Path to the compressed m4a file
+ */
+export function compressAudio(inputPath, targetBitrate = "32k") {
+    return new Promise((resolve, reject) => {
+        const ext = path.extname(inputPath);
+        const outputPath = inputPath.replace(ext, `_compressed_${targetBitrate}.m4a`);
+
+        const proc = spawn("ffmpeg", [
+            "-i", inputPath,
+            "-c:a", "aac",
+            "-b:a", targetBitrate,
+            "-ac", "1",
+            "-y",
+            outputPath,
+        ], { windowsHide: true });
+
+        let stderr = "";
+        proc.stderr.on("data", (d) => (stderr += d.toString()));
+
+        proc.on("close", (code) => {
+            if (code === 0 && fs.existsSync(outputPath)) {
+                resolve(outputPath);
+            } else {
+                reject(new Error(`FFmpeg compress failed (code ${code}): ${stderr.slice(-200)}`));
+            }
+        });
+
+        proc.on("error", reject);
+    });
+}
+
+/**
+ * Generate a short synthetic audio clip for testing.
+ * @param {number} [durationSec=4]
+ * @returns {Promise<string>} Path to generated m4a file
+ */
+export function generateSyntheticAudio(durationSec = 4) {
+    const tempDir = path.resolve(setting.ytdlp.tempDir);
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+    const rand = crypto.randomBytes(4).toString("hex");
+    const outputPath = path.join(tempDir, `synth_${rand}.m4a`);
+
+    return new Promise((resolve, reject) => {
+        const proc = spawn("ffmpeg", [
+            "-f", "lavfi",
+            "-i", `sine=frequency=523.25:duration=${durationSec}`,
+            "-c:a", "aac",
+            "-b:a", "32k",
+            "-y",
+            outputPath,
+        ], { windowsHide: true });
+
+        proc.on("close", (code) => {
+            if (code === 0 && fs.existsSync(outputPath)) {
+                resolve(outputPath);
+            } else {
+                reject(new Error(`Synthetic audio generation failed (code ${code})`));
+            }
+        });
+
+        proc.on("error", reject);
+    });
+}
+
+/**
  * Parse the formats array from metadata into a readable table.
  *
  * @param {object[]} formats - The `formats` array from yt-dlp JSON

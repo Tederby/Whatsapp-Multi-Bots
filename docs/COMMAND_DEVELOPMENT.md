@@ -333,3 +333,18 @@ HTML payloads rendered via `sendUI()` execute inside WhatsApp's native sandboxed
 | **Media & Graphics** | WebGL, WebGL2, Web Audio API, `MediaRecorder`, Picture-in-Picture, WebRTC | `getUserMedia` (camera/mic), WebGPU | Canvas 2D/3D games and synthesized Web Audio effects work out-of-the-box. Camera and microphone access are quarantined. |
 | **System & Browser** | `prefers-color-scheme` (dark mode), `navigator.onLine`, Permissions API | Notification API, Web Share API, Wake Lock API, Idle Detection, Payment Request | Automatic theme detection works. System push dialogs, wake locks, and OS share sheets are blocked. |
 
+### 8. Stanza Size Constraints & Media Embedding Thresholds
+
+When delivering rich HTML Webviews via `sendUI()`, the payload is packaged as an inline protocol stanza (`botForwardedMessage` → `richResponseMessage` → `GenAIaeacdsnwHtmlPrimitive`) rather than an uploaded CDN media file:
+
+| Threshold | Size Range | Server Behavior | Client Impact | Recommended Action |
+|:---|:---|:---|:---|:---|
+| **Safe Zone** | `< 250 KB` | Standard delivery | Instant render, zero lag | Recommended for all menus, cards, and game UIs. |
+| **Moderate Zone** | `250 KB – 700 KB` | Standard delivery | Slight mount pause on low-end devices | Acceptable for compressed short audio previews (32kbps mono AAC). |
+| **Danger Zone** | `750 KB – 1000 KB` | Unstable / sporadic delivery | Severe frame drops when scrolling | Avoid unless strictly necessary. |
+| **Drop Zone (Silent Drop)** | `> 1000 KB` (~1 MB+) | **SILENT DROP BY WHATSAPP ROUTER** | Message never appears on recipient devices | **STRICTLY PROHIBITED**. `relayMessage` resolves successfully with an ACK, but the WhatsApp delivery server drops the stanza. |
+
+#### Webview vs Document Fallback Rule
+1. **In-Line Webview (`sendUI`)**: Strictly for lightweight payloads (`< 700 KB`). When embedding audio, transcode via FFmpeg to low-bitrate AAC (`-c:a aac -b:a 32k -ac 1`) and verify file size before relaying.
+2. **Document Fallback (`sock.sendMessage(..., { document: htmlBuffer, mimetype: "text/html" })`)**: For full-length tracks (> 3 minutes) or high-fidelity audio (> 750 KB), package the complete HTML player into a `.html` document. WhatsApp routes documents through the media CDN (supporting up to 100 MB), and users can tap to open the interactive player directly in their device browser.
+

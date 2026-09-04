@@ -1,26 +1,31 @@
 /**
  * play — YouTube Audio & Interactive Spotify Mobile HTML Player
  *
- * Downloads YouTube audio with the highest compatible AAC/m4a format,
- * fetches the cover thumbnail, and renders an authentic Spotify Mobile
- * music player via WhatsApp's native HTML Webview engine.
+ * Downloads YouTube audio with the highest compatible format,
+ * compresses it for WhatsApp in-app Webview delivery, and renders an
+ * authentic Spotify Mobile music player via WhatsApp's native HTML Webview.
  *
- * Features:
- * - 4-stage sequential status update via message.replyUpdate
- * - Interactive play/pause, seeking timebar, loop toggle, and like button
- * - Zero auto-deletion (120s timeout disabled as requested)
- * - Self-contained Base64 assets bypassing WhatsApp sandbox network blocks
+ * Includes built-in diagnostic and probe commands:
+ * - `!play test`        : Sends a lightweight Spotify Player (~25KB) with synthetic audio
+ * - `!play test probe`  : Sends size probe payloads (25KB to 2MB) to measure WhatsApp's stanza cutoff
+ * - `!play <url> --doc` : Forces sending as an offline .html document (uncompressed audio)
  */
 
 import fs from "fs";
 import path from "path";
 import axios from "axios";
 import { getCachedInfo } from "../services/infoCache.js";
-import { downloadAudio, formatDuration } from "../services/ytdlp.js";
+import {
+    downloadAudio,
+    compressAudio,
+    generateSyntheticAudio,
+    formatDuration,
+    formatSize
+} from "../services/ytdlp.js";
 import { downloadQueue } from "../services/downloadQueue.js";
 import { tryDelete } from "../services/cleanup.js";
 import { sendUI, esc } from "../lib/uiEngine.js";
-import { isUrl } from "../lib/utils.js";
+import { isUrl, sanitizeFilename } from "../lib/utils.js";
 
 // ── Spotify Mobile HTML Player Template ──────────────────────────────────────
 
@@ -437,6 +442,18 @@ function toggleHeart() {
 </html>`;
 }
 
+/**
+ * Generate a dummy HTML string that expands to roughly targetBase64Kb after JSON and Base64 encoding.
+ */
+function makeProbeHtml(targetKb) {
+    const targetChars = targetKb * 1024 * 0.74; // account for Base64 expansion
+    const head = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Probe ${targetKb}KB</title></head><body style="background:#121212;color:#fff;font-family:sans-serif;padding:24px;text-align:center"><h2 style="color:#1db954">🔬 Webview Size Probe</h2><p style="margin-top:10px">Payload Target: <b>${targetKb} KB</b></p><p style="color:#888;font-size:12px;margin-top:8px">Jika card ini muncul, berarti stansa ${targetKb}KB berhasil diterima.</p><!-- `;
+    const foot = ` --></body></html>`;
+    const fillerLength = Math.max(0, Math.floor(targetChars - head.length - foot.length));
+    const filler = "Z".repeat(fillerLength);
+    return head + filler + foot;
+}
+
 // ── Command Definition ───────────────────────────────────────────────────────
 
 export default {
@@ -444,7 +461,7 @@ export default {
     aliases: ["ytplay", "spotify", "music"],
     category: "download",
     description: "Unduh audio YouTube dan putar di Spotify Mobile HTML Player",
-    usage: "!play <url>",
+    usage: "!play <url> | !play test | !play test probe",
 
     groupOnly: false,
     adminOnly: false,
@@ -454,6 +471,88 @@ export default {
     registerRequired: false,
 
     async handler({ message, sock, args, prefix }) {
+        const subCmd = args[0]?.toLowerCase();
+
+        // ── DIAGNOSTIC MODE: !play test probe ────────────────────────────────
+        if (subCmd === "test" && args[1]?.toLowerCase() === "probe") {
+            const probeSizesKb = [25, 50, 100, 250, 500, 1000, 2000];
+            await message.reply(
+                `🔬 *[PROBE DIAGNOSTIC]* Memulai pengujian batas ukuran stansa Webview...\n` +
+                `Mengirim 7 ukuran: ${probeSizesKb.map(k => k + "KB").join(", ")}.\n` +
+                `_Tiap probe dikirim bertahap selang 1.5 detik._`
+            );
+
+            for (const sizeKb of probeSizesKb) {
+                try {
+                    const probeHtml = makeProbeHtml(sizeKb);
+                    await sendUI(sock, message.chat, {
+                        title: `🔬 Probe ${sizeKb}KB`,
+                        html: probeHtml,
+                    });
+                    console.log(`[play probe] Dispatched ${sizeKb}KB probe`);
+                } catch (probeErr) {
+                    console.error(`[play probe] Failed on ${sizeKb}KB:`, probeErr.message);
+                }
+                await new Promise((r) => setTimeout(r, 1500));
+            }
+
+            return await message.reply(
+                `╭━━━〔 🔬 PROBE SELESAI 〕━━━\n` +
+                `┃ 7 payload probe telah di-relay:\n` +
+                `┃ 1. 🟢 25 KB\n` +
+                `┃ 2. 🟢 50 KB\n` +
+                `┃ 3. 🟢 100 KB\n` +
+                `┃ 4. 🟡 250 KB\n` +
+                `┃ 5. 🟡 500 KB\n` +
+                `┃ 6. 🔴 1000 KB (1 MB)\n` +
+                `┃ 7. 🔴 2000 KB (2 MB)\n` +
+                `┃\n` +
+                `┃ 💡 *Periksa di WhatsApp:* Nomor probe\n` +
+                `┃ terbesar yang muncul adalah batas\n` +
+                `┃ maksimal ukuran stansa yang diterima HP.\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+            );
+        }
+
+        // ── DIAGNOSTIC MODE: !play test (Lightweight Spotify Test Player) ─────
+        if (subCmd === "test") {
+            let synthPath = null;
+            try {
+                const update = await message.replyUpdate("⏳ *[Test]* Meracik Spotify Test Player dengan audio sintetis...");
+
+                // Generate 4-second synthetic audio (~17 KB)
+                synthPath = await generateSyntheticAudio(4);
+                const audioBuffer = fs.readFileSync(synthPath);
+                const audioBase64 = `data:audio/mp4;base64,${audioBuffer.toString("base64")}`;
+
+                const testHtml = renderSpotifyPlayerHtml({
+                    title: "Test Tone (C5 523Hz)",
+                    artist: "Antigravity Sound Lab",
+                    durationSec: 4,
+                    thumbnailBase64: "",
+                    audioBase64,
+                });
+
+                await sendUI(sock, message.chat, {
+                    title: "Spotify • Test Player (~25KB)",
+                    html: testHtml,
+                });
+
+                await update(
+                    `✅ *[Test Mode Selesai]*\n\n` +
+                    `🎵 Spotify Test Player (~25 KB) telah dikirim via Webview.\n` +
+                    `👉 *Periksa apakah card muncul di WhatsApp dan tombol Play dapat memutar suara tone 4 detik.*`
+                );
+            } catch (err) {
+                console.error("[play test error]", err);
+                await message.reply(`❌ *Gagal Test Player:* ${err.message}`);
+            } finally {
+                tryDelete(synthPath);
+            }
+            return;
+        }
+
+        // ── REGULAR MODE: !play <url> [--doc] ────────────────────────────────
         const url = args[0];
         if (!url || !isUrl(url)) {
             return message.reply(
@@ -461,10 +560,15 @@ export default {
                 `┃ *Penggunaan:* \`${prefix}play <link_youtube>\`\n` +
                 `┃ *Contoh:* \`${prefix}play https://youtu.be/dQw4w9WgXcQ\`\n` +
                 `┃\n` +
-                `┃ _Audio akan diunduh dan diputar di dalam Spotify HTML Player._\n` +
+                `┃ *Mode Diagnostik:* \n` +
+                `┃ • \`${prefix}play test\` (Kirim player uji coba 25KB)\n` +
+                `┃ • \`${prefix}play test probe\` (Uji batas ukuran stansa)\n` +
+                `┃ • \`${prefix}play <url> --doc\` (Kirim sebagai dokumen file .html)\n` +
                 `╰━━━━━━━━━━━━━━━━━━━━━━━`
             );
         }
+
+        const forceDoc = args.includes("--doc");
 
         // ── 1. Update Tahap a: Memulai Fetch ────────────────────────────────
         const update = await message.replyUpdate("⏳ *[1/4]* Menghubungkan ke YouTube & memverifikasi link...");
@@ -476,7 +580,9 @@ export default {
         }
         await downloadQueue.acquire();
 
-        let filePath = null;
+        let rawAudioPath = null;
+        let compressedAudioPath = null;
+
         try {
             // ── 3. Ambil Metadata & Thumbnail ───────────────────────────────
             let info;
@@ -491,18 +597,17 @@ export default {
             const durationSec = info.duration || 0;
             const durationFormatted = formatDuration(durationSec);
 
-            // Batasi durasi maksimal 10 menit (600 detik) untuk menjaga stabilitas payload Webview
             if (durationSec > 600) {
-                throw new Error(`Durasi audio terlalu panjang (${durationFormatted}). Batas maksimal untuk Spotify HTML Player adalah 10 menit.`);
+                throw new Error(`Durasi audio terlalu panjang (${durationFormatted}). Batas maksimal adalah 10 menit.`);
             }
 
-            // ── 4. Update Tahap b: Sedang Mengunduh ──────────────────────────
+            // ── 4. Update Tahap b: Mengunduh Audio ───────────────────────────
             await update(
                 `⏳ *[2/4]* Mengunduh audio & metadata...\n\n` +
                 `🎵 *Judul:* ${title}\n` +
                 `👤 *Channel:* ${artist}\n` +
                 `⏱️ *Durasi:* ${durationFormatted}\n\n` +
-                `_Sedang memproses audio kompatibel tertinggi..._`
+                `_Sedang memproses ekstraksi audio..._`
             );
 
             // Fetch cover thumbnail as Base64 Data URI
@@ -520,23 +625,33 @@ export default {
                 }
             }
 
-            // ── 5. Download Audio via yt-dlp ─────────────────────────────────
-            filePath = await downloadAudio(url, title);
+            // Download raw audio
+            rawAudioPath = await downloadAudio(url, title);
+            const rawStat = fs.statSync(rawAudioPath);
 
-            // Validasi file dan ukurannya
-            const stat = fs.statSync(filePath);
-            const MAX_AUDIO_BYTES = 5 * 1024 * 1024; // 5 MB safe ceiling for WhatsApp WebSocket frame
-            if (stat.size > MAX_AUDIO_BYTES) {
-                throw new Error(`Ukuran file audio melebihi batas aman Webview (${(stat.size / (1024 * 1024)).toFixed(1)} MB > 5 MB).`);
+            // ── 5. Kompresi / Penentuan Mode Pengiriman ───────────────────────
+            let finalAudioPath = rawAudioPath;
+            let deliveryMode = forceDoc ? "doc" : "webview";
+
+            // Jika mode webview, kompres audio via FFmpeg ke 32kbps mono untuk merampingkan stansa
+            if (!forceDoc) {
+                try {
+                    await update(`⏳ *[2/4]* Mengoptimalkan ukuran audio untuk WhatsApp Webview...`);
+                    compressedAudioPath = await compressAudio(rawAudioPath, "32k");
+                    finalAudioPath = compressedAudioPath;
+                } catch (compErr) {
+                    console.warn("[play] Gagal kompresi FFmpeg, menggunakan audio mentah:", compErr.message);
+                    finalAudioPath = rawAudioPath;
+                }
             }
 
-            // Encode audio ke Base64 Data URI
-            const ext = path.extname(filePath).toLowerCase().replace(".", "");
+            const finalStat = fs.statSync(finalAudioPath);
+            const ext = path.extname(finalAudioPath).toLowerCase().replace(".", "");
             const mimeType = ext === "m4a" || ext === "aac" ? "audio/mp4" : ext === "mp3" ? "audio/mpeg" : `audio/${ext}`;
-            const audioBuffer = fs.readFileSync(filePath);
+            const audioBuffer = fs.readFileSync(finalAudioPath);
             const audioBase64 = `data:${mimeType};base64,${audioBuffer.toString("base64")}`;
 
-            // ── 6. Update Tahap c: Selesai Download & Mengirim HTML ──────────
+            // ── 6. Update Tahap c: Selesai Download & Menyiapkan Player ──────
             await update(`📦 *[3/4]* Download selesai! Mengirim Spotify Mobile Player ke chat...`);
 
             const playerHtml = renderSpotifyPlayerHtml({
@@ -544,22 +659,49 @@ export default {
                 artist,
                 durationSec,
                 thumbnailBase64,
-                audioBase64
+                audioBase64,
             });
 
-            // Kirim pesan Webview interaktif via uiEngine (sendUI)
-            await sendUI(sock, message.chat, {
-                title: `Spotify • ${title.substring(0, 30)}`,
-                html: playerHtml
-            });
+            // Threshold: Jika ukuran file audio kompresi melebihi 700 KB (Base64 payload ~1MB),
+            // secara otomatis alihkan ke pengiriman Dokumen HTML agar tidak di-drop oleh WhatsApp.
+            const MAX_WEBVIEW_AUDIO_BYTES = 750 * 1024;
+            if (!forceDoc && finalStat.size > MAX_WEBVIEW_AUDIO_BYTES) {
+                deliveryMode = "doc";
+                console.log(`[play] Audio size (${formatSize(finalStat.size)}) exceeds webview safe limit, falling back to document mode.`);
+            }
+
+            if (deliveryMode === "webview") {
+                // Kirim via Webview in-app
+                await sendUI(sock, message.chat, {
+                    title: `Spotify • ${title.substring(0, 30)}`,
+                    html: playerHtml,
+                });
+            } else {
+                // Kirim via Dokumen HTML
+                const htmlBuffer = Buffer.from(playerHtml, "utf-8");
+                await sock.sendMessage(message.chat, {
+                    document: htmlBuffer,
+                    mimetype: "text/html",
+                    fileName: `${sanitizeFilename(title)}_spotify_player.html`,
+                    caption: [
+                        `🎵 *${title}*`,
+                        `👤 *Artist/Channel:* ${artist}`,
+                        `⏱️ *Durasi:* ${durationFormatted}`,
+                        `📦 *Ukuran Player:* ${formatSize(htmlBuffer.length)}`,
+                        ``,
+                        `💡 _Download file HTML di atas dan buka di browser HP Anda untuk memutar dengan tampilan Spotify Player lengkap._`
+                    ].join("\n"),
+                }, { quoted: message });
+            }
 
             // ── 7. Update Tahap d: Selesai & Peringatan Penghapusan Lokal ────
-            // Catatan: Timeout 2 menit dinonaktifkan sesuai permintaan pengguna
             await update(
                 `✅ *Done!*\n\n` +
-                `⚠️ *Peringatan:* Tampilan HTML Player ini tidak akan dihapus otomatis (timeout 2 menit dinonaktifkan). ` +
-                `Jika Anda atau anggota lain mengalami lag saat memuat pesan player ini di WhatsApp, ` +
-                `silakan hapus pesan ini secara lokal (*Delete for me*).`
+                (deliveryMode === "webview"
+                    ? `⚠️ *Peringatan:* Tampilan HTML Player ini tidak akan dihapus otomatis (timeout 2 menit dinonaktifkan). ` +
+                      `Jika Anda atau anggota lain mengalami lag saat memuat pesan player ini di WhatsApp, ` +
+                      `silakan hapus pesan ini secara lokal (*Delete for me*).`
+                    : `📄 File Spotify HTML Player interaktif telah dikirim sebagai dokumen (karena durasi/ukuran audio melampaui batas stansa Webview).`)
             );
 
         } catch (err) {
@@ -567,8 +709,8 @@ export default {
             console.error("[play command error]", err);
             await update(`❌ *Gagal:* ${err.message || "Terjadi kesalahan saat memproses permintaan."}`);
         } finally {
-            // Bersihkan file temporary dan bebaskan slot antrian
-            tryDelete(filePath);
+            tryDelete(rawAudioPath);
+            tryDelete(compressedAudioPath);
             downloadQueue.release();
         }
     }
