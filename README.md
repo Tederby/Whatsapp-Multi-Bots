@@ -16,6 +16,7 @@ This `README.md` serves as a high-level summary. Detailed technical documentatio
 | 🧩 [**Command Development Guide**](docs/COMMAND_DEVELOPMENT.md) | Full 55-command guide, permission flags, context builder, UI standards, and pseudo-buttons. |
 | 🗄️ [**Database & Storage Architecture**](docs/DATABASE.md) | SQLite WAL configuration, table schemas, LID/PN identity mapping, and helper methods. |
 | 🚀 [**Configuration & Deployment**](docs/CONFIGURATION_DEPLOYMENT.md) | Environment variables reference, PM2 multi-instance setup, headless pairing code, and OS prerequisites. |
+| 🌐 [**Webview Payload & UI Engine**](docs/WEBVIEW_PAYLOAD.md) | Undocumented in-app webview primitive, Baileys relay envelope, capability matrix, and stanza constraints. |
 
 ---
 
@@ -83,6 +84,8 @@ WhatsApp Multi-Bots supports two distinct presentation modes to accommodate both
 | **Interactivity** | In-webview client-side DOM (pagination, tabs, search) | Quoted chat replies via temporary reply handlers |
 | **Lifecycle** | **Auto-deleted after 120s** to prevent mobile viewport lag | **Permanent** in chat history |
 | **Media Handling** | Embedded as Base64 Data URIs to bypass sandbox restrictions | Direct image/document attachments |
+
+> 💡 *For the complete technical specification, Baileys relay envelope, browser capability matrix, and stanza size limits, see [`docs/WEBVIEW_PAYLOAD.md`](docs/WEBVIEW_PAYLOAD.md).*
 
 ---
 

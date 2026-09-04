@@ -235,3 +235,6 @@ const payload = Buffer.from(JSON.stringify({
 - `renderCard({ icon, title, subtitle, rows, sections })`: Builds structured information cards with key-value pairs and optional nested sections.
 - `renderList({ icon, title, subtitle, items })`: Generates interactive lists and menu selectors supporting item `onClick` event handlers.
 - `sendUI(sock, chatId, { title, html })`: Dispatches the interactive HTML payload to the target chat and returns `{ key, messageId }` for reply tracking.
+
+> For complete protocol specifications, standalone Baileys implementation, the empirical Chromium capability matrix, stanza size boundaries, and pseudo-button mechanics, see [**`docs/WEBVIEW_PAYLOAD.md`**](WEBVIEW_PAYLOAD.md).
+

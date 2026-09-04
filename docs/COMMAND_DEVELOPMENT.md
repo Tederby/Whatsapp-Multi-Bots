@@ -229,73 +229,57 @@ await sendUI(sock, message.chat, {
 
 Because the webview is instantiated every time the message enters the client's viewport, persistent HTML UI messages can cause severe lag for some users. To mitigate this and work around sandbox limitations:
 
-1. **Auto-Deletion (UI Payloads Only)**:
-   Always delete HTML UI payloads after a set duration (e.g., 2 minutes for read-only info like `!anime`) or immediately after a user resolves an interaction (e.g., selecting a media item to download). Standard text messages do NOT require auto-deletion.
+1. **Auto-Deletion (Mandatory for UI Payloads)**:
+   Always delete HTML UI payloads after 120 seconds. Standard text messages do NOT require auto-deletion.
    ```javascript
    const uiMsg = await sendUI(sock, message.chat, { title: "Menu", html: listHtml });
 
-   // Auto-delete after 2 minutes to prevent client lag
-   // Note: uiMsg.key from sendUI includes fromMe: true so revocation works in both groups and 1-on-1 chats
+   // Auto-delete after 2 minutes to prevent viewport mount lag
    setTimeout(() => {
        sock.sendMessage(message.chat, { delete: uiMsg.key }).catch(() => {});
    }, 120000);
    ```
 
-2. **Pseudo-Buttons & Direct Commands**:
-   - **Clipboard API Limitations**: In the sandboxed iframe/webview, standard `navigator.clipboard.writeText` calls fail due to missing clipboard permissions and lack of top-level document focus.
-   - **Native WhatsApp Long-Press Extraction Mechanics**: When a user long-presses an HTML anchor tag (`<a href="...">`), the native WhatsApp client intercepts the gesture and automatically extracts both the anchor's inner text and its resolved target link, concatenating them as: `[innerText] [href]` directly into the user's text composer bar (*auto-paste*).
-   - **Tokenized Parameterized Command Pattern (Recommended)**:
-     Structure pseudo-buttons where the **link text is the command name/prefix** and the **`href` contains the dynamic argument or target URL**:
-     ```html
-     <!-- Long-press yields: "!ytdl https://youtu.be/dQw4w9WgXcQ" in chat bar -->
-     <a href="https://youtu.be/dQw4w9WgXcQ" class="btn">!ytdl</a>
+2. **Pseudo-Buttons (Native Long-Press Extraction)**:
+   Standard `navigator.clipboard.writeText` calls fail in the sandboxed webview. Instead, use WhatsApp's native long-press anchor extraction:
+   ```html
+   <!-- Long-press pastes: "!ytdl https://youtu.be/..." into chat bar -->
+   <a href="https://youtu.be/dQw4w9WgXcQ" class="btn">!ytdl</a>
 
-     <!-- Long-press yields: "!anime --id 12345" in chat bar -->
-     <a href="12345" class="btn">!anime --id</a>
-     ```
-     When released, the complete executable command with its parameter appears directly in the chat bar ready to send with one tap. This eliminates the need for manual quoted replies, saves user friction from copying long URLs/IDs, and keeps the server pipeline stateless.
-   - **The `about:blank#` Trap (Avoid for Parameterless Commands)**:
-     Because the webview is loaded from a raw data buffer without a base URL, the document's `document.baseURI` is `about:blank`. Using a dummy relative anchor like `<a href="#">!ping</a>` will cause the browser to resolve `href` to `about:blank#`, resulting in `!ping about:blank#` (or `about:blank#`) being pasted into the chat bar.
-     - **For commands WITHOUT parameters** (e.g. `!ping` in `!menu`): Do NOT use anchor tags with dummy `href="#"`. Instead, render them as selectable chips (`user-select: all` / `user-select: text`) or simple non-anchor badges.
-     - **For commands WITH parameters** (e.g. `ytsearch`, `download`, `anime` details): Use `<a href="<param>">!cmd</a>` to leverage native concatenation and assemble the full command string automatically.
+   <!-- Long-press pastes: "!anime --id 12345" into chat bar -->
+   <a href="12345" class="btn">!anime --id</a>
+   ```
+   - **Avoid the `about:blank#` Trap**: Never use dummy `<a href="#">!cmd</a>` for parameterless commands, as it will paste `!cmd about:blank#`. Render parameterless commands as selectable text or badges instead.
 
-3. **State-Free Self-Contained UI**:
-   If a command renders a multi-screen UI where navigation (pagination, detail drill-down) is handled entirely client-side via JavaScript, **do not register a `replyHandler` in server memory**. Registering unused reply handlers for webview messages causes memory leaks since users interact on-screen rather than sending quoted chat replies.
+3. **Media Asset Inlining**:
+   Remote URLs (`<img src="https://...">`) are blocked by the webview sandbox. Remote images must be fetched on the server and converted into Base64 Data URIs (`data:image/...;base64,...`) before embedding. Keep thumbnails under 30–50 KB to stay well below the 1 MB stanza ceiling.
 
 4. **Strict Text-Only for Auto-Detection**:
-   When a message is triggered passively by link auto-detection (`lib/autoDetect.js`), it MUST ALWAYS be sent in text mode (`displayMode = 'text'`), NEVER as an HTML Webview UI payload. Delivering floating or auto-deleting webviews on passive URL matches causes viewport clutter, race conditions, and disruption in active group/personal chats.
-
-5. **Media Artwork Proportions & Aspect Ratios**:
-   Always match CSS containers and thumbnails to the native aspect ratio of the content domain:
-   - **Anime / Manga (MAL)**: Portrait format (`~2:3` or `3:4`). Use 38×54 px for list thumbnails and 140×200 px for detail posters.
-   - **Games (Steam / Store)**: Landscape banner format (`~2.14:1` or `16:9`). Use 72×32 px for capsule thumbnails and responsive `aspect-ratio: 460/215` (max-width 380 px) for header banners. Never squeeze landscape banners into portrait frames.
-
-6. **Prohibition of External Outbound Link Buttons**:
-   Outbound hyperlinks (`<a href="https://...">`), `window.open()`, and `window.location` are **strictly blocked by the WhatsApp client webview sandbox**. Clicking external links will NOT launch the external system browser or open web pages. Never include external link buttons (such as "View on MyAnimeList", "View on Steam Store", etc.) in webview payloads as they are completely non-functional. If an interaction needs to trigger an action, format it as a tokenized pseudo-button command (`<a href="<target_url>">!cmd</a>`) that uses native long-press text extraction to assemble the command into the WhatsApp composer bar.
+   Passive link auto-detection (`lib/autoDetect.js`) MUST ALWAYS output text messages, NEVER HTML UI webviews.
 
 ### Adaptive UI vs Text Mode Pattern
 
-When building commands that support rich HTML UI, respect the user's `meta.displayMode` preference with default fallback to `"ui"`, and allow on-the-fly override flags (`--ui` / `--text`):
+Commands supporting rich UI should respect the user's `meta.displayMode` preference with fallback to `"ui"`, while honoring `--ui` and `--text` flags:
 
 ```javascript
 import { getUser, resolveUserId } from "../lib/database.js";
 import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
 
-// Determine active mode: flag override > DB preference > default "ui"
 const userData = getUser(resolveUserId(sender));
-const displayMode = forcedMode || (userData.meta?.displayMode ?? "ui");
+const displayMode = (args.includes("--text") ? "text" : (args.includes("--ui") ? "ui" : null))
+    || userData.meta?.displayMode || "ui";
 
 if (displayMode === "ui") {
     try {
         const cardHtml = renderCard({ ... });
-        await sendUI(sock, message.chat, {
+        const uiMsg = await sendUI(sock, message.chat, {
             title: "Result Title",
             html: renderPage({ title: "Header", body: cardHtml })
         });
+        setTimeout(() => sock.sendMessage(message.chat, { delete: uiMsg.key }).catch(() => {}), 120000);
         return;
     } catch (err) {
         console.error("[UI Fallback]", err);
-        // Fallback to text below
     }
 }
 
@@ -303,49 +287,8 @@ if (displayMode === "ui") {
 await message.reply(captionText);
 ```
 
-#### Lifecycle & Architecture: UI Mode vs Text Mode
-
-| Dimension | UI Mode (`"ui"`) | Text Mode (`"text"`) |
-|:---|:---|:---|
-| **Payload Type** | `GenAIaeacdsnwHtmlPrimitive` (Webview) | Plain text (Box-drawing characters) |
-| **Client Impact** | Re-mount lag spike when entering viewport | Zero lag, native message list |
-| **Interactivity** | In-webview client-side DOM (pagination, screens) | Quoted chat replies via `registerReplyHandler` |
-| **Auto-Deletion** | **Mandatory** (120s timer) to prune laggy payloads | **Disabled** (persists in chat history) |
-| **Server State** | **State-free** (no reply handlers in memory) | Cleaned up on response or 15m background purge |
-
-#### Guidelines for Webview UI Commands
-1. **Media Assets**: Always convert remote images into Base64 Data URIs (`data:image/...;base64,...`) on the server before embedding in the webview to bypass sandbox network restrictions.
-2. **Per-Command CSS Overrides**: Use `renderPage({ styles: '...' })` to inject command-specific CSS that overrides the base design system when the default look doesn't fit. See `commands/anime.js` for a full example using custom `a-*` prefixed classes.
-3. **Design Philosophy**: Keep UI flat and minimal. Avoid gradients, glassmorphism, heavy shadows, excessive emoji icons, and entrance animations. Use the neutral zinc/gray palette from the base design system.
-4. **Immersive Navigation**: For paginated or multi-screen commands, embed the dataset into `<script>` and provide client-side controls (`.ui-screen.active`, `← Prev` / `Next →` buttons) so users do not have to break immersion by typing chat replies.
-
-### WhatsApp In-App Webview Runtime & Capability Matrix
-
-HTML payloads rendered via `sendUI()` execute inside WhatsApp's native sandboxed WebView (Chromium-based on Android/Desktop). The following empirical matrix defines supported vs blocked browser APIs:
-
-| Category | Supported (`✓`) | Blocked / Unsupported (`✗`) | Developer Guidelines |
-|:---|:---|:---|:---|
-| **CSS Layout** | `display: grid`, `flex`, `subgrid`, Container Queries (`container-type`), `aspect-ratio`, `gap`, `position: sticky`, `:has()`, `:is()` | — | Full modern responsive CSS is 100% safe to use without polyfills. |
-| **CSS Visual** | `backdrop-filter`, `filter`, `clip-path`, `mix-blend-mode`, `color: oklch()`, `accent-color`, `scroll-snap-type`, `view-transition-name`, `animation-timeline` | — | High-fidelity styling, shapes, and scroll-driven CSS animations work natively. |
-| **Storage** | — | `localStorage`, `sessionStorage`, `IndexedDB` | **ALL CLIENT STORAGE IS BLOCKED**. `localStorage` throws `SecurityError` and `IndexedDB.open()` fails/is quarantined due to `about:blank` origin. Keep all UI and navigation state strictly in JavaScript memory variables. |
-| **JavaScript & CSP** | Native ES6+ syntax (`async/await`, Promises, `fetch`, `WebSocket`, `structuredClone`, `BroadcastChannel`) | Dynamic `eval()`, `new Function()`, Web Workers, Service Workers | CSP restricts `unsafe-eval` and worker spawning (Blob/data URL workers fail). Native ES6+ (including `async/await`) executes normally when written directly in `<script>` tags without string evaluation. |
-| **Device & Haptics** | `navigator.vibrate`, Touch Events, Gamepad API | Clipboard API (`navigator.clipboard`), Geolocation, Battery Status, Device Orientation, Bluetooth, USB | Use `navigator.vibrate([15])` for haptic tap feedback. Never rely on Clipboard API (use pseudo-button `<a href="...">` long-press instead). Hardware permissions (GPS, camera, mic, clipboard) are quarantined. |
-| **Media & Graphics** | WebGL, WebGL2, Web Audio API (synthesized sounds), `MediaRecorder`, Picture-in-Picture, WebRTC | HTML5 `<audio>` / Base64 Audio Playback, `getUserMedia` (camera/mic), WebGPU | Canvas 2D/3D games and synthesized Web Audio effects (`AudioContext` oscillators) work out-of-the-box. **HTML5 `<audio>` elements and Base64 audio playback are quarantined/blocked** by the webview media pipeline (no audio output). |
-| **System & Browser** | `prefers-color-scheme` (dark mode), `navigator.onLine`, Permissions API | Notification API, Web Share API, Wake Lock API, Idle Detection, Payment Request | Automatic theme detection works. System push dialogs, wake locks, and OS share sheets are blocked. |
-
-### 8. Stanza Size Constraints & Media Embedding Thresholds
-
-When delivering rich HTML Webviews via `sendUI()`, the payload is packaged as an inline protocol stanza (`botForwardedMessage` → `richResponseMessage` → `GenAIaeacdsnwHtmlPrimitive`) rather than an uploaded CDN media file:
-
-| Threshold | Size Range | Server Behavior | Client Impact | Empirical Test Result |
-|:---|:---|:---|:---|:---|
-| **Safe Zone** | `< 250 KB` | Standard delivery | Instant render, zero lag | Tested: 25 KB, 50 KB, 100 KB, 250 KB delivered cleanly. |
-| **Moderate Zone** | `250 KB – 700 KB` | Standard delivery | Slight mount pause on low-end devices | Tested: 500 KB delivered cleanly. |
-| **Maximum Ceiling** | `750 KB – 1000 KB` | Last delivered tier | Mount latency spike on low-end devices | Tested: **1000 KB (1010652B) delivered successfully**. |
-| **Drop Zone (Silent Drop)** | `> 1000 KB` (~1 MB+) | **SILENT DROP BY WHATSAPP ROUTER** | Message never appears on recipient devices | Tested: **2000 KB (2021000B) silently dropped** (ACKed by socket, discarded by router). |
-
-#### Empirical Conclusions for Audio / Media Player Commands
-1. **HTML5 `<audio>` Sandbox Quarantine**: HTML `<audio>` elements (including Base64 Data URIs) do not emit sound or update playback states in WhatsApp's in-app webview container due to platform-level audio output device quarantines. In-app audio synthesis is strictly restricted to the Web Audio API (`AudioContext` oscillators / sound synthesis as demonstrated in `commands/yuegame.js`).
-2. **Webview vs Document Rule**: Because in-line webviews cannot decode/play external or embedded `<audio>` streams, music players must be sent as standalone `.html` Document attachments (`sock.sendMessage(..., { document, mimetype: "text/html" })`), allowing users to open the full interactive player in their external system browser.
+> [!TIP]
+> **Complete Technical Specification & Browser Matrix**:
+> For the comprehensive standalone specification, Baileys protobuf envelope deconstruction, Chromium sandbox capability matrix (CSS, Storage, CSP, Web Audio vs HTML5 audio quarantine), and the 1 MB stanza size ceiling, see [**`docs/WEBVIEW_PAYLOAD.md`**](WEBVIEW_PAYLOAD.md).
 
 

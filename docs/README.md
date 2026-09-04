@@ -21,6 +21,9 @@ The documentation is organized into the following guides:
 - [Configuration and Deployment Guide](CONFIGURATION_DEPLOYMENT.md)
   Environment variables, multi-bot PM2 configuration, headless pairing code setup, OS prerequisite installation, and diagnostic dashboard.
 
+- [Webview Payload and UI Engine](WEBVIEW_PAYLOAD.md)
+  Undocumented WhatsApp in-app webview protocol (`GenAIaeacdsnwHtmlPrimitive`), Baileys message envelope, empirical browser runtime capability matrix, stanza size ceilings (1 MB silent drop), and pseudo-button UX mechanics.
+
 ## Project Overview
 
 - Runtime: Node.js (ES Modules)
