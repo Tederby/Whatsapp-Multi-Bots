@@ -102,6 +102,40 @@ export async function download(url, formatStr, title, formatLabel) {
 }
 
 /**
+ * Download audio with highest compatible format (AAC/m4a or mp3).
+ * Returns the absolute path to the downloaded audio file.
+ *
+ * @param {string} url
+ * @param {string} title - Used to build a human-readable filename
+ * @returns {Promise<string>} Absolute path of the downloaded audio file
+ */
+export async function downloadAudio(url, title) {
+    const tempDir = path.resolve(setting.ytdlp.tempDir);
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+    const safe = sanitizeFilename(title).substring(0, 80);
+    const rand = crypto.randomBytes(4).toString("hex");
+    const template = path.join(tempDir, `${safe}_audio_${rand}.%(ext)s`);
+
+    await exec([
+        "-f", "ba[ext=m4a]/ba[ext=mp3]/ba",
+        "-x",
+        "--audio-format", "m4a",
+        "--audio-quality", "96K",
+        "--no-playlist",
+        "--no-warnings",
+        "-o", template,
+        url,
+    ]);
+
+    const prefix = `${safe}_audio_${rand}.`;
+    const files = fs.readdirSync(tempDir).filter((f) => f.startsWith(prefix));
+    if (files.length === 0) throw new Error("Audio download completed but output file not found");
+
+    return path.join(tempDir, files[0]);
+}
+
+/**
  * Parse the formats array from metadata into a readable table.
  *
  * @param {object[]} formats - The `formats` array from yt-dlp JSON

@@ -19,6 +19,11 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-09-04 — `[MINOR]` YouTube Audio & Interactive Spotify HTML Player
+- **Interactive Spotify Music Player**: Added `!play` (`commands/play.js`) downloading YouTube audio with highest compatible AAC (`m4a`) format and rendering an authentic Spotify Mobile Webview player with interactive play/pause, timebar scrubbing, and loop/heart toggles.
+- **Audio Downloader Helper**: Added `downloadAudio()` helper to `services/ytdlp.js` with AAC extraction, 96K bitrate ceiling, and automatic temporary file management.
+- **Persistent Webview Mode**: Disabled 120-second auto-deletion for `!play` webview payloads with client-side lag warning advising local message deletion (*Delete for me*).
+
 ### 2026-09-03 — `[MAJOR]` Interactive HTML Webview UI Overhaul & Sandbox Hardening
 - **User Display Preference Architecture**: Added `meta.displayMode` (`"ui"` vs `"text"`) with zero-migration fallback defaulting to UI mode. Configurable via `!register mode <ui|text>` and displayed in `!profile` (`6a693d9`).
 - **Interactive Anime Webview**: Styled posters as 2:3 vertical rectangles, embedded posters as Base64 Data URIs to bypass WhatsApp webview sandbox restrictions, and added in-webview pagination, touch transitions, and detail views (`6a693d9`, `89f76fe`, `0fd80a9`, `45a96a0`, `7826289`).
