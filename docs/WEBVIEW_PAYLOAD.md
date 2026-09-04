@@ -310,6 +310,7 @@ await message.reply(plainTextMessage);
 - [`commands/steam.js`](../commands/steam.js) — Steam game lookup with landscape banners (460/215 aspect ratio) and interactive game specs.
 - [`commands/yuegame.js`](../commands/yuegame.js) — Full canvas RPG mini-game with on-screen D-pad and Web Audio API synthesized sound effects.
 - [`commands/html.js`](../commands/html.js) — Developer sandbox tool that compiles and renders user HTML directly into the webview with AST and syntax validation.
+- [`commands/wvtest.js`](../commands/wvtest.js) — Empirical diagnostic suite with 35+ automated in-webview browser capability checks, calibrated stanza size probes, protobuf schema mutations, and URI interception tests.
 
 ---
 
