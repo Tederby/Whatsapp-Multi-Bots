@@ -10,7 +10,7 @@ import {
 
 export default {
     name: "github",
-    aliases: ["gh"],
+    aliases: ["gh", "git"],
     category: "search",
     description: "Mencari profil user atau repository GitHub",
     usage: "!github <user> atau !github <user>/<repo>",
