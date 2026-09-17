@@ -221,16 +221,13 @@ async function sendAnimeDetail(anime, message, sock) {
     }
     captionText += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-    captionText += `╭───「 📝 Sinopsis 」\n`;
-    captionText += `│ ${synopsis.replace(/\n/g, "\n│ ")}\n`;
-    captionText += `╰──────────────\n\n`;
+    captionText += `📝 *Sinopsis:*\n${synopsis}\n\n`;
 
-    captionText += `╭───「 🔗 Tautan 」\n`;
-    captionText += `│ 🌸 *AniList*     : ${anilistUrl}\n`;
+    captionText += `🔗 *Tautan:*\n`;
+    captionText += `• AniList: ${anilistUrl}`;
     if (malUrl) {
-        captionText += `│ 🎌 *MyAnimeList* : ${malUrl}\n`;
+        captionText += `\n• MyAnimeList: ${malUrl}`;
     }
-    captionText += `╰──────────────`;
 
     if (imageUrl) {
         await sock.sendMessage(
