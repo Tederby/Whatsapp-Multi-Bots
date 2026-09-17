@@ -1,6 +1,5 @@
-import axios from "axios";
-import https from "https";
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
+import { searchManga, cleanDescription, formatScore } from "../services/anilist.js";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -29,9 +28,14 @@ function generateListText(results, page, query) {
     text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     currentItems.forEach((manga, index) => {
-        let year = manga.published?.prop?.from?.year || "N/A";
-        text += `╭───「 ${start + index + 1}. ${manga.title} 」\n`;
-        text += `│ 📚 ${manga.type || "N/A"} | ⭐ ${manga.score || "N/A"} | 📖 ${manga.chapters || "?"} Chaps | 📅 ${year}\n`;
+        const title = manga.title?.romaji || manga.title?.userPreferred || manga.title?.english || "N/A";
+        const year = manga.startDate?.year || "N/A";
+        const score = formatScore(manga.averageScore);
+        const format = manga.format || manga.type || "N/A";
+        const chaps = manga.chapters ? `${manga.chapters} Chaps` : "? Chaps";
+
+        text += `╭───「 ${start + index + 1}. ${title} 」\n`;
+        text += `│ 📚 ${format} | ⭐ ${score} | 📖 ${chaps} | 📅 ${year}\n`;
         text += `╰──────────────\n\n`;
     });
 
@@ -45,11 +49,15 @@ export default {
     name: "manga",
     aliases: ["ln", "lightnovel", "comic", "manhwa"],
     category: "anime",
-    description: "Mencari daftar Manga / Light Novel dari MyAnimeList",
+    description: "Mencari daftar Manga / Light Novel / Manhwa dari AniList",
     usage: "!manga <judul manga/LN>",
     async handler({ message, args, sock, sender }) {
         if (args.length === 0) {
-            await message.reply("❌ Berikan judul manga atau light novel yang ingin dicari.\nContoh: `!manga solo leveling`\n\n💡 *Tip:* Tambahkan `-1` atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list. Contoh: `!manga solo leveling -1`");
+            await message.reply(
+                "❌ Berikan judul manga, manwha, atau light novel yang ingin dicari.\n" +
+                "Contoh: `!manga solo leveling`\n\n" +
+                "💡 *Tip:* Tambahkan `-1` atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list. Contoh: `!manga solo leveling -1`"
+            );
             return;
         }
 
@@ -58,7 +66,8 @@ export default {
         const directFlags = ["--top", "-t", "-1", "--direct", "top"];
 
         for (const arg of args) {
-            if (directFlags.includes(arg.toLowerCase())) {
+            const lower = arg.toLowerCase();
+            if (directFlags.includes(lower)) {
                 isDirect = true;
             } else {
                 cleanArgs.push(arg);
@@ -73,20 +82,12 @@ export default {
         }
 
         try {
-            const response = await axios.get(`https://api.tenrai.org/v1/manga?q=${encodeURIComponent(query)}&limit=20`, {
-                timeout: 15000, // Timeout 15 detik
-                httpsAgent: new https.Agent({ family: 4 }), // Paksa IPv4
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                }
-            });
+            const results = await searchManga(query, { perPage: 20 });
 
-            if (!response.data || !response.data.data || response.data.data.length === 0) {
+            if (!results || results.length === 0) {
                 await message.reply(`❌ Manga/Light Novel dengan kata kunci *${query}* tidak ditemukan di database.`);
                 return;
             }
-
-            const results = response.data.data;
 
             if (isDirect || results.length === 1) {
                 await sendMangaDetail(results[0], message, sock);
@@ -94,10 +95,8 @@ export default {
             }
 
             const text = generateListText(results, 0, query);
-
             const sentMsg = await sock.sendMessage(message.chat, { text }, { quoted: message });
 
-            // Register reply handler
             registerReplyHandler(sentMsg.key.id, replyHandler, {
                 results,
                 page: 0,
@@ -110,22 +109,16 @@ export default {
         } catch (err) {
             let errorMsg = err.message || "Unknown error";
             if (err.response) {
-                // Server merespon dengan status code selain 2xx
-                errorMsg = `HTTP ${err.response.status}: ${err.response.statusText}`;
+                errorMsg = `HTTP ${err.response.status}: ${err.response.statusText || ""}`;
                 console.error("Manga Command Error (Response):", errorMsg, err.response.data);
-            } else if (err.request) {
-                // Request terkirim tapi tidak ada respon (timeout/network error)
-                console.error("Manga Command Error (Request):", errorMsg);
             } else {
                 console.error("Manga Command Error:", err);
             }
 
-            if (err.code === 'ETIMEDOUT' || err.code === 'ECONNABORTED') {
-                await message.reply(`❌ Server MyAnimeList (Jikan API) sedang sibuk atau down. Silakan coba beberapa saat lagi.`);
-            } else if (err.response && err.response.status === 403) {
-                await message.reply(`❌ Akses ditolak oleh API Jikan (403 Forbidden). Ini sering terjadi jika IP server/VPS diblokir oleh sistem keamanan mereka (Cloudflare).`);
+            if (err.code === "ETIMEDOUT" || err.code === "ECONNABORTED") {
+                await message.reply("❌ Server AniList sedang sibuk atau timeout. Silakan coba beberapa saat lagi.");
             } else if (err.response && err.response.status === 429) {
-                await message.reply(`❌ Terlalu banyak request ke Jikan API (429 Rate Limit). Mohon tunggu beberapa saat.`);
+                await message.reply("❌ Terlalu banyak request ke AniList API (429 Rate Limit). Mohon tunggu beberapa saat.");
             } else {
                 await message.reply(`❌ Terjadi kesalahan saat mencari manga: ${errorMsg}`);
             }
@@ -159,9 +152,10 @@ async function replyHandler({ message, sock, state }) {
     const num = parseInt(text, 10);
     if (!isNaN(num) && num >= 1 && num <= results.length) {
         const manga = results[num - 1];
+        const mangaTitle = manga.title?.romaji || manga.title?.userPreferred || manga.title?.english || "N/A";
 
         deleteReplyHandler(messageKey.id);
-        await sock.sendMessage(message.chat, { text: `>> *${manga.title}*`, edit: messageKey });
+        await sock.sendMessage(message.chat, { text: `>> *${mangaTitle}*`, edit: messageKey });
 
         await sendMangaDetail(manga, message, sock);
         return;
@@ -169,40 +163,41 @@ async function replyHandler({ message, sock, state }) {
 }
 
 async function sendMangaDetail(manga, message, sock) {
-    const title = manga.title || "N/A";
-    const titleEng = manga.title_english ? ` (${manga.title_english})` : "";
+    const title = typeof manga.title === "object"
+        ? (manga.title?.romaji || manga.title?.userPreferred || manga.title?.english || "N/A")
+        : (manga.title || "N/A");
+    const titleEng = manga.title?.english ? ` (${manga.title.english})` : "";
     const status = manga.status || "N/A";
     const chapters = manga.chapters || "Unknown";
     const volumes = manga.volumes || "Unknown";
-    const type = manga.type || "N/A";
-    const score = manga.score || "N/A";
-    const rank = manga.rank || "N/A";
-    const popularity = manga.popularity || "N/A";
-    const authors = manga.authors && manga.authors.length > 0 ? manga.authors.map(a => a.name).join(", ") : "N/A";
+    const format = manga.format || manga.type || "N/A";
+    const score = formatScore(manga.averageScore);
+    const popularity = manga.popularity ? `#${manga.popularity}` : "N/A";
 
-    const url = manga.url;
-    const genres = manga.genres && manga.genres.length > 0 ? manga.genres.map(g => g.name).join(", ") : "N/A";
-
-    let synopsis = "Tidak ada sinopsis.";
-    if (manga.synopsis) {
-        synopsis = manga.synopsis.replace(/\[Written by MAL Rewrite\]/i, "").trim();
+    let authors = "N/A";
+    if (manga.staff?.edges && manga.staff.edges.length > 0) {
+        authors = manga.staff.edges.map(e => `${e.node.name.full} (${e.role})`).join(", ");
     }
 
-    let imageUrl = null;
-    if (manga.images?.jpg?.large_image_url) {
-        imageUrl = manga.images.jpg.large_image_url;
-    } else if (manga.images?.jpg?.image_url) {
-        imageUrl = manga.images.jpg.image_url;
-    }
+    const anilistUrl = manga.siteUrl || `https://anilist.co/manga/${manga.id}`;
+    const malUrl = manga.idMal ? `https://myanimelist.net/manga/${manga.idMal}` : null;
+    const genres = manga.genres && manga.genres.length > 0 ? manga.genres.join(", ") : "N/A";
+    const synopsis = cleanDescription(manga.description);
+
+    const imageUrl = manga.coverImage?.extraLarge || manga.coverImage?.large || manga.coverImage?.medium || null;
 
     let captionText = `📚 *${title}*${titleEng}\n\n`;
-    captionText += `🔗 *MyAnimeList:* ${url}\n\n`;
-    captionText += `⭐ *Score:* ${score}\n`;
-    captionText += `🏆 *Rank:* #${rank} | 📈 *Popularity:* #${popularity}\n`;
-    captionText += `📖 *Type:* ${type}\n`;
+    captionText += `🔗 *AniList:* ${anilistUrl}\n`;
+    if (malUrl) {
+        captionText += `🔗 *MyAnimeList:* ${malUrl}\n`;
+    }
+    captionText += `\n`;
+    captionText += `⭐ *Score:* ${score !== "N/A" ? score + " / 10" : "—"}\n`;
+    captionText += `📈 *Popularity:* ${popularity}\n`;
+    captionText += `📖 *Format:* ${format}\n`;
     captionText += `📝 *Chapters:* ${chapters} | 📚 *Volumes:* ${volumes}\n`;
     captionText += `⏳ *Status:* ${status}\n`;
-    captionText += `✍️ *Author:* ${authors}\n`;
+    captionText += `✍️ *Author/Staff:* ${authors}\n`;
     captionText += `🎭 *Genres:* ${genres}\n\n`;
     captionText += `📝 *Synopsis:*\n${synopsis}`;
 

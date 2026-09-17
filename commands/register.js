@@ -9,10 +9,14 @@ import { registerUser, unregisterUser, isRegistered, getUser, saveUser, resolveU
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 import { verifyMalAccount } from "../services/mal.js";
 import { verifySteamAccount } from "../services/steam.js";
+import { verifyAnilistAccount } from "../services/anilist.js";
 
 async function processDirectLinking(cmd, value, sender, pushname, message, sock, messageKey = null) {
     if (!value) {
-        const replyText = `❌ Berikan ${cmd === 'mal' ? 'username MAL' : 'custom URL atau SteamID64'}.\nContoh: \`${cmd} <value>\``;
+        let label = "custom URL atau SteamID64";
+        if (cmd === "mal") label = "username MAL";
+        else if (cmd === "anilist") label = "username AniList";
+        const replyText = `❌ Berikan ${label}.\nContoh: \`${cmd} <value>\``;
         if (messageKey) {
             await message.reply(replyText);
         } else {
@@ -67,6 +71,24 @@ async function processDirectLinking(cmd, value, sender, pushname, message, sock,
         const successText = `✅ Akun Steam berhasil ditautkan:\n🎮 *${result.name}*\n🔗 ${result.url}`;
         if (messageKey) await sock.sendMessage(message.chat, { text: successText, edit: messageKey });
         else if (loadingMsg) await sock.sendMessage(message.chat, { text: successText, edit: loadingMsg.key });
+
+    } else if (cmd === 'anilist') {
+        const result = await verifyAnilistAccount(value);
+        if (!result) {
+            const errText = `❌ Akun AniList *${value}* tidak ditemukan.`;
+            if (messageKey) await sock.sendMessage(message.chat, { text: errText, edit: messageKey });
+            else if (loadingMsg) await sock.sendMessage(message.chat, { text: errText, edit: loadingMsg.key });
+            return;
+        }
+
+        const user = getUser(sender);
+        user.meta = user.meta || {};
+        user.meta.anilistUsername = result.username;
+        saveUser(sender, user);
+
+        const successText = `✅ Akun AniList berhasil ditautkan:\n🌸 *${result.username}*\n🔗 ${result.url}`;
+        if (messageKey) await sock.sendMessage(message.chat, { text: successText, edit: messageKey });
+        else if (loadingMsg) await sock.sendMessage(message.chat, { text: successText, edit: loadingMsg.key });
     }
 }
 
@@ -75,7 +97,7 @@ export default {
     aliases: ["reg", "daftar", "registrasi"],
     category: "general",
     description: "Mendaftarkan diri ke database bot dan mengatur profil.",
-    usage: "!register [name/unreg/mal/steam/unlink/mode] [value]",
+    usage: "!register [name/unreg/mal/anilist/steam/unlink/mode] [value]",
 
     async handler({ message, args, sender, pushname, prefix, sock }) {
         try {
@@ -86,8 +108,8 @@ export default {
             if (args && args.length > 0) {
                 const cmd = args[0].toLowerCase();
 
-                // !register mal <username> / !register steam <id>
-                if (cmd === "mal" || cmd === "steam") {
+                // !register mal <username> / !register anilist <username> / !register steam <id>
+                if (cmd === "mal" || cmd === "steam" || cmd === "anilist") {
                     await processDirectLinking(cmd, args.slice(1).join(" ").trim(), sender, pushname, message, sock);
                     return;
                 }
@@ -114,15 +136,15 @@ export default {
                     return message.reply("✅ Registrasi kamu telah dihapus dari database bot.");
                 }
 
-                // !register unlink mal / !register unlink steam
+                // !register unlink mal / !register unlink anilist / !register unlink steam
                 if (cmd === "unlink") {
                     const service = (args[1] || "").toLowerCase();
-                    if (service !== "mal" && service !== "steam") {
-                        return message.reply(`❌ Pilih akun yang ingin dilepas:\n• \`${prefix}register unlink mal\`\n• \`${prefix}register unlink steam\``);
+                    if (service !== "mal" && service !== "steam" && service !== "anilist") {
+                        return message.reply(`❌ Pilih akun yang ingin dilepas:\n• \`${prefix}register unlink mal\`\n• \`${prefix}register unlink anilist\`\n• \`${prefix}register unlink steam\``);
                     }
                     const user = getUser(sender);
                     user.meta = user.meta || {};
-                    const metaKey = service === "mal" ? "malUsername" : "steamId";
+                    const metaKey = service === "mal" ? "malUsername" : (service === "anilist" ? "anilistUsername" : "steamId");
                     if (!user.meta[metaKey]) {
                         return message.reply(`❌ Tidak ada akun ${service.toUpperCase()} yang tertaut.`);
                     }
@@ -192,8 +214,10 @@ export default {
             caption += `┃\n`;
             caption += `┃ 🔗 *Link Akun*\n`;
             caption += `┃ ⋄ \`mal <username>\` tautkan MAL\n`;
+            caption += `┃ ⋄ \`anilist <username>\` tautkan AniList\n`;
             caption += `┃ ⋄ \`steam <custom_url/steamid>\` tautkan Steam\n`;
             caption += `┃ ⋄ \`unlink mal\` lepas MAL\n`;
+            caption += `┃ ⋄ \`unlink anilist\` lepas AniList\n`;
             caption += `┃ ⋄ \`unlink steam\` lepas Steam\n`;
             caption += `┃\n`;
             caption += `┃ 💡 _Bisa juga langsung:_\n`;
@@ -268,8 +292,8 @@ async function replyHandler({ message, sock, state }) {
         return;
     }
 
-    // ── Account Linking: MAL & Steam ────────────────────────────────────────
-    if (cmd === "mal" || cmd === "steam") {
+    // ── Account Linking: MAL, AniList & Steam ─────────────────────────────
+    if (cmd === "mal" || cmd === "steam" || cmd === "anilist") {
         const value = args.slice(1).join(" ").trim();
         deleteReplyHandler(messageKey.id);
         await processDirectLinking(cmd, value, userId, null, message, sock, messageKey);
@@ -279,15 +303,15 @@ async function replyHandler({ message, sock, state }) {
     // ── Unlink Accounts ─────────────────────────────────────────────
     if (cmd === "unlink") {
         const service = (args[1] || "").toLowerCase();
-        if (service !== "mal" && service !== "steam") {
-            await message.reply("❌ Pilih akun yang ingin dilepas: `unlink mal` atau `unlink steam`");
+        if (service !== "mal" && service !== "steam" && service !== "anilist") {
+            await message.reply("❌ Pilih akun yang ingin dilepas: `unlink mal`, `unlink anilist`, atau `unlink steam`");
             return;
         }
 
         const user = getUser(userId);
         user.meta = user.meta || {};
 
-        const metaKey = service === "mal" ? "malUsername" : "steamId";
+        const metaKey = service === "mal" ? "malUsername" : (service === "anilist" ? "anilistUsername" : "steamId");
         if (!user.meta[metaKey]) {
             await message.reply(`❌ Tidak ada akun ${service.toUpperCase()} yang tertaut.`);
             return;
@@ -310,8 +334,9 @@ async function replyHandler({ message, sock, state }) {
         "⋄ `mode <ui/text>` — atur preferensi tampilan\n" +
         "⋄ `unreg` — hapus registrasi\n" +
         "⋄ `mal <username>` — tautkan MAL\n" +
+        "⋄ `anilist <username>` — tautkan AniList\n" +
         "⋄ `steam <id>` — tautkan Steam\n" +
-        "⋄ `unlink mal/steam` — lepas tautan"
+        "⋄ `unlink mal/anilist/steam` — lepas tautan"
     );
 }
 

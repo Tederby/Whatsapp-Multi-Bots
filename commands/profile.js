@@ -128,10 +128,12 @@ export default {
             // Linked accounts
             const hasMal = !!userData.meta?.malUsername;
             const hasSteam = !!userData.meta?.steamId;
-            if (hasMal || hasSteam) {
+            const hasAnilist = !!userData.meta?.anilistUsername;
+            if (hasMal || hasSteam || hasAnilist) {
                 caption += `╭───「 🔗 Linked Accounts 」\n`;
-                if (hasSteam) caption += `│ 🎮 Steam : https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
-                if (hasMal) caption += `│ 🎌 MAL   : https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
+                if (hasSteam) caption += `│ 🎮 Steam   : https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
+                if (hasMal) caption += `│ 🎌 MAL     : https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
+                if (hasAnilist) caption += `│ 🌸 AniList : https://anilist.co/user/${userData.meta.anilistUsername}\n`;
                 caption += `╰──────────────\n\n`;
             }
 
