@@ -312,18 +312,18 @@ export async function sendAnilistProfileDetail(input, message, sock, isAutoDetec
             : "0";
 
         let text = `╭━━━〔 🌸 ANILIST PROFILE 〕━━━\n`;
-        text += `┃ 👤 *Username* : ${user.name}\n`;
+        text += `┃ 👤 *Username*  : ${user.name}\n`;
         if (user.createdAt) {
             const joinDate = new Date(user.createdAt * 1000).toLocaleDateString("id-ID", {
                 day: "numeric",
                 month: "long",
                 year: "numeric"
             });
-            text += `┃ 📅 *Join*     : ${joinDate}\n`;
+            text += `┃ 📅 *Bergabung* : ${joinDate}\n`;
         }
         text += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-        text += `╭───「 📺 Anime Stats 」\n`;
+        text += `╭───「 📺 Statistik Anime 」\n`;
         text += `│ ⏱️ *Days Watched* : ${daysWatched}\n`;
         text += `│ ⭐ *Mean Score*   : ${animeMeanScore} / 10\n`;
         text += `│ 🎬 *Total Entry*  : ${animeStats.count || 0}\n`;
@@ -334,7 +334,7 @@ export async function sendAnilistProfileDetail(input, message, sock, isAutoDetec
         text += `│ ⚪ *Planning*     : ${getStatusCount(animeStats.statuses, "PLANNING")}\n`;
         text += `╰──────────────\n\n`;
 
-        text += `╭───「 📚 Manga Stats 」\n`;
+        text += `╭───「 📚 Statistik Manga 」\n`;
         text += `│ 📖 *Chapters Read*: ${mangaStats.chaptersRead || 0}\n`;
         text += `│ 📚 *Volumes Read* : ${mangaStats.volumesRead || 0}\n`;
         text += `│ ⭐ *Mean Score*   : ${mangaMeanScore} / 10\n`;
@@ -346,7 +346,9 @@ export async function sendAnilistProfileDetail(input, message, sock, isAutoDetec
         text += `│ ⚪ *Planning*     : ${getStatusCount(mangaStats.statuses, "PLANNING")}\n`;
         text += `╰──────────────\n\n`;
 
-        text += `🔗 *Profil:* ${user.siteUrl}`;
+        text += `╭───「 🔗 Tautan 」\n`;
+        text += `│ 🌸 *AniList* : ${user.siteUrl}\n`;
+        text += `╰──────────────`;
 
         const avatarUrl = user.avatar?.large;
 

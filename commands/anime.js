@@ -24,7 +24,7 @@ function generateListText(results, page, query) {
     const currentItems = results.slice(start, end);
 
     let text = `╭━━━〔 🎌 ANIME SEARCH 〕━━━\n`;
-    text += `┃ 🔍 Query : ${query}\n`;
+    text += `┃ 🔍 *Query* : ${query}\n`;
     text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     currentItems.forEach((anime, index) => {
@@ -35,7 +35,10 @@ function generateListText(results, page, query) {
         const eps = anime.episodes ? `${anime.episodes} Eps` : "? Eps";
 
         text += `╭───「 ${start + index + 1}. ${title} 」\n`;
-        text += `│ 📺 ${format} | ⭐ ${score} | 🎬 ${eps} | 📅 ${year}\n`;
+        text += `│ 📺 *Tipe*    : ${format}\n`;
+        text += `│ ⭐ *Skor*    : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+        text += `│ 🎬 *Episode* : ${eps}\n`;
+        text += `│ 📅 *Tahun*   : ${year}\n`;
         text += `╰──────────────\n\n`;
     });
 
@@ -51,12 +54,16 @@ export default {
     category: "anime",
     description: "Mencari daftar anime dari AniList",
     usage: "!anime <judul> [--top/-1]",
-    async handler({ message, args, sock, sender }) {
+    async handler({ message, args, sock, sender, prefix }) {
         if (args.length === 0) {
             await message.reply(
-                "❌ Berikan judul anime yang ingin dicari.\n" +
-                "Contoh: `!anime frieren`\n\n" +
-                "💡 *Tip:* Tambahkan `-1` atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list. Contoh: `!anime frieren -1`"
+                "╭━━━〔 🎌 ANIME SEARCH 〕━━━\n" +
+                "┃ Mencari anime dari database AniList.\n" +
+                "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                "╭───「 📖 Penggunaan 」\n" +
+                `│ ⋄ \`${prefix || "!"}anime <judul>\`\n` +
+                `│ ⋄ \`${prefix || "!"}anime <judul> -1\` (hasil teratas)\n` +
+                "╰──────────────"
             );
             return;
         }
@@ -77,7 +84,7 @@ export default {
         const query = cleanArgs.join(" ");
 
         if (!query) {
-            await message.reply("❌ Berikan judul anime yang ingin dicari.\nContoh: `!anime frieren -1`");
+            await message.reply(`❌ Berikan judul anime yang ingin dicari.\nContoh: \`${prefix || "!"}anime frieren -1\``);
             return;
         }
 
@@ -166,7 +173,7 @@ async function sendAnimeDetail(anime, message, sock) {
     const title = typeof anime.title === "object"
         ? (anime.title?.romaji || anime.title?.userPreferred || anime.title?.english || "N/A")
         : (anime.title || "N/A");
-    const titleEng = anime.title?.english ? ` (${anime.title.english})` : "";
+    const rawTitleEng = anime.title?.english ? anime.title.english.replace(/[()]/g, "").trim() : "";
     const status = anime.status || "N/A";
     const episodes = anime.episodes || "Unknown";
     const type = anime.format || anime.type || "N/A";
@@ -189,31 +196,41 @@ async function sendAnimeDetail(anime, message, sock) {
     if (anime.nextAiringEpisode) {
         const remaining = formatAiringTime(anime.nextAiringEpisode.timeUntilAiring);
         if (remaining) {
-            nextAiringText = `⏱️ *Next Episode:* Ep ${anime.nextAiringEpisode.episode} rilis dalam ${remaining}\n`;
+            nextAiringText = `Ep ${anime.nextAiringEpisode.episode} rilis dalam ${remaining}`;
         }
     }
 
     const imageUrl = anime.coverImage?.extraLarge || anime.coverImage?.large || anime.coverImage?.medium || null;
 
-    let captionText = `🎌 *${title}*${titleEng}\n\n`;
-    captionText += `🔗 *AniList:* ${anilistUrl}\n`;
-    if (malUrl) {
-        captionText += `🔗 *MyAnimeList:* ${malUrl}\n`;
+    let captionText = `╭━━━〔 🎌 ANIME DETAIL 〕━━━\n`;
+    captionText += `┃ 🏷️ *Judul*       : ${title}\n`;
+    if (rawTitleEng) {
+        captionText += `┃ 🔤 *Inggris*     : ${rawTitleEng}\n`;
     }
-    captionText += `\n`;
-    captionText += `⭐ *Score:* ${score !== "N/A" ? score + " / 10" : "—"}\n`;
-    captionText += `📈 *Popularity:* ${popularity}\n`;
-    captionText += `📺 *Type:* ${type}\n`;
-    captionText += `🎬 *Episodes:* ${episodes}\n`;
-    captionText += `⏳ *Status:* ${status}\n`;
+    captionText += `┃ 📺 *Tipe*        : ${type}\n`;
+    captionText += `┃ ⭐ *Skor*        : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+    captionText += `┃ 🎬 *Episode*     : ${episodes}\n`;
+    captionText += `┃ ⏱️ *Durasi*      : ${duration}\n`;
+    captionText += `┃ ⏳ *Status*      : ${status}\n`;
+    captionText += `┃ 📅 *Musim*       : ${seasonYear}\n`;
+    captionText += `┃ 🎥 *Studio*      : ${studios}\n`;
+    captionText += `┃ 📈 *Popularitas* : ${popularity}\n`;
+    captionText += `┃ 🎭 *Genre*       : ${genres}\n`;
     if (nextAiringText) {
-        captionText += `${nextAiringText}`;
+        captionText += `┃ ⏱️ *Next Ep*     : ${nextAiringText}\n`;
     }
-    captionText += `📅 *Season:* ${seasonYear}\n`;
-    captionText += `🎥 *Studio:* ${studios}\n`;
-    captionText += `⏱️ *Duration:* ${duration}\n`;
-    captionText += `🎭 *Genres:* ${genres}\n\n`;
-    captionText += `📝 *Synopsis:*\n${synopsis}`;
+    captionText += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+    captionText += `╭───「 📝 Sinopsis 」\n`;
+    captionText += `│ ${synopsis.replace(/\n/g, "\n│ ")}\n`;
+    captionText += `╰──────────────\n\n`;
+
+    captionText += `╭───「 🔗 Tautan 」\n`;
+    captionText += `│ 🌸 *AniList*     : ${anilistUrl}\n`;
+    if (malUrl) {
+        captionText += `│ 🎌 *MyAnimeList* : ${malUrl}\n`;
+    }
+    captionText += `╰──────────────`;
 
     if (imageUrl) {
         await sock.sendMessage(

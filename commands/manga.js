@@ -24,7 +24,7 @@ function generateListText(results, page, query) {
     const currentItems = results.slice(start, end);
 
     let text = `╭━━━〔 📖 MANGA SEARCH 〕━━━\n`;
-    text += `┃ 🔍 Query : ${query}\n`;
+    text += `┃ 🔍 *Query* : ${query}\n`;
     text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     currentItems.forEach((manga, index) => {
@@ -35,7 +35,10 @@ function generateListText(results, page, query) {
         const chaps = manga.chapters ? `${manga.chapters} Chaps` : "? Chaps";
 
         text += `╭───「 ${start + index + 1}. ${title} 」\n`;
-        text += `│ 📚 ${format} | ⭐ ${score} | 📖 ${chaps} | 📅 ${year}\n`;
+        text += `│ 📖 *Format*  : ${format}\n`;
+        text += `│ ⭐ *Skor*    : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+        text += `│ 📝 *Chapter* : ${chaps}\n`;
+        text += `│ 📅 *Tahun*   : ${year}\n`;
         text += `╰──────────────\n\n`;
     });
 
@@ -51,12 +54,16 @@ export default {
     category: "anime",
     description: "Mencari daftar Manga / Light Novel / Manhwa dari AniList",
     usage: "!manga <judul manga/LN>",
-    async handler({ message, args, sock, sender }) {
+    async handler({ message, args, sock, sender, prefix }) {
         if (args.length === 0) {
             await message.reply(
-                "❌ Berikan judul manga, manwha, atau light novel yang ingin dicari.\n" +
-                "Contoh: `!manga solo leveling`\n\n" +
-                "💡 *Tip:* Tambahkan `-1` atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list. Contoh: `!manga solo leveling -1`"
+                "╭━━━〔 📖 MANGA SEARCH 〕━━━\n" +
+                "┃ Mencari manga/manhwa/novel dari AniList.\n" +
+                "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                "╭───「 📖 Penggunaan 」\n" +
+                `│ ⋄ \`${prefix || "!"}manga <judul>\`\n` +
+                `│ ⋄ \`${prefix || "!"}manga <judul> -1\` (hasil teratas)\n` +
+                "╰──────────────"
             );
             return;
         }
@@ -77,7 +84,7 @@ export default {
         const query = cleanArgs.join(" ");
 
         if (!query) {
-            await message.reply("❌ Berikan judul manga/LN yang ingin dicari.\nContoh: `!manga solo leveling -1`");
+            await message.reply(`❌ Berikan judul manga/LN yang ingin dicari.\nContoh: \`${prefix || "!"}manga solo leveling -1\``);
             return;
         }
 
@@ -166,7 +173,7 @@ async function sendMangaDetail(manga, message, sock) {
     const title = typeof manga.title === "object"
         ? (manga.title?.romaji || manga.title?.userPreferred || manga.title?.english || "N/A")
         : (manga.title || "N/A");
-    const titleEng = manga.title?.english ? ` (${manga.title.english})` : "";
+    const rawTitleEng = manga.title?.english ? manga.title.english.replace(/[()]/g, "").trim() : "";
     const status = manga.status || "N/A";
     const chapters = manga.chapters || "Unknown";
     const volumes = manga.volumes || "Unknown";
@@ -186,20 +193,31 @@ async function sendMangaDetail(manga, message, sock) {
 
     const imageUrl = manga.coverImage?.extraLarge || manga.coverImage?.large || manga.coverImage?.medium || null;
 
-    let captionText = `📚 *${title}*${titleEng}\n\n`;
-    captionText += `🔗 *AniList:* ${anilistUrl}\n`;
-    if (malUrl) {
-        captionText += `🔗 *MyAnimeList:* ${malUrl}\n`;
+    let captionText = `╭━━━〔 📚 MANGA DETAIL 〕━━━\n`;
+    captionText += `┃ 🏷️ *Judul*       : ${title}\n`;
+    if (rawTitleEng) {
+        captionText += `┃ 🔤 *Inggris*     : ${rawTitleEng}\n`;
     }
-    captionText += `\n`;
-    captionText += `⭐ *Score:* ${score !== "N/A" ? score + " / 10" : "—"}\n`;
-    captionText += `📈 *Popularity:* ${popularity}\n`;
-    captionText += `📖 *Format:* ${format}\n`;
-    captionText += `📝 *Chapters:* ${chapters} | 📚 *Volumes:* ${volumes}\n`;
-    captionText += `⏳ *Status:* ${status}\n`;
-    captionText += `✍️ *Author/Staff:* ${authors}\n`;
-    captionText += `🎭 *Genres:* ${genres}\n\n`;
-    captionText += `📝 *Synopsis:*\n${synopsis}`;
+    captionText += `┃ 📖 *Format*      : ${format}\n`;
+    captionText += `┃ ⭐ *Skor*        : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+    captionText += `┃ 📝 *Chapter*     : ${chapters}\n`;
+    captionText += `┃ 📚 *Volume*      : ${volumes}\n`;
+    captionText += `┃ ⏳ *Status*      : ${status}\n`;
+    captionText += `┃ ✍️ *Author*      : ${authors}\n`;
+    captionText += `┃ 📈 *Popularitas* : ${popularity}\n`;
+    captionText += `┃ 🎭 *Genre*       : ${genres}\n`;
+    captionText += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+    captionText += `╭───「 📝 Sinopsis 」\n`;
+    captionText += `│ ${synopsis.replace(/\n/g, "\n│ ")}\n`;
+    captionText += `╰──────────────\n\n`;
+
+    captionText += `╭───「 🔗 Tautan 」\n`;
+    captionText += `│ 🌸 *AniList*     : ${anilistUrl}\n`;
+    if (malUrl) {
+        captionText += `│ 🎌 *MyAnimeList* : ${malUrl}\n`;
+    }
+    captionText += `╰──────────────`;
 
     if (imageUrl) {
         await sock.sendMessage(

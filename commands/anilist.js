@@ -11,12 +11,15 @@ export default {
     async handler({ message, args, sock, sender, prefix }) {
         if (args.length === 0) {
             await message.reply(
-                "❌ Berikan *username AniList* yang ingin dicari, atau tag user, atau gunakan `-s`.\n\n" +
-                "Contoh Penggunaan:\n" +
-                "• `!anilist matchai`\n" +
-                "• `!anilist -s` (Melihat profil AniList milikmu sendiri jika sudah tertaut)\n" +
-                "• `!anilist @User` (Melihat profil AniList orang yang di-tag)\n\n" +
-                `💡 _Tautkan akun AniList kamu via \`${prefix}register anilist <username>\`_`
+                "╭━━━〔 🌸 ANILIST PROFILE 〕━━━\n" +
+                "┃ Mencari informasi profil user AniList.\n" +
+                "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                "╭───「 📖 Penggunaan 」\n" +
+                `│ ⋄ \`${prefix || "!"}anilist <username>\`\n` +
+                `│ ⋄ \`${prefix || "!"}anilist -s\` (profil sendiri)\n` +
+                `│ ⋄ \`${prefix || "!"}anilist @user\` (tag user)\n` +
+                "╰──────────────\n\n" +
+                `💡 _Tautkan akun via \`${prefix || "!"}register anilist <username>\`_`
             );
             return;
         }
@@ -29,7 +32,7 @@ export default {
             if (userData.meta?.anilistUsername) {
                 await sendAnilistProfileDetail(userData.meta.anilistUsername, message, sock, false);
             } else {
-                await message.reply(`❌ Kamu belum menautkan akun AniList.\n\n💡 _Gunakan perintah \`${prefix}register anilist <username>\` untuk menautkan._`);
+                await message.reply(`❌ Kamu belum menautkan akun AniList.\n\n💡 _Gunakan perintah \`${prefix || "!"}register anilist <username>\` untuk menautkan._`);
             }
             return;
         }
