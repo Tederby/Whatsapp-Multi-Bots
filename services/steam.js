@@ -129,7 +129,7 @@ export async function sendSteamGameDetail(appId, message, sock, isAutoDetect = f
         const rawSender = sender || message.sender || message.key?.participantAlt || message.key?.participant || message.key?.remoteJid;
         const normalizedSender = resolveUserId(rawSender);
         const userData = getUser(normalizedSender);
-        const userPref = userData?.meta?.displayMode ?? "ui";
+        const userPref = userData?.meta?.displayMode ?? "text";
         const displayMode = isAutoDetect ? "text" : (forcedMode || userPref);
 
         console.log(`[Steam Detail] Game: "${name}" (${appId}) | Sender: ${normalizedSender} | isAutoDetect: ${isAutoDetect} | Mode: ${displayMode}`);

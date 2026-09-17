@@ -19,6 +19,11 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-09-17 — `[MINOR]` Revert Default Display Mode to Text-First
+- **Text-First Zero-Migration Fallback**: Switched the default `meta.displayMode` fallback across the codebase from `"ui"` to `"text"` (`userData.meta?.displayMode ?? "text"`). Since WhatsApp webview payloads remain experimental and subject to client-side viewport constraints, standard commands (`!menu`, `!anime`, `!steam`) now default to robust, fast, and stable text responses.
+- **Opt-In Webview Architecture**: Interactive webview UI remains accessible via explicit `--ui` flags (e.g. `!menu --ui`, `!anime <title> --ui`, `!steam <query> --ui`) or via persistent user configuration (`!register mode ui`).
+- **Profile & Register Indicator Updates**: Updated `!register` and `!profile` status indicators to present "Teks Biasa (Default)" while preserving custom user choices.
+
 ### 2026-09-04 — `[DOCS]` Comprehensive Empirical Webview Audit & Stanza Protocol Specification
 - **Benchmark & Environment**: All empirical specifications benchmarked on **2026-09-04** using Android 12 (Xiaomi Redmi M2003J15SC, Chrome WebView `151.0.7922.199`).
 - **Exact Stanza Size Ceiling Pinpointing**: Probed stanzas from 950KB to 1400KB with byte-level precision. Confirmed that WhatsApp delivery routers (`Chatd`/Edge) enforce an exact hard ceiling of **1350 KB (~1.38 MB)** on inline `botForwardedMessage` stanzas (`950KB`, `1000KB`, `1024KB`, `1050KB`, `1100KB`, `1150KB`, `1200KB`, `1300KB`, and `1350KB` delivered successfully; `1400KB` silently dropped despite transport-level socket ACK).

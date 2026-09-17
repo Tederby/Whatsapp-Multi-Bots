@@ -296,7 +296,7 @@ import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
 
 const userData = getUser(resolveUserId(sender));
 const displayMode = (args.includes("--text") ? "text" : (args.includes("--ui") ? "ui" : null))
-    || userData.meta?.displayMode || "ui";
+    || userData.meta?.displayMode || "text";
 
 if (displayMode === "ui") {
     try {

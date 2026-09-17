@@ -362,7 +362,7 @@ export default {
 
         const normalizedSender = resolveUserId(sender);
         const userData = getUser(normalizedSender);
-        const userPref = userData?.meta?.displayMode ?? "ui";
+        const userPref = userData?.meta?.displayMode ?? "text";
         const displayMode = forcedMode || userPref;
 
         console.log(`[Steam] Query: "${query}" | Sender: ${normalizedSender} | Flag: ${forcedMode || "none"} | UserDB: ${userPref} | Mode: ${displayMode} | Direct: ${isDirect}`);

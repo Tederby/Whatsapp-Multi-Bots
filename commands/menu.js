@@ -486,7 +486,7 @@ export default {
 
         const normalizedSender = resolveUserId(sender);
         const userData = getUser(normalizedSender);
-        const userPref = userData.meta?.displayMode ?? "ui";
+        const userPref = userData.meta?.displayMode ?? "text";
         const displayMode = forcedMode || userPref;
 
         let input = cleanArgs.length > 0 ? cleanArgs.join(" ").toLowerCase().trim() : "";

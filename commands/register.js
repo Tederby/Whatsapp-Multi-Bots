@@ -163,8 +163,8 @@ export default {
                 })
                 : "Tidak diketahui";
 
-            const displayMode = user.meta?.displayMode ?? "ui";
-            const displayModeLabel = displayMode === "ui" ? "UI Interaktif (Default)" : "Teks Biasa";
+            const displayMode = user.meta?.displayMode ?? "text";
+            const displayModeLabel = displayMode === "ui" ? "UI Interaktif" : "Teks Biasa (Default)";
 
             let caption = `╭━━━〔 📝 Registrasi 〕━━━\n`;
             if (isNewUser) {

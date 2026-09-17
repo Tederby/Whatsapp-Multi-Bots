@@ -259,7 +259,7 @@ Because the webview is instantiated every time the message enters the client's v
 
 ### Adaptive UI vs Text Mode Pattern
 
-Commands supporting rich UI should respect the user's `meta.displayMode` preference with fallback to `"ui"`, while honoring `--ui` and `--text` flags:
+Commands supporting rich UI should respect the user's `meta.displayMode` preference with fallback to `"text"`, while honoring `--ui` and `--text` flags:
 
 ```javascript
 import { getUser, resolveUserId } from "../lib/database.js";
@@ -267,7 +267,7 @@ import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
 
 const userData = getUser(resolveUserId(sender));
 const displayMode = (args.includes("--text") ? "text" : (args.includes("--ui") ? "ui" : null))
-    || userData.meta?.displayMode || "ui";
+    || userData.meta?.displayMode || "text";
 
 if (displayMode === "ui") {
     try {
