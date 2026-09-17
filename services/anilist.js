@@ -127,6 +127,19 @@ export async function searchAnime(searchQuery, { perPage = 20 } = {}) {
             timeUntilAiring
           }
           siteUrl
+          recommendations(perPage: 5, sort: RATING_DESC) {
+            nodes {
+              rating
+              mediaRecommendation {
+                id
+                title {
+                  romaji
+                }
+                format
+                averageScore
+              }
+            }
+          }
         }
       }
     }
@@ -185,6 +198,19 @@ export async function searchManga(searchQuery, { perPage = 20 } = {}) {
           }
           bannerImage
           siteUrl
+          recommendations(perPage: 5, sort: RATING_DESC) {
+            nodes {
+              rating
+              mediaRecommendation {
+                id
+                title {
+                  romaji
+                }
+                format
+                averageScore
+              }
+            }
+          }
         }
       }
     }
@@ -192,6 +218,255 @@ export async function searchManga(searchQuery, { perPage = 20 } = {}) {
 
     const data = await queryAniList(query, { search: searchQuery, perPage });
     return data?.data?.Page?.media || [];
+}
+
+// ── Shared media fields fragment (used by trending/popular/seasonal) ────────
+const MEDIA_FIELDS = `
+  id
+  idMal
+  title {
+    romaji
+    english
+    native
+    userPreferred
+  }
+  format
+  status
+  description
+  startDate {
+    year
+    month
+    day
+  }
+  season
+  seasonYear
+  episodes
+  duration
+  chapters
+  volumes
+  countryOfOrigin
+  isAdult
+  genres
+  averageScore
+  popularity
+  trending
+  studios(isMain: true) {
+    nodes {
+      name
+    }
+  }
+  staff(perPage: 3) {
+    edges {
+      role
+      node {
+        name {
+          full
+        }
+      }
+    }
+  }
+  coverImage {
+    extraLarge
+    large
+    medium
+    color
+  }
+  bannerImage
+  nextAiringEpisode {
+    episode
+    airingAt
+    timeUntilAiring
+  }
+  siteUrl
+  recommendations(perPage: 5, sort: RATING_DESC) {
+    nodes {
+      rating
+      mediaRecommendation {
+        id
+        title {
+          romaji
+        }
+        format
+        averageScore
+      }
+    }
+  }
+`;
+
+/**
+ * Fetch trending media from AniList.
+ * @param {"ANIME"|"MANGA"} type
+ */
+export async function getTrending(type = "ANIME", { perPage = 20 } = {}) {
+    const query = `
+    query ($type: MediaType, $perPage: Int) {
+      Page (page: 1, perPage: $perPage) {
+        media (type: $type, sort: TRENDING_DESC) {
+          ${MEDIA_FIELDS}
+        }
+      }
+    }
+    `;
+
+    const data = await queryAniList(query, { type, perPage });
+    return data?.data?.Page?.media || [];
+}
+
+/**
+ * Fetch most popular media from AniList.
+ * @param {"ANIME"|"MANGA"} type
+ */
+export async function getPopular(type = "ANIME", { perPage = 20 } = {}) {
+    const query = `
+    query ($type: MediaType, $perPage: Int) {
+      Page (page: 1, perPage: $perPage) {
+        media (type: $type, sort: POPULARITY_DESC) {
+          ${MEDIA_FIELDS}
+        }
+      }
+    }
+    `;
+
+    const data = await queryAniList(query, { type, perPage });
+    return data?.data?.Page?.media || [];
+}
+
+/**
+ * Fetch seasonal anime from AniList.
+ * @param {"WINTER"|"SPRING"|"SUMMER"|"FALL"} season
+ * @param {number} year
+ */
+export async function getSeasonal(season, year, { perPage = 25 } = {}) {
+    const query = `
+    query ($season: MediaSeason, $seasonYear: Int, $perPage: Int) {
+      Page (page: 1, perPage: $perPage) {
+        media (season: $season, seasonYear: $seasonYear, type: ANIME, sort: POPULARITY_DESC) {
+          ${MEDIA_FIELDS}
+        }
+      }
+    }
+    `;
+
+    const data = await queryAniList(query, { season, seasonYear: year, perPage });
+    return data?.data?.Page?.media || [];
+}
+
+/**
+ * Fetch airing schedule from AniList within a time range.
+ * @param {number} startTime - Unix timestamp (seconds)
+ * @param {number} endTime - Unix timestamp (seconds)
+ */
+export async function getAiringSchedule(startTime, endTime, { perPage = 50 } = {}) {
+    // Fetch in 2 pages to get more results since airing schedules can be dense
+    const query = `
+    query ($start: Int, $end: Int, $page: Int, $perPage: Int) {
+      Page (page: $page, perPage: $perPage) {
+        airingSchedules (airingAt_greater: $start, airingAt_lesser: $end, sort: TIME) {
+          id
+          airingAt
+          timeUntilAiring
+          episode
+          media {
+            id
+            title {
+              romaji
+              english
+              userPreferred
+            }
+            format
+            popularity
+            isAdult
+            countryOfOrigin
+            coverImage {
+              large
+            }
+          }
+        }
+      }
+    }
+    `;
+
+    // Fetch page 1 and page 2 concurrently
+    const [page1, page2] = await Promise.all([
+        queryAniList(query, { start: startTime, end: endTime, page: 1, perPage }),
+        queryAniList(query, { start: startTime, end: endTime, page: 2, perPage })
+    ]);
+
+    const results1 = page1?.data?.Page?.airingSchedules || [];
+    const results2 = page2?.data?.Page?.airingSchedules || [];
+    return [...results1, ...results2];
+}
+
+/**
+ * Search characters from AniList.
+ */
+export async function searchCharacter(searchQuery, { perPage = 15 } = {}) {
+    const query = `
+    query ($search: String, $perPage: Int) {
+      Page (page: 1, perPage: $perPage) {
+        characters (search: $search) {
+          id
+          name {
+            full
+            native
+            alternative
+          }
+          age
+          gender
+          description
+          favourites
+          image {
+            large
+          }
+          siteUrl
+          media (perPage: 6, sort: POPULARITY_DESC) {
+            edges {
+              voiceActors (language: JAPANESE, sort: RELEVANCE) {
+                id
+                name {
+                  full
+                }
+              }
+              node {
+                id
+                title {
+                  romaji
+                }
+                format
+                type
+              }
+            }
+          }
+        }
+      }
+    }
+    `;
+
+    const data = await queryAniList(query, { search: searchQuery, perPage });
+    return data?.data?.Page?.characters || [];
+}
+
+/**
+ * Determine the current AniList season from a date.
+ * AniList seasons: WINTER (Jan-Mar), SPRING (Apr-Jun), SUMMER (Jul-Sep), FALL (Oct-Dec)
+ * @returns {{ season: string, year: number }}
+ */
+export function getCurrentSeason(date = new Date()) {
+    const month = date.getMonth(); // 0-indexed
+    const year = date.getFullYear();
+    const seasons = ["WINTER", "WINTER", "WINTER", "SPRING", "SPRING", "SPRING", "SUMMER", "SUMMER", "SUMMER", "FALL", "FALL", "FALL"];
+    return { season: seasons[month], year };
+}
+
+/**
+ * Get the next season after a given season/year.
+ * @returns {{ season: string, year: number }}
+ */
+export function getNextSeason(season, year) {
+    const order = ["WINTER", "SPRING", "SUMMER", "FALL"];
+    const idx = order.indexOf(season);
+    if (idx === 3) return { season: "WINTER", year: year + 1 };
+    return { season: order[idx + 1], year };
 }
 
 /**

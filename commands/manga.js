@@ -210,6 +210,22 @@ async function sendMangaDetail(manga, message, sock) {
 
     captionText += `📝 *Sinopsis:*\n${synopsis}\n\n`;
 
+    // Recommendations section
+    const recs = manga.recommendations?.nodes?.filter(r => r.mediaRecommendation) || [];
+    if (recs.length > 0) {
+        captionText += `╭───「 💡 Rekomendasi 」\n`;
+        recs.forEach((rec, i) => {
+            const recTitle = rec.mediaRecommendation.title?.romaji || "N/A";
+            const recScore = formatScore(rec.mediaRecommendation.averageScore);
+            const recFormat = rec.mediaRecommendation.format || "";
+            captionText += `│ ${i + 1}. ${recTitle}`;
+            if (recScore !== "N/A") captionText += ` (${recScore} / 10)`;
+            if (recFormat) captionText += ` [${recFormat}]`;
+            captionText += `\n`;
+        });
+        captionText += `╰──────────────\n\n`;
+    }
+
     captionText += `🔗 *Tautan:*\n`;
     captionText += `• AniList: ${anilistUrl}`;
     if (malUrl) {

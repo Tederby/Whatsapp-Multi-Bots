@@ -19,6 +19,14 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-09-17 — `[MINOR]` AniList API Feature Expansion
+- **Trending & Popular Commands**: Added `!trending` / `!popular` (aliases: `trend`, `top`) to browse currently trending and all-time popular anime/manga rankings from AniList. Both anime and manga subtypes supported via `!trending manga`. Shares a single command module with mode detection from alias used.
+- **Seasonal Chart Command**: Added `!seasonal` (aliases: `season`, `musim`) to browse anime by season. Supports `!seasonal` (current), `!seasonal next` (upcoming), and `!seasonal winter 2025` (specific season/year). Paginated list with reply handler drill-down to full anime detail.
+- **Airing Schedule Command**: Added `!airing` (aliases: `jadwal`, `schedule`) displaying the weekly anime airing schedule grouped by day in WIB (UTC+7). Default popularity filter (≥ 5,000) with `!airing all` override. Supports `today`/`tomorrow` subcommands. Compact output without reply handler.
+- **Character Search Command**: Added `!character` (aliases: `char`, `chara`, `waifu`) for searching anime/manga characters. Detail view shows name, age, gender, favorites count, description, media appearances with Japanese voice actor info.
+- **Recommendations in Detail Views**: Expanded `!anime` and `!manga` detail output with a "Rekomendasi" section showing top 5 community-recommended similar titles with scores and format tags. Data fetched via `recommendations(sort: RATING_DESC)` in the existing GraphQL queries.
+- **Service Layer Expansion** (`services/anilist.js`): Added 8 new exports (`getTrending`, `getPopular`, `getSeasonal`, `getAiringSchedule`, `searchCharacter`, `getCurrentSeason`, `getNextSeason`, shared `MEDIA_FIELDS` fragment). Existing `searchAnime` and `searchManga` queries extended with `recommendations` field.
+
 ### 2026-09-17 — `[MINOR]` Revert Default Display Mode to Text-First
 - **Text-First Zero-Migration Fallback**: Switched the default `meta.displayMode` fallback across the codebase from `"ui"` to `"text"` (`userData.meta?.displayMode ?? "text"`). Since WhatsApp webview payloads remain experimental and subject to client-side viewport constraints, standard commands (`!menu`, `!anime`, `!steam`) now default to robust, fast, and stable text responses.
 - **Opt-In Webview Architecture**: Interactive webview UI remains accessible via explicit `--ui` flags (e.g. `!menu --ui`, `!anime <title> --ui`, `!steam <query> --ui`) or via persistent user configuration (`!register mode ui`).
