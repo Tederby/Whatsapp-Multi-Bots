@@ -363,11 +363,19 @@ export default {
                 `┃ *Contoh:*\n` +
                 `┃ \`${prefix}md # Judul\\n**tebal** dan *miring*\`\n` +
                 `┃\n` +
+                `┃ *Flag:*\n` +
+                `┃ \`--keep\` — Webview permanen (tidak auto-hapus)\n` +
+                `┃\n` +
                 `┃ Teks yang diberikan akan dirender\n` +
                 `┃ sebagai markdown dalam webview.\n` +
-                `┃ _Tampilan otomatis dihapus dalam 2 menit._\n` +
                 `╰━━━━━━━━━━━━━━━━━━━━━`
             );
+        }
+
+        // Check for --keep flag before processing content
+        const keepFlag = /\s*--keep\b/i.test(content);
+        if (keepFlag) {
+            content = content.replace(/\s*--keep\b/gi, "").trim();
         }
 
         // Strip code fences if wrapped by user (```md ... ``` or ``` ... ```)
@@ -392,18 +400,23 @@ export default {
                 html: fullHtml
             });
 
-            await message.reply(
-                `📝 *Markdown Berhasil Dirender!*\n` +
-                `⏱️ _Tampilan interaktif ini akan otomatis dihapus dalam 2 menit._`
-            );
+            if (keepFlag) {
+                await message.reply(`📝 *Markdown Berhasil Dirender!*\n📌 _Webview ini bersifat permanen._`);
+            } else {
+                await message.reply(
+                    `📝 *Markdown Berhasil Dirender!*\n` +
+                    `⏱️ _Tampilan interaktif ini akan otomatis dihapus dalam 2 menit._\n` +
+                    `💡 _Gunakan \`--keep\` agar permanen._`
+                );
 
-            // Auto-delete webview payload after 2 minutes to prevent viewport lag
-            if (sent?.key) {
-                setTimeout(() => {
-                    sock.sendMessage(message.chat, {
-                        delete: { ...sent.key, fromMe: true }
-                    }).catch(() => {});
-                }, 120000);
+                // Auto-delete webview payload after 2 minutes to prevent viewport lag
+                if (sent?.key) {
+                    setTimeout(() => {
+                        sock.sendMessage(message.chat, {
+                            delete: { ...sent.key, fromMe: true }
+                        }).catch(() => {});
+                    }, 120000);
+                }
             }
         } catch (error) {
             console.error("[Markdown Command Error] Failed to render markdown:", error);
