@@ -19,6 +19,9 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-09-18 — `[MINOR]` Markdown Renderer Command
+- **New Command**: Added `!markdown` (aliases: `md`, `rendermd`) — renders raw text as styled markdown inside a WhatsApp webview. Accepts inline text (`!md <text>`) or reply-quoted messages. Server-side lightweight markdown parser handles headings, bold/italic/strikethrough, fenced code blocks with language labels, inline code, blockquotes, ordered/unordered lists, tables with alignment, horizontal rules, links, and images. Output uses the project dark-mode design system palette. 120-second auto-delete lifecycle.
+
 ### 2026-09-17 — `[MINOR]` AniList API Feature Expansion
 - **Trending & Popular Commands**: Added `!trending` / `!popular` (aliases: `trend`, `top`) to browse currently trending and all-time popular anime/manga rankings from AniList. Both anime and manga subtypes supported via `!trending manga`. Shares a single command module with mode detection from alias used.
 - **Seasonal Chart Command**: Added `!seasonal` (aliases: `season`, `musim`) to browse anime by season. Supports `!seasonal` (current), `!seasonal next` (upcoming), and `!seasonal winter 2025` (specific season/year). Paginated list with reply handler drill-down to full anime detail.
