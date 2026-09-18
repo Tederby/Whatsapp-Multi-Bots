@@ -19,6 +19,22 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-09-18 — `[MAJOR]` Centralized POSIX-Style CLI Flag Engine & Command Standardization
+- **POSIX Flag Parser Module (`lib/flagParser.js`)**: Added centralized parser supporting long flags (`--flag`), single-letter flags (`-f`), clustered Linux-style short flag combinations (e.g. `!steam -tu` for `--top --ui`, `!ss -mfd` for `--mobile --full --dark`), valued flags (`-w 5`, `--wait=5`), numeric aliases (`-1`), double-dash terminator (`--`), and safe multiline markdown/html text flag extraction.
+- **Pipeline Integration (`handler.js`)**: Wired declarative `cmd.flags` parsing into the message processing pipeline, automatically supplying destructured `flags` and `cleanArgs` to command handlers while ensuring zero regression for legacy commands.
+- **System-Wide Command Standardization**: Standardized flag handling across 17 commands:
+  - `commands/markdown.js`: Added `-k` alias for `--keep` webview persistence on direct or quoted inputs.
+  - `commands/html.js`: Added `-k` / `--keep` flag to disable 120s auto-delete on webview HTML payloads.
+  - `commands/wvtest.js`: Added `-k` alias alongside `--keep`.
+  - `commands/steam.js`: Unified `--top` / `-t` / `-1`, `--ui` / `-u`, `--text` / `-x`, and cluster combinations (e.g. `-tu`, `-tx`).
+  - `commands/menu.js`: Supported `-u` / `--ui` and `-x` / `--text`.
+  - `commands/screenshot.js`: Replaced ad-hoc parsing with cluster-ready flags (`-m`, `-f`, `-d`, `-w`).
+  - `commands/anime.js`, `commands/manga.js`, `commands/character.js`, `commands/trending.js`: Standardized `-t` / `--top` / `-1`.
+  - `commands/feedback.js`, `commands/report.js`, `commands/autoreply.js`: Standardized `-l` / `--list` and `-d` / `--del`.
+  - `commands/danbooru-new.js`: Standardized `-h` / `--help` and `-s` / `--safe`.
+  - `commands/anilist.js`, `commands/mal.js`, `commands/steamprofile.js`: Standardized `-s` / `--self`.
+- **Developer Documentation**: Added "Declarative POSIX Flag System" specification to `docs/COMMAND_DEVELOPMENT.md`.
+
 ### 2026-09-18 — `[MINOR]` Markdown Renderer Command
 - **New Command**: Added `!markdown` (aliases: `md`, `rendermd`) — renders raw text as styled markdown inside a WhatsApp webview. Accepts inline text (`!md <text>`) or reply-quoted messages. Server-side lightweight markdown parser handles headings, bold/italic/strikethrough, fenced code blocks with language labels, inline code, blockquotes, ordered/unordered lists, tables with alignment, horizontal rules, links, and images. Output uses the project dark-mode design system palette. 120-second auto-delete lifecycle.
 

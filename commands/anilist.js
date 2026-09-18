@@ -7,9 +7,14 @@ export default {
     aliases: ["al", "alprofile", "alp", "anilistprofile"],
     category: "search",
     description: "Mencari informasi profil user AniList",
-    usage: "!anilist [@user/-s/username/link]",
-    async handler({ message, args, sock, sender, prefix }) {
-        if (args.length === 0) {
+    usage: "!anilist [@user/-s/--self/username/link]",
+
+    flags: {
+        self: { type: "boolean", char: "s", aliases: ["self"] },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
+        if (args.length === 0 && (!flags || !flags.self)) {
             await message.reply(
                 "╭━━━〔 🌸 ANILIST PROFILE 〕━━━\n" +
                 "┃ Mencari informasi profil user AniList.\n" +
@@ -24,10 +29,10 @@ export default {
             return;
         }
 
-        const input = args[0].toLowerCase();
+        const input = (args[0] || "").toLowerCase();
 
-        // 1. Diri Sendiri (-s)
-        if (input === "-s") {
+        // 1. Diri Sendiri (-s / --self)
+        if (flags?.self || input === "-s" || input === "--self") {
             const userData = getUser(resolveUserId(sender));
             if (userData.meta?.anilistUsername) {
                 await sendAnilistProfileDetail(userData.meta.anilistUsername, message, sock, false);

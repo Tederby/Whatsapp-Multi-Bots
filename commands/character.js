@@ -54,35 +54,29 @@ export default {
     aliases: ["char", "chara", "waifu"],
     category: "anime",
     description: "Mencari informasi karakter anime/manga dari AniList",
-    usage: "!character <nama karakter>",
-    async handler({ message, args, sock, sender, prefix }) {
-        if (args.length === 0) {
+    usage: "!character <nama karakter> [-t/--top/-1]",
+
+    flags: {
+        top: { type: "boolean", char: "t", aliases: ["top", "direct", "1"] },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
+        const effectiveArgs = cleanArgs || args;
+        if (args.length === 0 && effectiveArgs.length === 0) {
             await message.reply(
                 "╭━━━〔 🎭 CHARACTER SEARCH 〕━━━\n" +
                 "┃ Mencari karakter anime/manga dari AniList.\n" +
                 "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
                 "╭───「 📖 Penggunaan 」\n" +
                 `│ ⋄ \`${prefix || "!"}character <nama>\`\n` +
-                `│ ⋄ \`${prefix || "!"}char <nama> -1\` (hasil teratas)\n` +
+                `│ ⋄ \`${prefix || "!"}char <nama> -t\` (hasil teratas)\n` +
                 "╰──────────────"
             );
             return;
         }
 
-        let isDirect = false;
-        const cleanArgs = [];
-        const directFlags = ["--top", "-t", "-1", "--direct", "top"];
-
-        for (const arg of args) {
-            const lower = arg.toLowerCase();
-            if (directFlags.includes(lower)) {
-                isDirect = true;
-            } else {
-                cleanArgs.push(arg);
-            }
-        }
-
-        const query = cleanArgs.join(" ");
+        const isDirect = Boolean(flags?.top);
+        const query = effectiveArgs.join(" ").trim();
 
         if (!query) {
             await message.reply(`❌ Berikan nama karakter yang ingin dicari.\nContoh: \`${prefix || "!"}character Rem\``);

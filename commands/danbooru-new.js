@@ -118,12 +118,18 @@ export default {
     aliases: ["dnew", "danbooru-latest", "dlatest", "dn", "drec", "danboorunew"],
     category: "anime",
     description: "Mendapatkan gambar anime terbaru (recent posts) dari Danbooru dengan opsi filter & interaksi",
-    usage: "!dnew [index 1-30 | safe | page <N> | help]",
-    async handler({ message, sock, args, prefix, sender }) {
-        args = (args || []).map(arg => arg.toLowerCase());
+    usage: "!dnew [index 1-30 | -s/--safe | page <N> | -h/--help]",
+
+    flags: {
+        help: { type: "boolean", char: "h", aliases: ["help"] },
+        safe: { type: "boolean", char: "s", aliases: ["safe", "sfw", "gen"] },
+    },
+
+    async handler({ message, sock, args, cleanArgs, flags, prefix, sender }) {
+        const rawLowerArgs = (args || []).map(arg => arg.toLowerCase());
 
         // 1. Check for Help Flag
-        if (args.includes("help") || args.includes("--help") || args.includes("-h") || args.includes("?")) {
+        if (flags?.help || rawLowerArgs.includes("help") || rawLowerArgs.includes("--help") || rawLowerArgs.includes("-h") || rawLowerArgs.includes("?")) {
             await message.reply(getHelpMessage(prefix || "!"));
             return;
         }
@@ -133,11 +139,11 @@ export default {
         let specificIndex = null;
 
         // 2. Parse Rating filter (safe / gen)
-        if (args.includes("safe") || args.includes("gen") || args.includes("sfw") || args.includes("g")) {
+        if (flags?.safe || rawLowerArgs.includes("safe") || rawLowerArgs.includes("gen") || rawLowerArgs.includes("sfw") || rawLowerArgs.includes("g")) {
             ratingFilter = "safe";
-        } else if (args.includes("q") || args.includes("questionable")) {
+        } else if (rawLowerArgs.includes("q") || rawLowerArgs.includes("questionable")) {
             ratingFilter = "q";
-        } else if (args.includes("s") || args.includes("sensitive")) {
+        } else if (rawLowerArgs.includes("s") || rawLowerArgs.includes("sensitive")) {
             ratingFilter = "s";
         }
 

@@ -53,35 +53,29 @@ export default {
     aliases: ["myanimelist", "ani", "anim"],
     category: "anime",
     description: "Mencari daftar anime dari AniList",
-    usage: "!anime <judul> [--top/-1]",
-    async handler({ message, args, sock, sender, prefix }) {
-        if (args.length === 0) {
+    usage: "!anime <judul> [-t/--top/-1]",
+
+    flags: {
+        top: { type: "boolean", char: "t", aliases: ["top", "direct", "1"] },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
+        const effectiveArgs = cleanArgs || args;
+        if (args.length === 0 && effectiveArgs.length === 0) {
             await message.reply(
                 "╭━━━〔 🎌 ANIME SEARCH 〕━━━\n" +
                 "┃ Mencari anime dari database AniList.\n" +
                 "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
                 "╭───「 📖 Penggunaan 」\n" +
                 `│ ⋄ \`${prefix || "!"}anime <judul>\`\n` +
-                `│ ⋄ \`${prefix || "!"}anime <judul> -1\` (hasil teratas)\n` +
+                `│ ⋄ \`${prefix || "!"}anime <judul> -t\` (hasil teratas)\n` +
                 "╰──────────────"
             );
             return;
         }
 
-        let isDirect = false;
-        const cleanArgs = [];
-        const directFlags = ["--top", "-t", "-1", "--direct", "top"];
-
-        for (const arg of args) {
-            const lower = arg.toLowerCase();
-            if (directFlags.includes(lower)) {
-                isDirect = true;
-            } else {
-                cleanArgs.push(arg);
-            }
-        }
-
-        const query = cleanArgs.join(" ");
+        const isDirect = Boolean(flags?.top);
+        const query = effectiveArgs.join(" ").trim();
 
         if (!query) {
             await message.reply(`❌ Berikan judul anime yang ingin dicari.\nContoh: \`${prefix || "!"}anime frieren -1\``);

@@ -6,17 +6,22 @@ export default {
     aliases: ["saran"],
     category: "general",
     description: "Mengirimkan saran atau ide fitur kepada owner bot",
-    usage: "!feedback <pesan saran>",
+    usage: "!feedback <pesan saran> | !feedback [-l/--list] [-d/--del <id>] [-r/--reply <id> <pesan>]",
 
-    async handler({ message, sock, args, rawArgs, sender, pushname, isGroup, groupName, isOwner, prefix }) {
-        if (args.length === 0) {
+    flags: {
+        list:   { type: "boolean", char: "l", aliases: ["list"] },
+        delete: { type: "boolean", char: "d", aliases: ["del", "delete"] },
+        reply:  { type: "boolean", char: "r", aliases: ["reply"] },
+    },
+
+    async handler({ message, sock, args, cleanArgs, flags, rawArgs, sender, pushname, isGroup, groupName, isOwner, prefix }) {
+        const effectiveArgs = cleanArgs || args;
+        if (args.length === 0 && effectiveArgs.length === 0) {
             return message.reply(`❌ Format salah.\nContoh: \`${prefix}feedback Tolong tambahkan fitur main tebak-tebakan\``);
         }
 
-        const cmdFlag = args[0].toLowerCase();
-
         // ── Owner Flags Management ─────────────────────────────────────
-        if (["--list", "-l"].includes(cmdFlag)) {
+        if (flags?.list) {
             if (!isOwner) return message.reply("⚠️ Hanya Owner yang bisa menggunakan flag ini.");
             
             const feedbacks = getReports("feedback");
@@ -35,18 +40,18 @@ export default {
                 if (fb.replied) reply += `│ ✅ *[Telah Dibalas]*\n`;
                 reply += `╰──────────────\n\n`;
             });
-            reply += `_Gunakan \`${prefix}feedback --del <id>\` untuk menghapus._\n`;
-            reply += `_Gunakan \`${prefix}feedback --reply <id> <pesan>\` untuk membalas._`;
+            reply += `_Gunakan \`${prefix}feedback -d <id>\` atau \`--del <id>\` untuk menghapus._\n`;
+            reply += `_Gunakan \`${prefix}feedback -r <id> <pesan>\` atau \`--reply <id> <pesan>\` untuk membalas._`;
 
             return message.reply(reply);
         }
 
-        if (["--delete", "--del", "-d"].includes(cmdFlag)) {
+        if (flags?.delete) {
             if (!isOwner) return message.reply("⚠️ Hanya Owner yang bisa menggunakan flag ini.");
             
-            const id = parseInt(args[1], 10);
+            const id = parseInt(effectiveArgs[0], 10);
             if (isNaN(id)) {
-                return message.reply(`❌ Masukkan ID feedback yang ingin dihapus.\nContoh: \`${prefix}feedback --del 1\``);
+                return message.reply(`❌ Masukkan ID feedback yang ingin dihapus.\nContoh: \`${prefix}feedback -d 1\``);
             }
 
             const success = deleteReport("feedback", id);
@@ -57,13 +62,13 @@ export default {
             }
         }
 
-        if (["--reply", "-r"].includes(cmdFlag)) {
+        if (flags?.reply) {
             if (!isOwner) return message.reply("⚠️ Hanya Owner yang bisa menggunakan flag ini.");
             
-            const id = parseInt(args[1], 10);
-            const replyMsg = args.slice(2).join(" ");
+            const id = parseInt(effectiveArgs[0], 10);
+            const replyMsg = effectiveArgs.slice(1).join(" ");
             if (isNaN(id) || !replyMsg) {
-                return message.reply(`❌ Format salah.\nContoh: \`${prefix}feedback --reply 1 Oke, saran diterima\``);
+                return message.reply(`❌ Format salah.\nContoh: \`${prefix}feedback -r 1 Oke, saran diterima\``);
             }
 
             const item = getReports("feedback").find(r => r.id === id);

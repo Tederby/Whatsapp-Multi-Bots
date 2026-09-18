@@ -26,41 +26,6 @@ function isBlockedUrl(urlStr) {
     }
 }
 
-// ── Flag / URL Parsing ──────────────────────────────────────────────────────
-
-const FLAG_DEFINITIONS = {
-    "-m":      "mobile",
-    "-mobile": "mobile",
-    "-f":      "full",
-    "-full":   "full",
-    "-d":      "dark",
-    "-dark":   "dark",
-    "-w":      "wait",
-    "-wait":   "wait",
-};
-
-function parseArgs(args) {
-    const flags = new Set();
-    let url = null;
-    let waitSeconds = null;
-
-    for (let i = 0; i < args.length; i++) {
-        const lower = args[i].toLowerCase();
-        if (FLAG_DEFINITIONS[lower]) {
-            const flagName = FLAG_DEFINITIONS[lower];
-            flags.add(flagName);
-            // -w takes an optional numeric argument: -w 5
-            if (flagName === "wait" && i + 1 < args.length && /^\d+$/.test(args[i + 1])) {
-                waitSeconds = Math.min(parseInt(args[i + 1], 10), 15); // cap at 15s
-                i++; // skip the number
-            }
-        } else if (!url) {
-            url = args[i];
-        }
-    }
-
-    return { flags, url, waitSeconds };
-}
 
 function normalizeUrl(raw) {
     // If no protocol, prepend https://
@@ -94,28 +59,36 @@ export default {
     aliases: ["ss", "web", "capture"],
     category: "tools",
     description: "Mengambil screenshot tampilan website",
-    usage: "!ss <url> [-m mobile] [-f fullpage] [-d dark] [-w detik]",
-    async handler({ message, args, sock }) {
-        if (args.length === 0) {
+    usage: "!ss <url> [-m/--mobile] [-f/--full] [-d/--dark] [-w/--wait <detik>]",
+
+    flags: {
+        mobile: { type: "boolean", char: "m", aliases: ["mobile"] },
+        full:   { type: "boolean", char: "f", aliases: ["full", "fullpage"] },
+        dark:   { type: "boolean", char: "d", aliases: ["dark"] },
+        wait:   { type: "number",  char: "w", aliases: ["wait"], default: null },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock }) {
+        const effectiveArgs = cleanArgs || args;
+        if (args.length === 0 && effectiveArgs.length === 0) {
             await message.reply(
                 "❌ Berikan URL website yang ingin di-screenshot.\n\n" +
                 "Contoh:\n" +
                 "• `!ss google.com`\n" +
                 "• `!ss -m https://github.com`\n" +
-                "• `!ss reddit.com -f -d`\n" +
-                "• `!ss -w 5 reddit.com` _(tunggu 5 detik)_\n\n" +
+                "• `!ss reddit.com -mfd` _(kombinasi: mobile, fullpage, dark)_\n" +
+                "• `!ss -w 5 reddit.com -fd` _(tunggu 5 detik + fullpage + dark)_\n\n" +
                 "╭───「 🏷️ Flags 」\n" +
-                "│ `-m` — Tampilan mobile\n" +
-                "│ `-f` — Full-page (seluruh halaman)\n" +
-                "│ `-d` — Dark mode\n" +
-                "│ `-w [detik]` — Tunggu ekstra (default 2s, max 15s)\n" +
+                "│ `-m, --mobile` — Tampilan mobile\n" +
+                "│ `-f, --full`   — Full-page (seluruh halaman)\n" +
+                "│ `-d, --dark`   — Dark mode\n" +
+                "│ `-w, --wait [detik]` — Tunggu ekstra (default 2s, max 15s)\n" +
                 "╰──────────────"
             );
             return;
         }
 
-        // ── Parse flags & URL ───────────────────────────────────────────
-        const { flags, url: rawUrl, waitSeconds } = parseArgs(args);
+        const rawUrl = effectiveArgs[0];
 
         if (!rawUrl) {
             await message.reply("❌ URL tidak ditemukan. Pastikan kamu menyertakan link website.");
@@ -135,10 +108,13 @@ export default {
             return;
         }
 
-        const isMobile   = flags.has("mobile");
-        const isFullPage  = flags.has("full");
-        const isDark     = flags.has("dark");
-        const extraWaitMs = flags.has("wait") && waitSeconds !== null
+        const isMobile    = Boolean(flags?.mobile);
+        const isFullPage  = Boolean(flags?.full);
+        const isDark      = Boolean(flags?.dark);
+        const waitSeconds = typeof flags?.wait === "number" && !isNaN(flags.wait)
+            ? Math.min(flags.wait, 15)
+            : null;
+        const extraWaitMs = waitSeconds !== null
             ? waitSeconds * 1000
             : DEFAULT_WAIT_MS;
 

@@ -323,42 +323,37 @@ export default {
     aliases: ["steamsearch", "game"],
     category: "search",
     description: "Mencari game di Steam beserta informasi harganya",
-    usage: "!steam <judul game> [--top/-1] [--ui/--text]",
-    async handler({ message, args, sock, sender }) {
-        if (args.length === 0) {
+    usage: "!steam <judul game> [-t/--top/-1] [-u/--ui | -x/--text]",
+
+    flags: {
+        top:  { type: "boolean", char: "t", aliases: ["top", "direct", "1"] },
+        ui:   { type: "boolean", char: "u", aliases: ["ui"] },
+        text: { type: "boolean", char: "x", aliases: ["text", "txt"] },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock, sender, prefix = "!" }) {
+        if (args.length === 0 && (!cleanArgs || cleanArgs.length === 0)) {
             await message.reply(
                 "❌ Berikan judul game yang ingin dicari.\nContoh: `!steam stardew valley`\n\n" +
-                "💡 *Tip:* Tambahkan `-1` atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list. Contoh: `!steam stardew valley -1`\n" +
-                "💡 *Mode:* Tambahkan `--ui` untuk paksa UI interaktif atau `--text` untuk teks biasa.\n" +
-                "💡 _Cari profil user? Gunakan `!steamprofile <username>`_"
+                "💡 *Tip:* Tambahkan `-t`, `-1`, atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list.\n" +
+                "💡 *Mode:* Tambahkan `-u` / `--ui` untuk paksa UI interaktif atau `-x` / `--text` untuk teks biasa.\n" +
+                "💡 *Kombinasi:* Bisa digabung seperti `!steam stardew valley -tu` (langsung hasil pertama + mode UI).\n" +
+                `💡 _Cari profil user? Gunakan \`${prefix}steamprofile <username>\`_`
             );
             return;
         }
 
-        let isDirect = false;
-        let forcedMode = null;
-        const cleanArgs = [];
-        const directFlags = ["--top", "-t", "-1", "--direct", "top"];
-
-        for (const arg of args) {
-            const lower = arg.toLowerCase();
-            if (directFlags.includes(lower)) {
-                isDirect = true;
-            } else if (lower === "--ui") {
-                forcedMode = "ui";
-            } else if (lower === "--text" || lower === "--txt") {
-                forcedMode = "text";
-            } else {
-                cleanArgs.push(arg);
-            }
-        }
-
-        const query = cleanArgs.join(" ");
+        const query = (cleanArgs || args).join(" ").trim();
 
         if (!query) {
-            await message.reply("❌ Berikan judul game yang ingin dicari.\nContoh: `!steam stardew valley -1`");
+            await message.reply("❌ Berikan judul game yang ingin dicari.\nContoh: `!steam stardew valley -t`");
             return;
         }
+
+        const isDirect = Boolean(flags?.top);
+        let forcedMode = null;
+        if (flags?.ui) forcedMode = "ui";
+        else if (flags?.text) forcedMode = "text";
 
         const normalizedSender = resolveUserId(sender);
         const userData = getUser(normalizedSender);

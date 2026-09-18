@@ -37,7 +37,7 @@ export default {
     aliases: ["webviewtest", "wvprobe", "wtest"],
     category: "tools",
     description: "Empirical diagnostic suite and size boundary probes for WhatsApp in-app webviews",
-    usage: "!wvtest [suite|probe|proto|form|audio|links|lifecycle] [--keep]",
+    usage: "!wvtest [suite|probe|proto|form|audio|links|lifecycle] [-k/--keep]",
 
     groupOnly: false,
     adminOnly: false,
@@ -46,9 +46,13 @@ export default {
     privateOnly: false,
     registerRequired: false,
 
-    async handler({ message, sock, args, prefix }) {
+    flags: {
+        keep: { type: "boolean", char: "k", aliases: ["keep"] },
+    },
+
+    async handler({ message, sock, args, flags, prefix }) {
         const subCmd = (args[0] || "suite").toLowerCase();
-        const keepFlag = args.includes("--keep");
+        const keepFlag = Boolean(flags?.keep || args.includes("--keep") || args.includes("-k"));
         const autoDeleteMs = keepFlag ? 0 : DEFAULT_AUTO_DELETE_MS;
 
         // ── Helper: Schedule Auto Deletion ──────────────────────────────────

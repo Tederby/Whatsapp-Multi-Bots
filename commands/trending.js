@@ -67,25 +67,34 @@ export default {
     aliases: ["trend", "popular", "top"],
     category: "anime",
     description: "Melihat anime/manga trending atau terpopuler di AniList",
-    usage: "!trending [anime/manga] | !popular [anime/manga]",
-    async handler({ message, args, sock, sender, prefix, commandName }) {
+    usage: "!trending [anime/manga] [-t/--top/-1] | !popular [anime/manga] [-t/--top/-1]",
+
+    flags: {
+        top:   { type: "boolean", char: "t", aliases: ["top", "direct", "1"] },
+        manga: { type: "boolean", char: "m", aliases: ["manga"] },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock, sender, prefix, commandName }) {
         // Determine mode from the command used
         const isPopular = commandName === "popular" || commandName === "top";
         const mode = isPopular ? "popular" : "trending";
 
-        // Determine media type from args
+        // Determine media type from flags or args
         let mediaType = "ANIME";
-        let isDirect = false;
-        const directFlags = ["--top", "-t", "-1", "--direct", "top"];
-
-        for (const arg of args) {
-            const lower = arg.toLowerCase();
-            if (lower === "manga" || lower === "m") {
-                mediaType = "MANGA";
-            } else if (directFlags.includes(lower)) {
-                isDirect = true;
+        if (flags?.manga) {
+            mediaType = "MANGA";
+        } else {
+            const effectiveArgs = cleanArgs || args;
+            for (const arg of effectiveArgs) {
+                const lower = arg.toLowerCase();
+                if (lower === "manga" || lower === "m") {
+                    mediaType = "MANGA";
+                    break;
+                }
             }
         }
+
+        const isDirect = Boolean(flags?.top);
 
         try {
             const fetchFn = mode === "trending" ? getTrending : getPopular;

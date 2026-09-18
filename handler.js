@@ -9,6 +9,7 @@
 
 import { msgFilter } from "./lib/utils.js";
 import { parseCommand } from "./lib/commandParser.js";
+import { parseFlags } from "./lib/flagParser.js";
 import { getCommand, getReplyHandler } from "./commands/_registry.js";
 import { buildContext } from "./lib/contextBuilder.js";
 import { runAutoDetects } from "./lib/autoDetect.js";
@@ -189,7 +190,19 @@ let msgHandler = async (upsert, sock, message) => {
             registerUser(ctx.sender, ctx.pushname);
         }
 
-        // ── 7. Log & Execute ────────────────────────────────────────
+        // ── 7. Flag Parsing (declarative POSIX flags) ──────────────
+        let parsedFlags = {};
+        let effectiveArgs = args;
+        let cleanArgs = args;
+
+        if (cmd.flags) {
+            const flagResult = parseFlags(args, cmd.flags);
+            parsedFlags = flagResult.flags;
+            cleanArgs = flagResult.cleanArgs;
+            effectiveArgs = flagResult.cleanArgs;
+        }
+
+        // ── 8. Log & Execute ────────────────────────────────────────
         logger.exec(t, cmdLabel, ctx.pushname, ctx.isGroup, ctx.groupName);
         await sock.readMessages([message.key]);
 
@@ -197,8 +210,10 @@ let msgHandler = async (upsert, sock, message) => {
             message,
             sock,
             upsert,
-            args,
+            args: effectiveArgs,
+            cleanArgs,
             rawArgs,
+            flags: parsedFlags,
             prefix,
             commandName,
             ...ctx,

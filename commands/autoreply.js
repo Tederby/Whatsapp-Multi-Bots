@@ -5,19 +5,26 @@ export default {
     aliases: ["ar", "autorespond"],
     category: "group",
     description: "Mengatur balasan otomatis khusus untuk grup ini (Admin Only).",
-    usage: "!autoreply kata kunci | teks balasan\n!autoreply --list\n!autoreply --del kata kunci",
+    usage: "!autoreply kata kunci | teks balasan\n!autoreply [-l/--list]\n!autoreply [-d/--del] kata kunci",
     groupOnly: true,
     adminOnly: true,
-    async handler({ message, rawArgs, prefix }) {
+
+    flags: {
+        list:   { type: "boolean", char: "l", aliases: ["list"] },
+        delete: { type: "boolean", char: "d", aliases: ["del", "delete"] },
+    },
+
+    async handler({ message, rawArgs, cleanArgs, flags, prefix }) {
         const textArgs = (rawArgs || "").trim();
         const chat = message.chat;
         const config = getGroupConfig(chat);
 
         if (!textArgs && !message.quoted) {
-            return await message.reply(`❌ Format salah. Gunakan:\n1. Tambah: \`${prefix}autoreply kata kunci | teks balasan\`\n2. Hapus: \`${prefix}autoreply --del kata kunci\`\n3. Lihat daftar: \`${prefix}autoreply --list\``);
+            return await message.reply(`❌ Format salah. Gunakan:\n1. Tambah: \`${prefix}autoreply kata kunci | teks balasan\`\n2. Hapus: \`${prefix}autoreply -d kata kunci\` atau \`--del\`\n3. Lihat daftar: \`${prefix}autoreply -l\` atau \`--list\``);
         }
 
-        if (textArgs.toLowerCase() === "--list") {
+        const isList = Boolean(flags?.list || textArgs.toLowerCase() === "--list" || textArgs.toLowerCase() === "-l");
+        if (isList) {
             const replies = config.autoReplies || {};
             const keys = Object.keys(replies);
             
@@ -35,22 +42,25 @@ export default {
             return await message.reply(listMsg.trim());
         }
 
-        if (textArgs.toLowerCase() === "--del" || textArgs.toLowerCase().startsWith("--del ")) {
+        const isDel = Boolean(flags?.delete || textArgs.toLowerCase() === "--del" || textArgs.toLowerCase() === "-d" || textArgs.toLowerCase().startsWith("--del ") || textArgs.toLowerCase().startsWith("-d "));
+        if (isDel) {
             let triggerToDelete = "";
             
-            if (textArgs.toLowerCase() === "--del" && message.quoted) {
+            if (message.quoted && (!cleanArgs || cleanArgs.length === 0 || textArgs.toLowerCase() === "--del" || textArgs.toLowerCase() === "-d")) {
                 if (message.quoted.message?.stickerMessage) {
                     const hash = Buffer.from(message.quoted.message.stickerMessage.fileSha256).toString('base64');
                     triggerToDelete = `sticker:${hash}`;
                 } else if (message.quoted.text) {
                     triggerToDelete = message.quoted.text.toLowerCase();
                 }
+            } else if (cleanArgs && cleanArgs.length > 0) {
+                triggerToDelete = cleanArgs.join(" ").trim().toLowerCase();
             } else {
-                triggerToDelete = textArgs.slice(6).trim().toLowerCase();
+                triggerToDelete = textArgs.replace(/^--(del|delete)\s*|^-d\s*/i, "").trim().toLowerCase();
             }
             
             if (!triggerToDelete) {
-                return await message.reply(`❌ Masukkan kata kunci atau index yang ingin dihapus, atau reply pesan yang ingin dihapus trigger-nya. Contoh: \`${prefix}autoreply --del halo\` atau \`${prefix}autoreply --del 1\``);
+                return await message.reply(`❌ Masukkan kata kunci atau index yang ingin dihapus, atau reply pesan yang ingin dihapus trigger-nya. Contoh: \`${prefix}autoreply -d halo\` atau \`${prefix}autoreply -d 1\``);
             }
 
             const replies = config.autoReplies || {};

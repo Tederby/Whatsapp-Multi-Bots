@@ -86,7 +86,9 @@ async handler({
     isOwner,          // Boolean indicating if the sender is a configured owner
     isBotAdmin,       // Boolean indicating if the sender is a delegated bot admin
     prefix,           // The specific prefix used to invoke this command
-    botNumber         // Canonical JID of the current bot instance
+    botNumber,        // Canonical JID of the current bot instance
+    flags,            // Parsed POSIX flags object (e.g., { top: true, ui: true })
+    cleanArgs         // Arguments with all parsed flags cleanly stripped out
 }) {
     // Command implementation
 }
@@ -94,7 +96,50 @@ async handler({
 
 ---
 
-## 5. Interactive Reply Handlers
+## 5. Declarative POSIX Flag System (`lib/flagParser.js`)
+
+Commands can declare supported CLI flags via the optional `flags` property. When declared, `handler.js` automatically parses arguments using `parseFlags()`, isolates flags from query arguments, and provides a structured `flags` object and clean `args`/`cleanArgs`.
+
+### Features & Syntax
+
+1. **Long Flags**: Prefixed with `--` (e.g., `--keep`, `--top`, `--ui`, `--text`, `--wait=5`).
+2. **Short Flags**: Single letter with `-` (e.g., `-k`, `-t`, `-u`, `-x`).
+3. **Clustered / Combined Short Flags (Linux-style)**:
+   - `-tu` expands to `-t` and `-u` (e.g., direct top result + UI mode in `!steam`)
+   - `-mfd` expands to `-m`, `-f`, and `-d` (e.g., mobile + fullpage + dark in `!ss`)
+4. **Valued Flags**: Accepts numbers or strings via `-w 5`, `-w=5`, `--wait 5`, or `--wait=5`.
+5. **Numeric Shortcut Flags**: Aliases like `-1` for `--top` can be mapped directly in the schema.
+6. **Double-Dash Terminator (`--`)**: Per POSIX convention, tokens after `--` are strictly treated as positional arguments.
+
+### Example Declaration
+
+```javascript
+// commands/example.js
+export default {
+    name: "example",
+    usage: "!example <query> [-t/--top] [-u/--ui | -x/--text]",
+
+    flags: {
+        top:  { type: "boolean", char: "t", aliases: ["top", "direct", "1"] },
+        ui:   { type: "boolean", char: "u", aliases: ["ui"] },
+        text: { type: "boolean", char: "x", aliases: ["text", "txt"] },
+        wait: { type: "number",  char: "w", aliases: ["wait"], default: null }
+    },
+
+    async handler({ message, args, cleanArgs, flags, prefix }) {
+        // Query text is clean — flags are already stripped!
+        const query = (cleanArgs || args).join(" ").trim();
+
+        if (flags.top) {
+            // User supplied -t, -1, --top, or combined flag like -tu
+        }
+    }
+};
+```
+
+---
+
+## 6. Interactive Reply Handlers
 
 For multi-step flows (e.g., interactive menus, pagination, confirmation prompts), commands can register temporary reply handlers via `commands/_registry.js`:
 
@@ -122,7 +167,7 @@ registerReplyHandler(messageKey, {
 
 ---
 
-## 6. UI and Text Formatting Standard
+## 7. UI and Text Formatting Standard
 
 All structured bot responses must follow the box-drawing styling standard used across `commands/menu.js`, `commands/owner.js`, `commands/profile.js`, `commands/steamprofile.js`, and `commands/mal.js`:
 

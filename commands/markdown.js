@@ -1,4 +1,5 @@
 import { sendUI } from "../lib/uiEngine.js";
+import { extractFlagsFromText } from "../lib/flagParser.js";
 
 /**
  * Escape HTML entities to prevent injection when embedding user text
@@ -349,10 +350,19 @@ export default {
     privateOnly: false,
     registerRequired: false,
 
-    async handler({ message, sock, rawArgs, text, prefix }) {
-        // Resolve input from direct arguments or quoted message text
-        const rawInput = rawArgs || text;
-        let content = rawInput ? rawInput.trim() : (message.quoted?.text ? message.quoted.text.trim() : "");
+    flags: {
+        keep: { type: "boolean", char: "k", aliases: ["keep"] },
+    },
+
+    async handler({ message, sock, rawArgs, text, flags, prefix }) {
+        const schema = { keep: { type: "boolean", char: "k", aliases: ["keep"] } };
+
+        // If user replies to a message with `!md -k` or `!md --keep`
+        const extracted = extractFlagsFromText(rawArgs || text || "", schema);
+        const keepFlag = Boolean(flags?.keep || extracted.flags?.keep);
+
+        // Content comes from quoted message if available, otherwise from cleaned input text
+        let content = message.quoted?.text ? message.quoted.text.trim() : extracted.cleanText;
 
         if (!content) {
             return message.reply(
@@ -361,21 +371,15 @@ export default {
                 `┃ *Atau:* Balas pesan berisi teks dengan \`${prefix}md\`\n` +
                 `┃\n` +
                 `┃ *Contoh:*\n` +
-                `┃ \`${prefix}md # Judul\\n**tebal** dan *miring*\`\n` +
+                `┃ \`${prefix}md -k # Judul\\n**tebal** dan *miring*\`\n` +
                 `┃\n` +
                 `┃ *Flag:*\n` +
-                `┃ \`--keep\` — Webview permanen (tidak auto-hapus)\n` +
+                `┃ \`-k, --keep\` — Webview permanen (tidak auto-hapus)\n` +
                 `┃\n` +
                 `┃ Teks yang diberikan akan dirender\n` +
                 `┃ sebagai markdown dalam webview.\n` +
                 `╰━━━━━━━━━━━━━━━━━━━━━`
             );
-        }
-
-        // Check for --keep flag before processing content
-        const keepFlag = /\s*--keep\b/i.test(content);
-        if (keepFlag) {
-            content = content.replace(/\s*--keep\b/gi, "").trim();
         }
 
         // Strip code fences if wrapped by user (```md ... ``` or ``` ... ```)
@@ -406,7 +410,7 @@ export default {
                 await message.reply(
                     `📝 *Markdown Berhasil Dirender!*\n` +
                     `⏱️ _Tampilan interaktif ini akan otomatis dihapus dalam 2 menit._\n` +
-                    `💡 _Gunakan \`--keep\` agar permanen._`
+                    `💡 _Gunakan \`-k\` atau \`--keep\` agar permanen._`
                 );
 
                 // Auto-delete webview payload after 2 minutes to prevent viewport lag

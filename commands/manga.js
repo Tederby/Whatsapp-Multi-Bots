@@ -53,35 +53,29 @@ export default {
     aliases: ["ln", "lightnovel", "comic", "manhwa"],
     category: "anime",
     description: "Mencari daftar Manga / Light Novel / Manhwa dari AniList",
-    usage: "!manga <judul manga/LN>",
-    async handler({ message, args, sock, sender, prefix }) {
-        if (args.length === 0) {
+    usage: "!manga <judul manga/LN> [-t/--top/-1]",
+
+    flags: {
+        top: { type: "boolean", char: "t", aliases: ["top", "direct", "1"] },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
+        const effectiveArgs = cleanArgs || args;
+        if (args.length === 0 && effectiveArgs.length === 0) {
             await message.reply(
                 "╭━━━〔 📖 MANGA SEARCH 〕━━━\n" +
                 "┃ Mencari manga/manhwa/novel dari AniList.\n" +
                 "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
                 "╭───「 📖 Penggunaan 」\n" +
                 `│ ⋄ \`${prefix || "!"}manga <judul>\`\n` +
-                `│ ⋄ \`${prefix || "!"}manga <judul> -1\` (hasil teratas)\n` +
+                `│ ⋄ \`${prefix || "!"}manga <judul> -t\` (hasil teratas)\n` +
                 "╰──────────────"
             );
             return;
         }
 
-        let isDirect = false;
-        const cleanArgs = [];
-        const directFlags = ["--top", "-t", "-1", "--direct", "top"];
-
-        for (const arg of args) {
-            const lower = arg.toLowerCase();
-            if (directFlags.includes(lower)) {
-                isDirect = true;
-            } else {
-                cleanArgs.push(arg);
-            }
-        }
-
-        const query = cleanArgs.join(" ");
+        const isDirect = Boolean(flags?.top);
+        const query = effectiveArgs.join(" ").trim();
 
         if (!query) {
             await message.reply(`❌ Berikan judul manga/LN yang ingin dicari.\nContoh: \`${prefix || "!"}manga solo leveling -1\``);

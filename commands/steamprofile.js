@@ -7,9 +7,14 @@ export default {
     aliases: ["steamuser", "sp"],
     category: "search",
     description: "Mencari informasi profil user Steam",
-    usage: "!steamprofile [@user/-s/username/steamid]",
-    async handler({ message, args, sock, sender, prefix }) {
-        if (args.length === 0) {
+    usage: "!steamprofile [@user/-s/--self/username/steamid]",
+
+    flags: {
+        self: { type: "boolean", char: "s", aliases: ["self"] },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
+        if (args.length === 0 && (!flags || !flags.self)) {
             await message.reply(
                 "❌ Berikan *custom URL* atau *SteamID64* yang ingin dicari, atau tag user, atau gunakan `-s`.\n\n" +
                 "Contoh Penggunaan:\n" +
@@ -27,10 +32,10 @@ export default {
             return;
         }
 
-        const input = args[0].toLowerCase();
+        const input = (args[0] || "").toLowerCase();
 
-        // 1. Diri Sendiri (-s)
-        if (input === "-s") {
+        // 1. Diri Sendiri (-s / --self)
+        if (flags?.self || input === "-s" || input === "--self") {
             const userData = getUser(resolveUserId(sender));
             if (userData.meta?.steamId) {
                 await sendSteamProfileDetail(userData.meta.steamId, message, sock, false);

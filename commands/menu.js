@@ -468,20 +468,19 @@ export default {
     aliases: ["help", "list"],
     category: "general",
     description: "Menampilkan daftar perintah bot secara interaktif",
-    usage: "!menu [all/nama kategori] [--ui/--text]",
-    async handler({ message, args, sock, sender, isGroup, prefix = "!" }) {
-        let forcedMode = null;
-        const cleanArgs = [];
+    usage: "!menu [all/nama kategori] [-u/--ui | -x/--text]",
 
-        for (const arg of args) {
-            const lower = arg.toLowerCase();
-            if (lower === "--ui") {
-                forcedMode = "ui";
-            } else if (lower === "--text" || lower === "--txt") {
-                forcedMode = "text";
-            } else {
-                cleanArgs.push(arg);
-            }
+    flags: {
+        ui:   { type: "boolean", char: "u", aliases: ["ui"] },
+        text: { type: "boolean", char: "x", aliases: ["text", "txt"] },
+    },
+
+    async handler({ message, args, cleanArgs, flags, sock, sender, isGroup, prefix = "!" }) {
+        let forcedMode = null;
+        if (flags?.ui) {
+            forcedMode = "ui";
+        } else if (flags?.text) {
+            forcedMode = "text";
         }
 
         const normalizedSender = resolveUserId(sender);
@@ -489,7 +488,8 @@ export default {
         const userPref = userData.meta?.displayMode ?? "text";
         const displayMode = forcedMode || userPref;
 
-        let input = cleanArgs.length > 0 ? cleanArgs.join(" ").toLowerCase().trim() : "";
+        const effectiveArgs = cleanArgs || args;
+        let input = effectiveArgs.length > 0 ? effectiveArgs.join(" ").toLowerCase().trim() : "";
         let isAll = false;
         let targetCategory = null;
 
