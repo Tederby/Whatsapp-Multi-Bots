@@ -167,6 +167,9 @@ The bot incorporates runtime hot-reloading for commands via `chokidar` in `comma
 3. Zero Downtime:
    New commands, bug fixes, and permission modifications take effect instantly without restarting running bot processes or severing active WhatsApp socket connections.
 
+> [!NOTE]
+> **Memory Caveat**: Node.js ES Module `import()` with cache-busting query parameters (`?t=${Date.now()}`) causes previously loaded module versions to remain in V8's module map since ESM has no cache eviction API. Over many reloads, this results in a slow, cumulative memory increase. This is acceptable for development and infrequent production hotfixes, but operators running high-reload environments should schedule periodic process restarts (e.g., via PM2 `cron_restart`).
+
 ---
 
 ## 5. Background Services and Resource Queues
@@ -226,8 +229,10 @@ const payload = Buffer.from(JSON.stringify({
 4. **Link Blocking vs DOM Click Interactivity**:
    - **Internal DOM Events**: Client-side JavaScript click events, pagination, and multi-screen toggles (`showAnimeDetail()`, `.ui-screen.active`) execute normally inside the local webview.
    - **External Navigation**: Outbound anchor tags (`<a href="...">`), `window.open`, and `window.location` are strictly blocked by the client sandbox container and will not launch external browsers or open external links.
-5. **Storage & CSP Isolation**: `localStorage`, `sessionStorage`, and `IndexedDB` access is blocked or quarantined with errors due to partitioned sandbox origins (`about:blank`). Dynamic string execution (`eval`, `new Function`) and Web Worker spawning are blocked by CSP/sandbox boundaries. UI state must be managed strictly in ephemeral JavaScript memory.
-6. **Hardware & Media Sandbox**: WebGL 1/2, Web Audio API, and `navigator.vibrate` (haptics) are fully operational. Clipboard access, camera/microphone (`getUserMedia`), Web Share, and system dialogs are completely quarantined.
+5. **Storage & CSP Isolation**: `localStorage`, `sessionStorage`, and `IndexedDB` access is blocked or quarantined with errors due to partitioned sandbox origins (`about:blank`). Dynamic string execution (`eval`, `new Function`) is blocked by CSP. `WebAssembly.instantiate()` is blocked because the CSP lacks `'wasm-unsafe-eval'`. Blob Workers are operational. UI state must be managed strictly in ephemeral JavaScript memory.
+6. **Hardware & Media Sandbox**: WebGL 1/2, Web Audio API, and `navigator.vibrate` (haptics) are fully operational. Clipboard API (`navigator.clipboard.writeText`) is blocked, but `document.execCommand('copy')` is functional. Camera/microphone (`getUserMedia`), Web Share, and system dialogs are completely quarantined.
+
+> For full empirical test data, see [**`docs/WEBVIEW_TEST_RESULTS.md`**](WEBVIEW_TEST_RESULTS.md).
 
 ### Core Rendering Primitives
 
@@ -236,5 +241,5 @@ const payload = Buffer.from(JSON.stringify({
 - `renderList({ icon, title, subtitle, items })`: Generates interactive lists and menu selectors supporting item `onClick` event handlers.
 - `sendUI(sock, chatId, { title, html })`: Dispatches the interactive HTML payload to the target chat and returns `{ key, messageId }` for reply tracking.
 
-> For complete protocol specifications, standalone Baileys implementation, the empirical Chromium capability matrix, stanza size boundaries, and pseudo-button mechanics, see [**`docs/WEBVIEW_PAYLOAD.md`**](WEBVIEW_PAYLOAD.md).
+> For complete protocol specifications, standalone Baileys implementation, the empirical Chromium capability matrix, stanza size boundaries, and copy chip mechanics, see [**`docs/WEBVIEW_PAYLOAD.md`**](WEBVIEW_PAYLOAD.md).
 

@@ -48,6 +48,7 @@ export default {
 | `category` | `string` | Categorization used in `!menu` (e.g., `general`, `group`, `downloader`, `media`, `anime`, `search`, `tools`, `botadmin`, `owner`). |
 | `description` | `string` | Short description displayed in help listings. |
 | `usage` | `string` | Usage syntax example. |
+| `flags` | `object` | *(Optional)* Declarative POSIX flag schema. When present, `handler.js` automatically parses flags and provides structured `flags` and `cleanArgs` to the handler. See [§5](#5-declarative-posix-flag-system-libflagparserjs). |
 
 ---
 
@@ -206,7 +207,7 @@ await message.reply(lines.join("\n"));
 
 ---
 
-## 7. Interactive HTML UI Responses
+## 8. Interactive HTML UI Responses
 
 For commands requiring visual interfaces, menus, or mini-games, use `lib/uiEngine.js` to deliver rich HTML webview messages:
 
@@ -270,7 +271,7 @@ await sendUI(sock, message.chat, {
 });
 ```
 
-### UI Best Practices: Auto-Deletion & Pseudo-Buttons
+### UI Best Practices: Auto-Deletion & Copy Chips
 
 Because the webview is instantiated every time the message enters the client's viewport, persistent HTML UI messages can cause severe lag for some users. To mitigate this and work around sandbox limitations:
 
@@ -285,34 +286,42 @@ Because the webview is instantiated every time the message enters the client's v
    }, 120000);
    ```
 
-2. **Pseudo-Buttons (Native Long-Press Extraction)**:
-   Standard `navigator.clipboard.writeText` calls fail in the sandboxed webview. Instead, use WhatsApp's native long-press anchor extraction:
+2. **Copy Chips (Replaces Deprecated Long-Press Anchors)**:
+   Standard `navigator.clipboard.writeText` calls fail in the sandboxed webview. As of September 2026 (Chrome 151+), long-pressing `<a href="...">` is intercepted by WhatsApp as a message selection gesture and no longer extracts text into the composer bar. Use copyable monospace chips with `document.execCommand('copy')` on tap instead:
    ```html
-   <!-- Long-press pastes: "!ytdl https://youtu.be/..." into chat bar -->
-   <a href="https://youtu.be/dQw4w9WgXcQ" class="btn">!ytdl</a>
-
-   <!-- Long-press pastes: "!anime --id 12345" into chat bar -->
-   <a href="12345" class="btn">!anime --id</a>
+   <div class="ui-chip" onclick="copyCommand('!cmd param')">!cmd param</div>
    ```
-   - **Avoid the `about:blank#` Trap**: Never use dummy `<a href="#">!cmd</a>` for parameterless commands, as it will paste `!cmd about:blank#`. Render parameterless commands as selectable text or badges instead.
+   ```javascript
+   function copyCommand(text) {
+       const el = document.createElement('textarea');
+       el.value = text;
+       document.body.appendChild(el);
+       el.select();
+       document.execCommand('copy');
+       document.body.removeChild(el);
+   }
+   ```
+   See [**`docs/WEBVIEW_PAYLOAD.md` §IV.2**](WEBVIEW_PAYLOAD.md) for full deprecation details.
 
 3. **Media Asset Inlining**:
-   Remote URLs (`<img src="https://...">`) are blocked by the webview sandbox. Remote images must be fetched on the server and converted into Base64 Data URIs (`data:image/...;base64,...`) before embedding. Keep thumbnails under 30–50 KB to stay well below the 1 MB stanza ceiling.
+   Remote URLs (`<img src="https://...">`) are blocked by the webview sandbox. Remote images must be fetched on the server and converted into Base64 Data URIs (`data:image/...;base64,...`) before embedding. Keep thumbnails under 30–50 KB to stay well below the 1350 KB stanza ceiling.
 
 4. **Strict Text-Only for Auto-Detection**:
    Passive link auto-detection (`lib/autoDetect.js`) MUST ALWAYS output text messages, NEVER HTML UI webviews.
 
 ### Adaptive UI vs Text Mode Pattern
 
-Commands supporting rich UI should respect the user's `meta.displayMode` preference with fallback to `"text"`, while honoring `--ui` and `--text` flags:
+Commands supporting rich UI should respect the user's `meta.displayMode` preference with fallback to `"text"`, while honoring `flags.ui` and `flags.text` from the declarative POSIX flag system (see §5):
 
 ```javascript
 import { getUser, resolveUserId } from "../lib/database.js";
 import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
 
 const userData = getUser(resolveUserId(sender));
-const displayMode = (args.includes("--text") ? "text" : (args.includes("--ui") ? "ui" : null))
-    || userData.meta?.displayMode || "text";
+let forcedMode = null;
+if (flags?.ui) forcedMode = "ui";
+else if (flags?.text) forcedMode = "text";
+const displayMode = forcedMode || userData.meta?.displayMode || "text";
 
 if (displayMode === "ui") {
     try {
@@ -334,6 +343,6 @@ await message.reply(captionText);
 
 > [!TIP]
 > **Complete Technical Specification & Browser Matrix**:
-> For the comprehensive standalone specification, Baileys protobuf envelope deconstruction, Chromium sandbox capability matrix (CSS, Storage, CSP, Web Audio vs HTML5 audio quarantine), and the 1 MB stanza size ceiling, see [**`docs/WEBVIEW_PAYLOAD.md`**](WEBVIEW_PAYLOAD.md).
+> For the comprehensive standalone specification, Baileys protobuf envelope deconstruction, Chromium sandbox capability matrix (CSS, Storage, CSP, Web Audio vs HTML5 audio quarantine), and the 1350 KB stanza size ceiling, see [**`docs/WEBVIEW_PAYLOAD.md`**](WEBVIEW_PAYLOAD.md).
 
 

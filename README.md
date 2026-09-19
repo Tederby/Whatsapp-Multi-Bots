@@ -13,7 +13,7 @@ This `README.md` serves as a high-level summary. Detailed technical documentatio
 | 📖 [**Documentation Hub**](docs/README.md) | Master index and project specifications overview. |
 | 📝 [**Development Journal & Changelog**](docs/CHANGELOG.md) | Chronological rolling release notes, architectural milestones, and git-verified changelog. |
 | 🏗️ [**System Architecture**](docs/ARCHITECTURE.md) | 13-stage message pipeline, multi-bot concurrency model, and webview protocol relay. |
-| 🧩 [**Command Development Guide**](docs/COMMAND_DEVELOPMENT.md) | Full 55-command guide, permission flags, context builder, UI standards, and pseudo-buttons. |
+| 🧩 [**Command Development Guide**](docs/COMMAND_DEVELOPMENT.md) | Full 63-command guide, permission flags, POSIX flag engine, context builder, UI standards, and copy chips. |
 | 🗄️ [**Database & Storage Architecture**](docs/DATABASE.md) | SQLite WAL configuration, table schemas, LID/PN identity mapping, and helper methods. |
 | 🚀 [**Configuration & Deployment**](docs/CONFIGURATION_DEPLOYMENT.md) | Environment variables reference, PM2 multi-instance setup, headless pairing code, and OS prerequisites. |
 | 🌐 [**Webview Payload & UI Engine**](docs/WEBVIEW_PAYLOAD.md) | Undocumented in-app webview primitive, Baileys relay envelope, capability matrix, and stanza constraints. |
@@ -26,7 +26,7 @@ This `README.md` serves as a high-level summary. Detailed technical documentatio
 - **Interactive In-App Webview UI Engine** — Deliver graphical cards, interactive lists, and multi-screen dashboards directly inside WhatsApp's native client webview using Meta AI protobuf messaging (`GenAIaeacdsnwHtmlPrimitive`). Features a minimal dark-mode zinc/gray aesthetic, embedded Base64 media (bypassing sandbox network restrictions), client-side filtering, and tactile transitions.
 - **Adaptive Display Modes (`UI` vs `Text`)** — Users choose their preferred output format globally via `!register mode <ui|text>` (viewable via `!profile`), or override on the fly with `--ui` / `--text` flags on supported commands (`!anime`, `!steam`, `!menu`).
 - **Lifecycle & Memory Hygiene** — Rich webview messages automatically self-delete after 120 seconds with explicit `fromMe` keys to eliminate viewport re-mount lag and memory spikes on mobile devices.
-- **Native Long-Press Pseudo-Buttons** — Overcomes webview sandbox clipboard restrictions: long-pressing an anchor tag like `<a href="param">!cmd</a>` leverages native WhatsApp text extraction to auto-paste the command directly into the chat composer bar.
+- **Copy Chip Interactions** — Overcomes webview sandbox clipboard restrictions: tapping a copyable chip element uses `document.execCommand('copy')` to place the command text into the clipboard, ready to paste into the chat composer bar. (Replaces deprecated long-press anchor extraction, which is intercepted as message selection in modern WhatsApp builds.)
 - **SQLite with WAL Mode** — Centralized `better-sqlite3` database engine running in Write-Ahead Logging (WAL) mode with cached prepared statements, a 5000ms busy timeout, and automated schema migrations.
 - **LID & PN Addressing Resolution** — Built-in `jidHelper.js` dynamically reconciles WhatsApp Multi-Device Linked Identity Descriptors (`@lid`) and Phone Numbers (`@s.whatsapp.net`) via the `identity_map` table so moderation, mentions, and database queries never break.
 - **Modular 13-Stage Pipeline** — Decoupled message handling in `handler.js` covering replay protection, sider tracking, early ban checks, multi-bot claiming, spam rate limiting, and declarative permission validation.
@@ -66,8 +66,8 @@ WhatsApp Multi-Bots supports two distinct presentation modes to accommodate both
 
 ```text
 # Configure personal preference
-!register mode ui      # Rich graphical webview (default)
-!register mode text    # Clean plain-text with box-drawing formatting
+!register mode ui      # Rich graphical webview
+!register mode text    # Clean plain-text with box-drawing formatting (default)
 
 # Check current preference and user stats
 !profile
@@ -91,7 +91,7 @@ WhatsApp Multi-Bots supports two distinct presentation modes to accommodate both
 
 ## 📋 Command Categories Overview
 
-The bot includes **55 built-in command modules** organized across 10 functional categories. Below is an overview of each category with representative examples:
+The bot includes **63 built-in command modules** organized across 10 functional categories. Below is an overview of each category with representative examples:
 
 | Category | Description | Representative Commands |
 |:---|:---|:---|
@@ -99,14 +99,14 @@ The bot includes **55 built-in command modules** organized across 10 functional 
 | 🛡️ **Group Moderation** | Participant management, greeting triggers, keyword auto-replies, sider lurker tracking | `!kick`, `!promote`, `!welcome`, `!track`, `!autoreply`, `!tag` |
 | 📥 **Media Downloader** | Multi-platform video and audio extractions backed by yt-dlp concurrency queue | `!ytdl`, `!ytdlf`, `!download`, `!ytsearch` |
 | 🎨 **Media & Maker** | Sticker creation, Brat-styled typography stickers, view-once media extraction | `!sticker`, `!toimg`, `!brat`, `!resend`, `!watermark` |
-| 🌸 **Anime & Manga** | MyAnimeList queries with 2:3 vertical posters and Danbooru tag exploration | `!anime`, `!manga`, `!danbooru`, `!danbooru-new` |
+| 🌸 **Anime & Manga** | AniList/Jikan queries with 2:3 vertical posters, character search, seasonal charts, and Danbooru tag exploration | `!anime`, `!manga`, `!character`, `!trending`, `!seasonal`, `!airing`, `!danbooru` |
 | 🔍 **Search & Lookup** | Steam store/community search with 460/215 banners, GitHub repos, KBBI dictionary | `!steam`, `!steamprofile`, `!github`, `!kbbi` |
 | 🎮 **Games & Fun** | In-app Webview RPG mini-game with Web Audio API sound synthesis and touch controls | `!yuegame` |
 | 🛠️ **Tools & Utilities** | Scheduled alert reminders, Gemini AI translation, quote cards, web screenshots | `!remind`, `!translate`, `!screenshot`, `!quote` |
 | 🛡️ **Bot Admin** | Cross-instance global user bans and bot profile configuration | `!gban`, `!gunban`, `!setname` |
 | 💻 **System & Owner** | Bot administrator delegation, remote SSH shell, SQLite database maintenance | `!bash`, `!dbfix`, `!addbotadmin`, `!scanids` |
 
-> 💡 *For the complete reference of all 55 commands, aliases, and permission flags, see [`docs/COMMAND_DEVELOPMENT.md`](docs/COMMAND_DEVELOPMENT.md) or send `!menu` in chat.*
+> 💡 *For the complete reference of all 63 commands, aliases, and permission flags, see [`docs/COMMAND_DEVELOPMENT.md`](docs/COMMAND_DEVELOPMENT.md) or send `!menu` in chat.*
 
 ---
 

@@ -60,7 +60,7 @@ Because this bot operates on a **continuous delivery / rolling release model** r
   - **Clean "Forwarded" Removal**: Setting `isForwarded: false`, `forwardingScore: 0`, and `forwardOrigin: 1` in `contextInfo` completely removes the native "Forwarded" badge above webview cards.
   - **Custom `botJid` Acceptance**: Confirmed that `forwardedAiBotMessageInfo.botJid` accepts custom bot phone number JIDs (`<number>@s.whatsapp.net`) in addition to universal Meta AI JID (`867051314767696@bot`).
   - **`trusted_sources` Inefficacy**: Proven that whitelisting domains in `trusted_sources` does not bypass sandbox cross-origin network blocks; remote `<img>` tags remain blocked.
-- **CSP Directive & Runtime Capabilities**: Identified exact CSP directive (`script-src 'unsafe-inline'`). `WebAssembly` and `Blob Worker` are operational. `execCommand('copy')` and `navigator.vibrate()` functional; `navigator.clipboard.writeText` blocked.
+- **CSP Directive & Runtime Capabilities**: Identified exact CSP directive (`script-src 'unsafe-inline'`). `Blob Worker` is operational. `WebAssembly.instantiate()` is **blocked** by CSP (lacks `'wasm-unsafe-eval'`). `execCommand('copy')` and `navigator.vibrate()` functional; `navigator.clipboard.writeText` blocked.
 - **Anchor Pseudo-Button Gesture Deprecation**: Verified that on modern Android WhatsApp builds (Chrome 151+), long-pressing `<a href="...">` is captured as a chat message selection gesture rather than composer bar extraction; updated design guidelines to copyable text chips.
 - **Lifecycle Persistence Audit**: Verified that viewport scrolling (~15-20 messages away) destroys and re-mounts the webview (resetting all JS state to 0), while app backgrounding (minimizing WhatsApp) preserves active `setInterval` timers in memory.
 - **Empirical Testing Suite (`!wvtest`)**: Implemented `commands/wvtest.js` featuring automated capability matrix (35+ browser checks), calibrated stanza size probes, protobuf mutation testing, audio decoding probes, URI scheme audits, and lifecycle persistence checks.
@@ -157,7 +157,7 @@ Because this bot operates on a **continuous delivery / rolling release model** r
   - Bot Architecture: Multi-owner support and paginated menu navigation (`30b0189`, `dcb4968`, `b557d94`).
 
 ### 2026-06-19 – 2026-06-20 — `[MAJOR]` Project Genesis & Bot Standup
-- **Core Architecture**: Repositori inisiasi oleh Tederby menggunakan Node.js ES Modules (`"type": "module"`) dan Baileys (`b721bef`, `bc2f05f`, `0836f63`, `ff6fe90`).
+- **Core Architecture**: Repository initialized by Tederby using Node.js ES Modules (`"type": "module"`) and Baileys (`b721bef`, `bc2f05f`, `0836f63`, `ff6fe90`).
 - **Initial Feature Set**: Added foundational commands (`!menu`, `!sticker`, `!toimg`), session stability patches, and initial documentation (`f9b6ce0`, `45460bc`, `4753763`).
 
 ### 2025-10-29 – 2025-12-06 — `[CHORE]` Upstream Base Initialization
@@ -205,6 +205,8 @@ The message processing handler (`handler.js`) was refactored from a monolithic r
 12. **Permission Validation**: Enforces declarative command requirements (`lib/middleware.js`).
 13. **Execution and Error Boundary**: Executes command handlers with error isolation and logging.
 
+> The authoritative, up-to-date pipeline reference is maintained in [`docs/ARCHITECTURE.md` §2](ARCHITECTURE.md). The list above is a historical snapshot from the original refactoring.
+
 ### 4. Concurrency Infrastructure & Media Queues
 
 High-memory operations (Puppeteer browser rendering and yt-dlp media extraction) previously risked exhausting server resources during traffic bursts. Two dedicated queue managers were introduced:
@@ -228,12 +230,12 @@ Key architectural highlights:
 ### 7. User Display Preference & Sandbox Security Boundary
 
 With the introduction of the interactive HTML UI engine (`lib/uiEngine.js`), commands can render rich webviews directly inside supported WhatsApp clients. However, user environments vary:
-- **Zero-Migration Fallback**: By leveraging the in-code nullish coalescing pattern (`userData.meta?.displayMode ?? "ui"`), all existing database records default seamlessly to `"ui"` mode without requiring schema changes or database migration runs.
+- **Zero-Migration Fallback**: By leveraging the in-code nullish coalescing pattern (`userData.meta?.displayMode ?? "text"`), all existing database records default seamlessly to `"text"` mode without requiring schema changes or database migration runs.
 - **Preference Controls**: Users configure preference via `!register mode <ui|text>` (or via the interactive registration reply menu) and view their active mode via `!profile`.
 - **Adaptive Command Rendering**: Implemented in `commands/anime.js` (`!anime`), `commands/steam.js` (`!steam`), and `commands/menu.js` (`!menu`), dynamically rendering custom flat HTML layouts for UI mode and fallback poster/banner image or interactive text for Text mode. Includes on-the-fly override flags (`--ui` and `--text`).
 - **Media Proportions & Aspect Ratio Adaptation**: Tailored layout containers to native media formats — portrait (`~2:3`) for anime posters versus landscape (`~2.14:1`) for Steam game banners (`aspect-ratio: 460/215` responsive).
 - **Auto-Detection Stability Boundary**: Formally established that passive URL triggers (`lib/autoDetect.js`) MUST strictly output text messages and are strictly forbidden from emitting HTML UI webviews, maintaining chat thread stability and preventing viewport re-render storms.
 - **Sandbox Lifecycle & Memory Hygiene**: Established UI-exclusive auto-deletion (120s timer) with explicit `fromMe` keys to eliminate viewport re-mount lag spikes in client chat history. Eliminated redundant `registerReplyHandler` registrations in memory for self-contained webview interfaces, keeping server memory completely leak-free.
-- **Pseudo-Buttons & Interaction Modeling**: Documented sandbox clipboard limitations, native WhatsApp long-press auto-paste behavior, and direct tokenized command patterns for external bot interactions without nested condition checks.
+- **Copy Chips & Interaction Modeling**: Documented sandbox clipboard limitations. Native long-press anchor extraction was later deprecated in September 2026 (Chrome 151+) in favor of `document.execCommand('copy')` tap-to-copy chips.
 - **External Navigation Prohibition**: Pruned non-functional outbound anchor links across webview templates because external hyperlinks are strictly blocked by WhatsApp's sandbox.
 - **Webview Asset Inlining**: Enforced Base64 Data URI conversion for posters and detail banners in `commands/anime.js` and `commands/steam.js` with defensive `onerror` handling to bypass WhatsApp's network-blocking webview sandbox.

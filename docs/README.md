@@ -13,7 +13,7 @@ The documentation is organized into the following guides:
   Detailed explanation of the message processing pipeline, hot-reloading architecture, multi-instance concurrency, and background services.
 
 - [Command Development Guide](COMMAND_DEVELOPMENT.md)
-  Comprehensive guide for writing new commands, declarative permission flags, context builder objects, reply handlers, and UI formatting standards.
+  Comprehensive guide for writing new commands, declarative permission flags, POSIX-style flag engine, context builder objects, reply handlers, and UI formatting standards.
 
 - [Database and Storage Architecture](DATABASE.md)
   Schema reference for SQLite tables, Write-Ahead Logging (WAL) configuration, identity resolution mapping (LID vs PN), and migration utilities.
@@ -22,14 +22,14 @@ The documentation is organized into the following guides:
   Environment variables, multi-bot PM2 configuration, headless pairing code setup, OS prerequisite installation, and diagnostic dashboard.
 
 - [Webview Payload and UI Engine](WEBVIEW_PAYLOAD.md)
-  Undocumented WhatsApp in-app webview protocol (`GenAIaeacdsnwHtmlPrimitive`), Baileys message envelope, empirical browser runtime capability matrix, stanza size ceilings (1350 KB silent drop), and pseudo-button UX mechanics.
+  Undocumented WhatsApp in-app webview protocol (`GenAIaeacdsnwHtmlPrimitive`), Baileys message envelope, empirical browser runtime capability matrix, stanza size ceilings (1350 KB silent drop), and copy chip UX mechanics.
 
 - [Webview Empirical Test Results & Benchmark Log](WEBVIEW_TEST_RESULTS.md)
   Raw empirical audit logs, calibrated stanza size probe results (950 KB – 1400 KB), protobuf envelope mutation experiments, and Web Audio API benchmarks as of September 4, 2026.
 
 ## Project Overview
 
-- Runtime: Node.js (ES Modules)
+- Runtime: Node.js ≥ v18.0.0 (ES Modules)
 - WhatsApp Engine: Baileys
 - Storage: better-sqlite3 with WAL mode
 - Process Management: PM2 (Multi-instance concurrency)

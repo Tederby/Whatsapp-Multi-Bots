@@ -12,7 +12,7 @@ Copy `.env.example` to `.env` to configure global settings:
 # Bot Identity
 BOT_ID=default
 BOT_NAME=TederbyBot
-OWNER_NUMBER=6287825136146
+OWNER_NUMBER=628123456789
 PREFIXES=!.#/-
 PAIRING_NUMBER=
 
@@ -24,17 +24,27 @@ GEMINI_API_KEY=
 YOUTUBE_API_KEY=
 STEAM_API_KEY=
 
-# Remote Shell Credentials (!bash)
+# Remote Shell Credentials (!bash) — see Security Warning below
 SSH_HOST=127.0.0.1
 SSH_PORT=22
-SSH_USER=root
-
-# Visual Branding
-OWNER_IMAGE=https://example.com/owner.jpg
-CHANNEL_URL=https://whatsapp.com/channel/xxxx
-STICKER_PACK=WhatsApp Multi-Bots
-STICKER_AUTHOR=Tederby
+SSH_USER=deploy
 ```
+
+> [!CAUTION]
+> **Remote Shell Security (`!bash`)**:
+> The `!bash` command provides full remote shell access to the SSH host via WhatsApp messages. This command is gated behind `ownerOnly: true`, but operators must still exercise extreme caution:
+> - **Never expose SSH credentials** in public repositories or group chats.
+> - **Use a non-root user** with minimal privileges (e.g., a `deploy` user with scoped `sudoers` rules) instead of `SSH_USER=root`.
+> - **Prefer SSH key authentication** over password-based login.
+> - **Restrict `SSH_HOST`** to localhost (`127.0.0.1`) unless remote access is genuinely required.
+>
+> **Visual Branding** (optional):
+> ```ini
+> OWNER_IMAGE=https://example.com/owner.jpg
+> CHANNEL_URL=https://whatsapp.com/channel/xxxx
+> STICKER_PACK=WhatsApp Multi-Bots
+> STICKER_AUTHOR=Tederby
+> ```
 
 ---
 
@@ -148,7 +158,7 @@ For SQLite native compilation, ensure Python and Visual Studio C++ Build Tools a
 
 On startup, `lib/diagnostics.js` executes automated pre-flight checks and prints a diagnostic summary to the console:
 
-- Node.js version validation.
+- Node.js runtime identification (minimum required: **v18.0.0** for stable ES Modules, `fetch`, and `crypto.randomUUID`).
 - Binary availability check (`ffmpeg`, `yt-dlp`).
 - Optional API key validation (`GEMINI_API_KEY`, `STEAM_API_KEY`, `YOUTUBE_API_KEY`).
 - SQLite database connection and WAL mode confirmation.

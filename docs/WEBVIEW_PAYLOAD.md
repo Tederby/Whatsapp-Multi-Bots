@@ -105,9 +105,13 @@ import { randomUUID } from "crypto";
  * @param {object} options
  * @param {string} options.title - Preview title shown in push notifications and chat previews
  * @param {string} options.html - Full HTML markup string
+ * @param {object} [options.quoted] - Optional quoted message context for native reply bubble
+ * @param {string} [options.quoted.stanzaId] - Message ID to quote
+ * @param {string} [options.quoted.participant] - JID of the quoted message sender
+ * @param {object} [options.quoted.quotedMessage] - The quoted message object
  * @returns {Promise<{ key: object, messageId: string }>}
  */
-export async function sendHtmlWebview(sock, chatId, { title, html }) {
+export async function sendHtmlWebview(sock, chatId, { title, html, quoted }) {
     const responseId = randomUUID();
     const BOT_JID = "867051314767696@bot"; // Universal Meta AI bot JID
 
@@ -130,7 +134,24 @@ export async function sendHtmlWebview(sock, chatId, { title, html }) {
         })
     ).toString("base64");
 
-    // 2. Relay the message with botForwardedMessage envelope
+    // 2. Build contextInfo with clean forwarding (no "Forwarded" badge)
+    const contextInfo = {
+        forwardingScore: 0,           // 0 = not forwarded
+        isForwarded: false,           // Removes "Forwarded" label
+        forwardOrigin: 1,             // Clean origin
+        forwardedAiBotMessageInfo: {
+            botJid: BOT_JID,
+        },
+    };
+
+    // 3. Optionally attach native reply quote bubble
+    if (quoted) {
+        contextInfo.stanzaId = quoted.stanzaId;
+        contextInfo.participant = quoted.participant;
+        contextInfo.quotedMessage = quoted.quotedMessage;
+    }
+
+    // 4. Relay the message with botForwardedMessage envelope
     await sock.relayMessage(
         chatId,
         {
@@ -154,14 +175,7 @@ export async function sendHtmlWebview(sock, chatId, { title, html }) {
                         unifiedResponse: {
                             data: payload,
                         },
-                        contextInfo: {
-                            forwardingScore: 1,
-                            isForwarded: true,
-                            forwardOrigin: 4,
-                            forwardedAiBotMessageInfo: {
-                                botJid: BOT_JID,
-                            },
-                        },
+                        contextInfo,
                     },
                 },
             },
@@ -187,12 +201,27 @@ The WhatsApp client renders the payload inside an isolated, sandboxed WebView (`
 | **CSS Layout** | `display: grid`, `flex`, `subgrid`, Container Queries (`container-type`), `aspect-ratio`, `position: sticky`, `:has()`, `:is()` | — | **100% PASS**. Full modern CSS layout is functional. Fluid responsive layouts and subgrids render flawlessly. |
 | **CSS Visuals** | `backdrop-filter`, `filter`, `clip-path`, `mix-blend-mode`, `color: oklch()`, `accent-color`, `scroll-snap-type`, scroll-driven animations | — | High-fidelity dark mode, custom shapes, and backdrop filters work natively without visual glitches. |
 | **Client Storage** | — | `IndexedDB` (open throws `SecurityError`), `localStorage`, `sessionStorage`, `document.cookie`, `Cache Storage`, `OPFS` | **Zero Persistence**: Calling `indexedDB.open()` throws `SecurityError: access to Indexed Database API is denied in this context`. All storage APIs are quarantined due to the opaque `about:blank` sandbox origin. UI state MUST reside strictly in JavaScript memory variables. |
-| **Network & Comms** | `BroadcastChannel` (API present) | Outbound `fetch()` (Public CORS & Localhost/SSRF), `WebSocket` (Handshake blocked), `XMLHttpRequest`, `EventSource` | **Air-Gapped Sandbox**: Although constructors exist in JavaScript, the native WebView client blocks all outbound network requests (`Failed to fetch`, `Handshake rejected / blocked`). Container cannot communicate with external servers or local ports. |
-| **JavaScript & CSP** | Modern ES6+, `Worker` (Blob Workers), `structuredClone` | Dynamic `eval()`, `new Function()`, `WebAssembly.instantiate()`, `crypto.subtle` | Content Security Policy enforces: `script-src 'unsafe-inline'`. String evaluation via `eval()` or `new Function()` throws CSP violations. **`WebAssembly.instantiate()` is BLOCKED** because the CSP lacks `'wasm-unsafe-eval'`. `crypto.subtle` is unavailable (non-secure context). |
+| **Network & Comms** | `BroadcastChannel` (API present) | Outbound `fetch()` (blocked at runtime), `WebSocket` (handshake blocked), `XMLHttpRequest`, `EventSource` | **Air-Gapped Sandbox**: Network API constructors (`fetch`, `WebSocket`, `XMLHttpRequest`) are *present* in the JavaScript global scope (`typeof` returns `"function"`), but all actual outbound network requests are blocked at the native WebView container level (`Failed to fetch`, `Handshake rejected / blocked`). See [Methodology Note](#methodology-note) below. |
+| **JavaScript & CSP** | Modern ES6+, `Worker` (Blob Workers), `structuredClone` | Dynamic `eval()`, `new Function()`, `WebAssembly.instantiate()`, `crypto.subtle` | Content Security Policy enforces: `script-src 'unsafe-inline'`. String evaluation via `eval()` or `new Function()` throws CSP violations. **`WebAssembly.instantiate()` is BLOCKED** because the CSP lacks `'wasm-unsafe-eval'` — although `typeof WebAssembly === 'object'` (API *present*), actual compilation/instantiation fails. Blob Workers are operational. `crypto.subtle` is unavailable (non-secure context). |
 | **Form Controls & Inputs** | `<input type="text">`, `<textarea>`, `<select>` (native Android dialog), `<input type="date">` (native calendar), `<input type="color">`, `<input type="range">` | `<input type="file">` (completely unhandled), `window.visualViewport` resize events | Soft keyboard pops up smoothly and pushes the card downward without obscuring it. Native selection dialogs work cleanly. However, `<input type="file">` produces zero response (`onShowFileChooser` not implemented by WhatsApp). Range slider gestures can collide with outer chat scrolling. |
 | **Device & Haptics** | `navigator.vibrate([ms])`, `document.execCommand('copy')`, `navigator.geolocation`, `requestFullscreen`, `window.alert()` (native modal) | Clipboard API (`navigator.clipboard.writeText`), Screen Wake Lock, Device Orientation | `window.alert()` triggers a native WhatsApp popup modal. `navigator.vibrate([50])` triggers device haptics. `navigator.clipboard.writeText` is blocked (lacks top-level document focus), but `document.execCommand('copy')` is supported. |
 | **Media & Audio** | Canvas 2D, WebGL 1/2, **Web Audio API `decodeAudioData` (ArrayBuffer)**, Web Audio Oscillators, FontFace API, HTML5 `<video>` (`canPlayType`) | HTML5 `<audio>` playback (`NotSupportedError`), Base64 `<audio src="...">`, WebGPU, Speech Synthesis | **Breakthrough Finding**: HTML5 `<audio>` tags are quarantined (play button greyed out; calling `play()` rejects with `NotSupportedError: The Element has no supported sources`). However, **Web Audio API `decodeAudioData()` successfully decodes in-memory ArrayBuffers and plays audio via `AudioBufferSourceNode`!** Oscillators work, but rapid repeated triggering may encounter audio focus throttling. |
 | **System & Links** | `prefers-color-scheme`, `navigator.onLine` | Outbound links (`https://`, `whatsapp://`, `wa.me`, `tel:`, `mailto:`, `intent:`), Web Share API | **Total Interception**: Tapping links triggers CSS active animations, but the native Android WebView container suppresses all external navigation, deep links, dialers, and intent schemes. External browsers and apps will NOT open. |
+
+#### Methodology Note
+
+The "Supported" column distinguishes between **API presence** (constructor/object exists in `window`) and **functional operation** (runtime calls succeed). Several APIs that report `PASS` on a `typeof` check are actually blocked at runtime:
+
+| API | `typeof` / Presence | Runtime Behavior |
+|:---|:---:|:---|
+| `fetch` | `"function"` (present) | `Failed to fetch` (blocked) |
+| `WebSocket` | `"function"` (present) | Handshake rejected (blocked) |
+| `XMLHttpRequest` | `"function"` (present) | Network error (blocked) |
+| `WebAssembly` | `"object"` (present) | `instantiate()` CSP violation (blocked) |
+| `navigator.geolocation` | Present | Permission prompt (functional) |
+| `EventSource` | `"function"` (present) | Not tested at runtime |
+
+The capability matrix above marks these as **Blocked** in the runtime behavior column. The raw test log in [`WEBVIEW_TEST_RESULTS.md`](WEBVIEW_TEST_RESULTS.md) labels some of these as `PASS` because the test suite checks `typeof` presence, not runtime execution. Always consult the "Empirical Findings" column for ground truth.
 
 ---
 
@@ -288,15 +317,17 @@ The project follows a strict **flat, minimal, content-first** design philosophy:
 
 ### 4. Adaptive UI vs Text Mode Pattern
 
-Commands check user preference (`userData.meta?.displayMode`) and flag overrides (`--ui` / `--text`):
+Commands check user preference (`userData.meta?.displayMode`, defaulting to `"text"`) and POSIX flag overrides (`flags.ui` / `flags.text`):
 
 ```javascript
 import { getUser, resolveUserId } from "../lib/database.js";
 import { sendUI, renderPage, renderCard } from "../lib/uiEngine.js";
 
 const userData = getUser(resolveUserId(sender));
-const displayMode = (args.includes("--text") ? "text" : (args.includes("--ui") ? "ui" : null))
-    || userData.meta?.displayMode || "text";
+let forcedMode = null;
+if (flags?.ui) forcedMode = "ui";
+else if (flags?.text) forcedMode = "text";
+const displayMode = forcedMode || userData.meta?.displayMode || "text";
 
 if (displayMode === "ui") {
     try {
@@ -317,7 +348,7 @@ await message.reply(plainTextMessage);
 
 ### 5. Production Reference Implementations
 
-- [`commands/menu.js`](../commands/menu.js) — Main bot menu with live client-side category filtering, instant search, and pseudo-buttons.
+- [`commands/menu.js`](../commands/menu.js) — Main bot menu with live client-side category filtering, instant search, and copy chip interactions.
 - [`commands/anime.js`](../commands/anime.js) — Anime search with Base64 poster inlining (2:3 aspect ratio), detail view transitions, and client-side pagination.
 - [`commands/steam.js`](../commands/steam.js) — Steam game lookup with landscape banners (460/215 aspect ratio) and interactive game specs.
 - [`commands/yuegame.js`](../commands/yuegame.js) — Full canvas RPG mini-game with on-screen D-pad and Web Audio API synthesized sound effects.

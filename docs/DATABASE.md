@@ -77,7 +77,9 @@ Coordinates message processing across multiple bot instances sharing a single gr
 |:---|:---|:---|
 | `id` | `TEXT` | WhatsApp Message Key ID (Primary Key). |
 | `bot_id` | `TEXT` | Identifier of the bot instance that claimed the message. |
-| `created_at` | `INTEGER` | Unix timestamp of the claim. |
+| `created_at` | `INTEGER` | Unix timestamp in **milliseconds** of the claim. |
+
+**Retention**: Stale claims older than **10 minutes** are purged by `!dbfix` (see [§6. Operational Lifecycle](#6-operational-lifecycle)).
 
 ### `bot_registry`
 Tracks active bot instances and last heartbeat timestamps.
@@ -86,7 +88,9 @@ Tracks active bot instances and last heartbeat timestamps.
 |:---|:---|:---|
 | `bot_id` | `TEXT` | Bot identifier from `BOT_ID` environment variable (Primary Key). |
 | `jid` | `TEXT` | Bot phone number JID. |
-| `last_seen` | `INTEGER` | Unix timestamp of last recorded activity. |
+| `last_seen` | `INTEGER` | Unix timestamp in **milliseconds** of last recorded activity. |
+
+**Lifecycle**: `last_seen` is updated by `index.js` via `upsertBotRegistry()` on initial connection and every **60 seconds** thereafter via `setInterval`. Entries with `last_seen` older than **10 minutes** are purged by `!dbfix`.
 
 ### `identity_map`
 Maintains bidirectional mappings between WhatsApp Linked Identity Descriptors (`LID`) and Phone Number JIDs (`PN`).
@@ -136,6 +140,17 @@ Stores incoming user feedback and issue reports submitted via `!report` / `!feed
 | `timestamp` | `INTEGER` | Unix timestamp of submission. |
 | `bot_id` | `TEXT` | Bot instance that received the report. |
 
+### Timestamp Units Reference
+
+| Table | Column(s) | Unit | Notes |
+|:---|:---|:---|:---|
+| `users` | `registered_at`, `banned_at` | **Milliseconds** (`Date.now()`) | — |
+| `groups` | `registered_at`, `banned_at` | **Milliseconds** (`Date.now()`) | — |
+| `message_claims` | `created_at` | **Milliseconds** (`Date.now()`) | Purged after 10 min |
+| `bot_registry` | `last_seen` | **Milliseconds** (`Date.now()`) | Heartbeat every 60s |
+| `reminders` | `trigger_time`, `created_at` | **Milliseconds** (`Date.now()`) | — |
+| `reports` | `timestamp` | **Milliseconds** (`Date.now()`) | — |
+
 ---
 
 ## 3. Database Indexes
@@ -171,3 +186,19 @@ node scripts/migrate_json_to_sqlite.js
 ```
 
 This script reads legacy JSON files (`data/users.json`, `data/groups.json`), converts data structures into normalized rows, and populates `database.db` inside an atomic transaction.
+
+---
+
+## 6. Operational Lifecycle
+
+The `!dbfix` owner command (`lib/database.js` → `runDatabaseFix()`) performs the following maintenance operations in a single atomic run:
+
+| Operation | Retention Rule | Affected Table |
+|:---|:---|:---|
+| Purge stale message claims | `created_at` older than **10 minutes** | `message_claims` |
+| Purge stale bot registry | `last_seen` older than **10 minutes** | `bot_registry` |
+| Clean orphan group bans | `group_id` not in `groups` table | `group_banned_users` |
+| Clean empty users | Unregistered, unbanned, no meta, no name | `users` |
+
+> [!NOTE]
+> There is currently no automatic scheduled cleanup — `!dbfix` must be triggered manually by the bot owner. For high-traffic deployments, consider running it periodically via an external cron job or PM2 cron restart hook.
