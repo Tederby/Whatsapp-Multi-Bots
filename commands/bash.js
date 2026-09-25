@@ -14,6 +14,8 @@
  * code, and execution time. Uses message editing instead of double-send.
  *
  * Security: ownerOnly — only owner numbers can execute this command.
+ *
+ * @module commands/bash
  */
 
 import { spawn } from "child_process";
@@ -315,7 +317,7 @@ function formatOutput({ command, output, code, elapsed, cwd, user, killed }) {
 export default {
     name: "bash",
     aliases: ["sh", "exec", "terminal", "shell"],
-    category: "system",
+    category: "owner",
     description: "Eksekusi command bash di VPS — stateful (owner only)",
     usage: "!bash <command>  |  $ <command>  |  $ reset",
     ownerOnly: true,
@@ -375,6 +377,7 @@ export default {
         try {
             result = await executeInSession(session, command);
         } catch (err) {
+            console.error("[BASH]", err);
             await sock.sendMessage(message.chat, {
                 text: "```╭─ ❌ Gagal: " + err.message + "\n╰─ Coba: $ reset```",
                 edit: sentMsg.key,

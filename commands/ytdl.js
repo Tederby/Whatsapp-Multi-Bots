@@ -1,10 +1,6 @@
 /**
- * ytdl — Quick Download
- *
- * Downloads with the best auto-selected format (≤720p by default).
- * If the estimated size exceeds the WhatsApp video limit (64 MB),
- * the bot cascades down to lower resolutions automatically.
- * Sends the result as an inline-playable video.
+ * @fileoverview Quick video/audio downloader with auto-resolution cascading.
+ * @module commands/ytdl
  */
 
 import fs from "fs";
@@ -18,14 +14,21 @@ import setting from "../setting.js";
 export default {
     name: "ytdl",
     aliases: ["video", "ytv", "mp4"],
-    category: "download",
+    category: "downloader",
     description: "Quick video/audio download (auto format)",
     usage: "!ytdl <url>",
 
     async handler({ message, sock, args, prefix }) {
+        const p = prefix || "!";
         const url = args[0];
         if (!url || !isUrl(url)) {
-            return message.reply("❌ Masukkan URL yang valid.\nContoh: `!ytdl https://youtube.com/watch?v=xxx`");
+            return message.reply(
+                `╭━━━〔 🎬 YTDL 〕━━━\n` +
+                `┃ ❌ Masukkan URL yang valid.\n` +
+                `┃ ⋄ Format: *${p}ytdl <url>*\n` +
+                `┃ ⋄ Contoh: *${p}ytdl https://youtube.com/watch?v=xxx*\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━`
+            );
         }
 
         // ── 1. Fetch info ───────────────────────────────────────────
@@ -43,8 +46,7 @@ export default {
 
         // ── 2. Format (Simple yt-dlp execution) ─────────────────────
         const maxSize = setting.ytdlp.maxFileSize;
-        // Gunakan format selector bawaan yang universal (misal: membatasi hingga 720p)
-        // Ini lebih aman untuk link non-youtube (TikTok, IG, dll) daripada filter JSON.
+        // Use universal default format selector (capping resolution up to 720p)
         const chosenFormat = setting.ytdlp.defaultFormats ? setting.ytdlp.defaultFormats[0] : "bv*[height<=720]+ba/b";
 
         // ── 3. Acquire queue slot ───────────────────────────────────
@@ -71,12 +73,13 @@ export default {
                     mimetype: "video/mp4",
                     fileName: `${sanitizeFilename(title)}.mp4`,
                     caption: [
-                        `🎬 *${title}*`,
-                        `📏 Durasi: ${duration}`,
-                        `🌐 Platform: ${platform}`,
-                        `📦 Ukuran: ${formatSize(stat.size)}`,
-                        ``,
-                        `💡 Gunakan \`${prefix}ytdlf\` untuk format kustom`,
+                        `╭━━━〔 🎬 VIDEO DOWNLOAD 〕━━━`,
+                        `┃ ⋄ Judul : *${title}*`,
+                        `┃ ⋄ Durasi : ${duration}`,
+                        `┃ ⋄ Platform : ${platform}`,
+                        `┃ ⋄ Ukuran : ${formatSize(stat.size)}`,
+                        `╰━━━━━━━━━━━━━━━━━━━━`,
+                        `💡 Gunakan *${p}ytdlf* untuk opsi format & resolusi manual.`,
                     ].join("\n"),
                 }, { quoted: message, ephemeralExpiration: message.contextInfo?.expiration });
             } else {
@@ -85,16 +88,17 @@ export default {
                 await sock.sendMessage(message.chat, {
                     video: fs.readFileSync(filePath),
                     caption: [
-                        `🎬 *${title}*`,
-                        `📏 Durasi: ${duration}`,
-                        `🌐 Platform: ${platform}`,
-                        ``,
-                        `💡 Gunakan \`${prefix}ytdlf\` untuk format kustom`,
+                        `╭━━━〔 🎬 VIDEO DOWNLOAD 〕━━━`,
+                        `┃ ⋄ Judul : *${title}*`,
+                        `┃ ⋄ Durasi : ${duration}`,
+                        `┃ ⋄ Platform : ${platform}`,
+                        `╰━━━━━━━━━━━━━━━━━━━━`,
+                        `💡 Gunakan *${p}ytdlf* untuk opsi format & resolusi manual.`,
                     ].join("\n"),
                 }, { quoted: message, ephemeralExpiration: message.contextInfo?.expiration });
             }
         } catch (err) {
-            console.error("[ytdl]", err);
+            console.error("[YTDL]", err);
             await update("❌ Gagal mengunduh. " + (err.message || "Coba lagi nanti."));
         } finally {
             tryDelete(filePath);

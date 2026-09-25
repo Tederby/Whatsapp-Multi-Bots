@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Translate text using Gemini AI.
+ * @module commands/translate
+ */
+
 import axios from "axios";
 import { jidNormalizedUser } from "baileys";
 import { getUser, resolveUserId } from "../lib/database.js";
@@ -23,7 +28,7 @@ function formatPhoneNumber(num) {
 function resolveMentionsInText(text, message) {
     if (!text) return text;
 
-    // Kumpulkan seluruh mention JID dari pesan utama dan pesan yang di-reply
+    // Collect all mention JIDs from main message and quoted message
     const mentions = [
         ...(message.mentionedJid || []),
         ...(message.quoted?.mentionedJid || [])
@@ -31,13 +36,13 @@ function resolveMentionsInText(text, message) {
 
     const existingMentionIds = mentions.map(jid => jid.split('@')[0]);
 
-    // Parsing manual tag angka (misal @628123456789)
+    // Parse numeric mention tags (e.g., @628123456789)
     const manualMentions = [...text.matchAll(/@(\d{10,16})/g)]
         .map(v => v[1])
         .filter(num => !existingMentionIds.includes(num))
         .map(num => num + '@s.whatsapp.net');
 
-    // Parsing manual LID tag (misal @123456789012345@lid)
+    // Parse LID mention tags (e.g., @123456789012345@lid)
     const manualLidMentions = [...text.matchAll(/@(\d{10,20})@lid/g)]
         .map(v => v[1])
         .filter(num => !existingMentionIds.includes(num))
@@ -110,7 +115,7 @@ async function callGemini(model, prompt, apiKey) {
     const res = await axios.post(url, {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-            // Dinaikin dikit jadi 0.4 biar dapet balance antara kaku & puitis
+            // Slightly elevated temperature for poetic vs literal balance
             temperature: 0.4,
             maxOutputTokens: 2048,
         },
@@ -156,17 +161,22 @@ export default {
     category: "tools",
     description: "Terjemahkan teks ke bahasa lain menggunakan AI (Gemini)",
     usage: "!translate <kode bahasa> <teks> atau reply pesan dengan !translate <kode bahasa>",
-    async handler({ message, args, rawArgs }) {
+    async handler({ message, args, rawArgs, prefix }) {
         const apiKey = setting.gemini?.apiKey || process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return message.reply("❌ GEMINI_API_KEY belum diatur di file .env.");
         }
 
+        const p = prefix || "!";
+
         if (args.length === 0) {
             return message.reply(
-                "❌ Sertakan kode bahasa tujuan.\n" +
-                "Contoh: `!translate id Hello world`\n" +
-                "Atau reply pesan dengan: `!translate en`"
+                `╭━━━〔 🌐 TRANSLATE 〕━━━\n` +
+                `┃ ❌ Sertakan kode bahasa tujuan.\n` +
+                `┃ ⋄ Format: *${p}translate <kode> <teks>*\n` +
+                `┃ ⋄ Contoh: *${p}translate id Hello world*\n` +
+                `┃ ⋄ Atau reply: *${p}translate en*\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━`
             );
         }
 
@@ -196,12 +206,15 @@ export default {
 
         if (!sourceText) {
             return message.reply(
-                "❌ Tidak ada teks untuk diterjemahkan.\n" +
-                "Gunakan: `!translate id <teks>` atau reply pesan dengan `!translate id`"
+                `╭━━━〔 🌐 TRANSLATE 〕━━━\n` +
+                `┃ ❌ Tidak ada teks untuk diterjemahkan.\n` +
+                `┃ ⋄ Gunakan: *${p}translate <kode> <teks>*\n` +
+                `┃ ⋄ Atau reply pesan dengan: *${p}translate <kode>*\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━`
             );
         }
 
-        // Resolusi tag/mention (@62812... atau @lid...) menjadi nama user (@Name)
+        // Resolve mentions (@62812... or @lid...) to human-readable names
         sourceText = resolveMentionsInText(sourceText, message);
 
         const update = await message.replyUpdate("⏳ Menerjemahkan...");

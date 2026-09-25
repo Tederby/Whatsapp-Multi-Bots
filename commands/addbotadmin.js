@@ -1,3 +1,7 @@
+/**
+ * AddBotAdmin — Grant Bot Admin privileges to a user (System Owner Only).
+ */
+
 import { jidNormalizedUser } from "baileys";
 import { setBotAdmin, resolveUserId, isBotAdmin } from "../lib/database.js";
 import setting from "../setting.js";
@@ -5,10 +9,10 @@ import setting from "../setting.js";
 export default {
     name: "addbotadmin",
     aliases: ["promote-bot"],
-    category: "system",
+    category: "owner",
     description: "Mengangkat seseorang menjadi Bot Admin (System Owner Only)",
     usage: "!addbotadmin @user",
-    ownerOnly: true, // HANYA hardcoded owner yang bisa eksekusi
+    ownerOnly: true,
 
     async handler({ message, sock, args, sender, prefix }) {
         try {
@@ -23,7 +27,15 @@ export default {
             }
 
             if (!target) {
-                return message.reply(`Tag, reply, atau masukkan nomor user yang ingin diangkat menjadi Bot Admin.\nContoh: \`${prefix}addbotadmin @user\``);
+                return message.reply(
+                    "╭━━━〔 🛡️ ADD BOT ADMIN 〕━━━\n" +
+                    "┃ Mengangkat user menjadi Bot Admin.\n" +
+                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                    "╭───「 📖 Penggunaan 」\n" +
+                    `│ ⋄ \`${prefix || "!"}addbotadmin @user\`\n` +
+                    `│ ⋄ \`${prefix || "!"}addbotadmin <nomor>\`\n` +
+                    "╰──────────────"
+                );
             }
 
             // Resolve LID → PN agar bot admin tersimpan dengan key PN yang konsisten
@@ -72,7 +84,7 @@ export default {
                 { quoted: message }
             );
         } catch (error) {
-            console.error("[ADDBOTADMIN CMD]", error);
+            console.error("[ADDBOTADMIN]", error);
             message.reply("❌ Terjadi kesalahan saat mengangkat Bot Admin.");
         }
     }

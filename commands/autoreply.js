@@ -1,3 +1,10 @@
+/**
+ * Autoreply — Manage per-group automated text and sticker responses.
+ */
+
+import fs from "fs";
+import path from "path";
+import { downloadContentFromMessage } from "baileys";
 import { getGroupConfig, saveGroupConfig } from "../lib/database.js";
 
 export default {
@@ -15,189 +22,213 @@ export default {
     },
 
     async handler({ message, rawArgs, cleanArgs, flags, prefix }) {
-        const textArgs = (rawArgs || "").trim();
-        const chat = message.chat;
-        const config = getGroupConfig(chat);
+        try {
+            const textArgs = (rawArgs || "").trim();
+            const chat = message.chat;
+            const config = getGroupConfig(chat);
 
-        if (!textArgs && !message.quoted) {
-            return await message.reply(`❌ Format salah. Gunakan:\n1. Tambah: \`${prefix}autoreply kata kunci | teks balasan\`\n2. Hapus: \`${prefix}autoreply -d kata kunci\` atau \`--del\`\n3. Lihat daftar: \`${prefix}autoreply -l\` atau \`--list\``);
-        }
-
-        const isList = Boolean(flags?.list || textArgs.toLowerCase() === "--list" || textArgs.toLowerCase() === "-l");
-        if (isList) {
-            const replies = config.autoReplies || {};
-            const keys = Object.keys(replies);
-            
-            if (keys.length === 0) {
-                return await message.reply("Belum ada auto-reply yang disetel di grup ini.");
+            if (!textArgs && !message.quoted) {
+                return await message.reply(
+                    "╭━━━〔 🤖 AUTOREPLY 〕━━━\n" +
+                    "┃ Pengaturan balasan otomatis grup ini.\n" +
+                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                    "╭───「 📖 Penggunaan 」\n" +
+                    `│ ⋄ \`${prefix}autoreply <trigger> | <balasan>\`\n` +
+                    `│ ⋄ \`${prefix}autoreply -l\` (lihat daftar)\n` +
+                    `│ ⋄ \`${prefix}autoreply -d <trigger/index>\` (hapus)\n` +
+                    "╰──────────────\n\n" +
+                    `_Dapat juga me-reply pesan/stiker dengan \`${prefix}ar trigger|\`_`
+                );
             }
-            
-            let listMsg = "📝 *Daftar Auto-Reply Grup Ini:*\n\n";
-            keys.forEach((key, index) => {
-                const displayKey = key.startsWith("sticker:") ? "[Stiker]" : key;
-                const displayRes = replies[key].type === "sticker" ? "[Balasan Stiker]" : replies[key].text;
-                listMsg += `${index + 1}. *Trigger:* ${displayKey}\n   *Balasan:* ${displayRes}\n\n`;
-            });
-            
-            return await message.reply(listMsg.trim());
-        }
 
-        const isDel = Boolean(flags?.delete || textArgs.toLowerCase() === "--del" || textArgs.toLowerCase() === "-d" || textArgs.toLowerCase().startsWith("--del ") || textArgs.toLowerCase().startsWith("-d "));
-        if (isDel) {
-            let triggerToDelete = "";
-            
-            if (message.quoted && (!cleanArgs || cleanArgs.length === 0 || textArgs.toLowerCase() === "--del" || textArgs.toLowerCase() === "-d")) {
-                if (message.quoted.message?.stickerMessage) {
-                    const hash = Buffer.from(message.quoted.message.stickerMessage.fileSha256).toString('base64');
-                    triggerToDelete = `sticker:${hash}`;
-                } else if (message.quoted.text) {
-                    triggerToDelete = message.quoted.text.toLowerCase();
+            const isList = Boolean(flags?.list || textArgs.toLowerCase() === "--list" || textArgs.toLowerCase() === "-l");
+            if (isList) {
+                const replies = config.autoReplies || {};
+                const keys = Object.keys(replies);
+
+                if (keys.length === 0) {
+                    return await message.reply("⚠️ Belum ada auto-reply yang disetel di grup ini.");
                 }
-            } else if (cleanArgs && cleanArgs.length > 0) {
-                triggerToDelete = cleanArgs.join(" ").trim().toLowerCase();
-            } else {
-                triggerToDelete = textArgs.replace(/^--(del|delete)\s*|^-d\s*/i, "").trim().toLowerCase();
-            }
-            
-            if (!triggerToDelete) {
-                return await message.reply(`❌ Masukkan kata kunci atau index yang ingin dihapus, atau reply pesan yang ingin dihapus trigger-nya. Contoh: \`${prefix}autoreply -d halo\` atau \`${prefix}autoreply -d 1\``);
+
+                let listMsg = `╭━━━〔 📝 DAFTAR AUTOREPLY 〕━━━\n`;
+                listMsg += `┃ Total: ${keys.length} auto-reply\n`;
+                listMsg += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+                keys.forEach((key, index) => {
+                    const displayKey = key.startsWith("sticker:") ? "[Stiker]" : key;
+                    const displayRes = replies[key].type === "sticker" ? "[Balasan Stiker]" : replies[key].text;
+                    listMsg += `╭───「 ${index + 1}. ${displayKey} 」\n`;
+                    listMsg += `│ 💬 *Balasan:* ${displayRes}\n`;
+                    listMsg += `╰──────────────\n\n`;
+                });
+                listMsg += `_Gunakan \`${prefix}autoreply -d <kata/nomor>\` untuk menghapus._`;
+
+                return await message.reply(listMsg.trim());
             }
 
-            const replies = config.autoReplies || {};
-            const keys = Object.keys(replies);
-            let deleted = false;
-            let mediaPathToDelete = null;
-            let finalDeletedTrigger = triggerToDelete;
-            
-            // 1. Coba hapus berdasarkan EXACT MATCH trigger terlebih dahulu
-            for (const key of keys) {
-                if (key.toLowerCase() === triggerToDelete.toLowerCase()) {
-                    if (replies[key].type === "sticker" && replies[key].mediaPath) {
-                        mediaPathToDelete = replies[key].mediaPath;
+            const isDel = Boolean(flags?.delete || textArgs.toLowerCase() === "--del" || textArgs.toLowerCase() === "-d" || textArgs.toLowerCase().startsWith("--del ") || textArgs.toLowerCase().startsWith("-d "));
+            if (isDel) {
+                let triggerToDelete = "";
+
+                if (message.quoted && (!cleanArgs || cleanArgs.length === 0 || textArgs.toLowerCase() === "--del" || textArgs.toLowerCase() === "-d")) {
+                    if (message.quoted.message?.stickerMessage) {
+                        const hash = Buffer.from(message.quoted.message.stickerMessage.fileSha256).toString('base64');
+                        triggerToDelete = `sticker:${hash}`;
+                    } else if (message.quoted.text) {
+                        triggerToDelete = message.quoted.text.toLowerCase();
                     }
-                    delete replies[key];
-                    deleted = true;
-                    finalDeletedTrigger = key;
-                    break;
+                } else if (cleanArgs && cleanArgs.length > 0) {
+                    triggerToDelete = cleanArgs.join(" ").trim().toLowerCase();
+                } else {
+                    triggerToDelete = textArgs.replace(/^--(del|delete)\s*|^-d\s*/i, "").trim().toLowerCase();
                 }
-            }
 
-            // 2. Jika tidak ada exact match dan input adalah angka, coba hapus berdasarkan index
-            if (!deleted && /^\d+$/.test(triggerToDelete)) {
-                const indexToDelete = parseInt(triggerToDelete, 10) - 1; // 0-based index
-                if (indexToDelete >= 0 && indexToDelete < keys.length) {
-                    const key = keys[indexToDelete];
-                    if (replies[key].type === "sticker" && replies[key].mediaPath) {
-                        mediaPathToDelete = replies[key].mediaPath;
-                    }
-                    delete replies[key];
-                    deleted = true;
-                    finalDeletedTrigger = key;
+                if (!triggerToDelete) {
+                    return await message.reply(`❌ Masukkan kata kunci atau index yang ingin dihapus, atau reply pesan yang ingin dihapus trigger-nya.\nContoh: \`${prefix}autoreply -d halo\` atau \`${prefix}autoreply -d 1\``);
                 }
-            }
 
-            if (deleted) {
-                if (mediaPathToDelete && (await import('fs')).existsSync(mediaPathToDelete)) {
-                    (await import('fs')).unlinkSync(mediaPathToDelete);
-                }
-                config.autoReplies = replies;
-                saveGroupConfig(chat, config);
-                const displayKey = finalDeletedTrigger.startsWith("sticker:") ? "[Stiker]" : finalDeletedTrigger;
-                return await message.reply(`✅ Berhasil menghapus auto-reply untuk: *${displayKey}*`);
-            } else {
-                return await message.reply(`❌ Kata kunci atau index tidak ditemukan di daftar auto-reply.`);
-            }
-        }
+                const replies = config.autoReplies || {};
+                const keys = Object.keys(replies);
+                let deleted = false;
+                let mediaPathToDelete = null;
+                let finalDeletedTrigger = triggerToDelete;
 
-        // Add auto reply
-        const splitArgs = textArgs.split("|");
-        
-        let trigger = splitArgs[0] ? splitArgs[0].trim() : "";
-        let responseText = splitArgs.slice(1).join("|").trim();
-        
-        let responseType = "text";
-        let responseMediaPath = "";
-
-        const isQuotedSticker = !!message.quoted?.message?.stickerMessage;
-        const quotedText = message.quoted?.text || "";
-        const quotedStickerMsg = message.quoted?.message?.stickerMessage;
-
-        // Case 1: !ar trigger| (Response is the quoted msg)
-        if (trigger && !responseText && textArgs.includes("|") && message.quoted) {
-            if (isQuotedSticker) {
-                responseType = "sticker";
-                await message.reply("⏳ Menyimpan stiker untuk autoreply...");
-                
-                // Fix DNS for downloading media if needed
-                if (quotedStickerMsg?.url && quotedStickerMsg.url.includes('a.whatsapp.net')) {
-                    quotedStickerMsg.url = quotedStickerMsg.url.replace('a.whatsapp.net', 'mmg.whatsapp.net');
-                }
-                const { downloadContentFromMessage } = await import("baileys");
-                const fs = await import("fs");
-                const path = await import("path");
-                
-                const stream = await downloadContentFromMessage(quotedStickerMsg, 'sticker');
-                const chunks = [];
-                for await (const chunk of stream) { chunks.push(chunk); }
-                const buffer = Buffer.concat(chunks);
-                
-                const arDir = path.resolve(process.cwd(), "database", "autoreply");
-                if (!fs.existsSync(arDir)) fs.mkdirSync(arDir, { recursive: true });
-                
-                responseMediaPath = path.join(arDir, `${chat.split('@')[0]}_${Date.now()}.webp`);
-                fs.writeFileSync(responseMediaPath, buffer);
-                responseText = "[Stiker]";
-            } else if (quotedText) {
-                responseText = quotedText;
-            } else {
-                return await message.reply("❌ Harap reply teks atau stiker untuk balasannya.");
-            }
-        }
-        // Case 2: !ar |respond (Trigger is the quoted msg)
-        else if (!trigger && responseText && textArgs.includes("|") && message.quoted) {
-            if (isQuotedSticker) {
-                const hash = Buffer.from(quotedStickerMsg.fileSha256).toString('base64');
-                trigger = `sticker:${hash}`;
-            } else if (quotedText) {
-                trigger = quotedText.trim();
-            } else {
-                return await message.reply("❌ Harap reply teks atau stiker untuk trigger-nya.");
-            }
-        }
-
-        if (!trigger || !responseText) {
-            return await message.reply(`❌ Format salah. Gunakan tanda *|* (pipa) untuk memisahkan kata kunci dan balasan.\nContoh: \`${prefix}autoreply Halo | Halo juga\``);
-        }
-
-        // Ambil mention dari pesan
-        const mentions = message.mentionedJid || [];
-
-        if (!config.autoReplies) config.autoReplies = {};
-        
-        // Cek jika sudah ada dengan key yang sama tapi case berbeda, hapus dulu
-        for (const key of Object.keys(config.autoReplies)) {
-            if (key.toLowerCase() === trigger.toLowerCase()) {
-                if (config.autoReplies[key].type === "sticker" && config.autoReplies[key].mediaPath) {
-                    const fs = await import('fs');
-                    if (fs.existsSync(config.autoReplies[key].mediaPath)) {
-                        fs.unlinkSync(config.autoReplies[key].mediaPath);
+                // 1. Coba hapus berdasarkan EXACT MATCH trigger terlebih dahulu
+                for (const key of keys) {
+                    if (key.toLowerCase() === triggerToDelete.toLowerCase()) {
+                        if (replies[key].type === "sticker" && replies[key].mediaPath) {
+                            mediaPathToDelete = replies[key].mediaPath;
+                        }
+                        delete replies[key];
+                        deleted = true;
+                        finalDeletedTrigger = key;
+                        break;
                     }
                 }
-                delete config.autoReplies[key];
+
+                // 2. Jika tidak ada exact match dan input adalah angka, coba hapus berdasarkan index
+                if (!deleted && /^\d+$/.test(triggerToDelete)) {
+                    const indexToDelete = parseInt(triggerToDelete, 10) - 1; // 0-based index
+                    if (indexToDelete >= 0 && indexToDelete < keys.length) {
+                        const key = keys[indexToDelete];
+                        if (replies[key].type === "sticker" && replies[key].mediaPath) {
+                            mediaPathToDelete = replies[key].mediaPath;
+                        }
+                        delete replies[key];
+                        deleted = true;
+                        finalDeletedTrigger = key;
+                    }
+                }
+
+                if (deleted) {
+                    if (mediaPathToDelete && fs.existsSync(mediaPathToDelete)) {
+                        fs.unlinkSync(mediaPathToDelete);
+                    }
+                    config.autoReplies = replies;
+                    saveGroupConfig(chat, config);
+                    const displayKey = finalDeletedTrigger.startsWith("sticker:") ? "[Stiker]" : finalDeletedTrigger;
+                    return await message.reply(`✅ Berhasil menghapus auto-reply untuk: *${displayKey}*`);
+                } else {
+                    return await message.reply(`❌ Kata kunci atau index tidak ditemukan di daftar auto-reply.`);
+                }
             }
+
+            // Add auto reply
+            const splitArgs = textArgs.split("|");
+
+            let trigger = splitArgs[0] ? splitArgs[0].trim() : "";
+            let responseText = splitArgs.slice(1).join("|").trim();
+
+            let responseType = "text";
+            let responseMediaPath = "";
+
+            const isQuotedSticker = !!message.quoted?.message?.stickerMessage;
+            const quotedText = message.quoted?.text || "";
+            const quotedStickerMsg = message.quoted?.message?.stickerMessage;
+
+            // Case 1: !ar trigger| (Response is the quoted msg)
+            if (trigger && !responseText && textArgs.includes("|") && message.quoted) {
+                if (isQuotedSticker) {
+                    responseType = "sticker";
+                    await message.reply("⏳ Menyimpan stiker untuk autoreply...");
+
+                    // Fix DNS for downloading media if needed
+                    if (quotedStickerMsg?.url && quotedStickerMsg.url.includes('a.whatsapp.net')) {
+                        quotedStickerMsg.url = quotedStickerMsg.url.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+                    }
+
+                    const stream = await downloadContentFromMessage(quotedStickerMsg, 'sticker');
+                    const chunks = [];
+                    for await (const chunk of stream) { chunks.push(chunk); }
+                    const buffer = Buffer.concat(chunks);
+
+                    const arDir = path.resolve(process.cwd(), "database", "autoreply");
+                    if (!fs.existsSync(arDir)) fs.mkdirSync(arDir, { recursive: true });
+
+                    responseMediaPath = path.join(arDir, `${chat.split('@')[0]}_${Date.now()}.webp`);
+                    fs.writeFileSync(responseMediaPath, buffer);
+                    responseText = "[Stiker]";
+                } else if (quotedText) {
+                    responseText = quotedText;
+                } else {
+                    return await message.reply("❌ Harap reply teks atau stiker untuk balasannya.");
+                }
+            }
+            // Case 2: !ar |respond (Trigger is the quoted msg)
+            else if (!trigger && responseText && textArgs.includes("|") && message.quoted) {
+                if (isQuotedSticker) {
+                    const hash = Buffer.from(quotedStickerMsg.fileSha256).toString('base64');
+                    trigger = `sticker:${hash}`;
+                } else if (quotedText) {
+                    trigger = quotedText.trim();
+                } else {
+                    return await message.reply("❌ Harap reply teks atau stiker untuk trigger-nya.");
+                }
+            }
+
+            if (!trigger || !responseText) {
+                return await message.reply(
+                    `❌ Format salah. Gunakan tanda *|* (pipa) untuk memisahkan kata kunci dan balasan.\nContoh: \`${prefix}autoreply Halo | Halo juga\``
+                );
+            }
+
+            // Ambil mention dari pesan
+            const mentions = message.mentionedJid || [];
+
+            if (!config.autoReplies) config.autoReplies = {};
+
+            // Cek jika sudah ada dengan key yang sama tapi case berbeda, hapus dulu
+            for (const key of Object.keys(config.autoReplies)) {
+                if (key.toLowerCase() === trigger.toLowerCase()) {
+                    if (config.autoReplies[key].type === "sticker" && config.autoReplies[key].mediaPath) {
+                        if (fs.existsSync(config.autoReplies[key].mediaPath)) {
+                            fs.unlinkSync(config.autoReplies[key].mediaPath);
+                        }
+                    }
+                    delete config.autoReplies[key];
+                }
+            }
+
+            config.autoReplies[trigger] = {
+                type: responseType,
+                text: responseText,
+                mediaPath: responseMediaPath,
+                mentions: mentions
+            };
+
+            saveGroupConfig(chat, config);
+
+            const displayKey = trigger.startsWith("sticker:") ? "[Stiker]" : trigger;
+            const displayRes = responseType === "sticker" ? "[Balasan Stiker]" : responseText;
+
+            let successMsg = `╭━━━〔 ✅ AUTOREPLY DITAMBAHKAN 〕━━━\n`;
+            successMsg += `┃ 🎯 Trigger : ${displayKey}\n`;
+            successMsg += `┃ 💬 Balasan : ${displayRes}\n`;
+            successMsg += `╰━━━━━━━━━━━━━━━━━━━━`;
+
+            await message.reply(successMsg);
+        } catch (error) {
+            console.error("[AUTOREPLY]", error);
+            await message.reply("❌ Terjadi kesalahan saat memproses perintah autoreply.");
         }
-
-        config.autoReplies[trigger] = {
-            type: responseType,
-            text: responseText,
-            mediaPath: responseMediaPath,
-            mentions: mentions
-        };
-
-        saveGroupConfig(chat, config);
-
-        const displayKey = trigger.startsWith("sticker:") ? "[Stiker]" : trigger;
-        const displayRes = responseType === "sticker" ? "[Balasan Stiker]" : responseText;
-        await message.reply(`✅ Berhasil menambahkan auto-reply!\n\n*Trigger:* ${displayKey}\n*Balasan:* ${displayRes}`);
     }
 };

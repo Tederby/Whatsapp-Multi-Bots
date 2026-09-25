@@ -1,3 +1,9 @@
+/**
+ * KBBI — Search word definitions in Kamus Besar Bahasa Indonesia.
+ *
+ * @module commands/kbbi
+ */
+
 import axios from "axios";
 
 export default {
@@ -6,9 +12,9 @@ export default {
     category: "search",
     description: "Mencari arti kata dari Kamus Besar Bahasa Indonesia (KBBI)",
     usage: "!kbbi <kata>",
-    async handler({ message, args, sock }) {
+    async handler({ message, args, sock, prefix }) {
         if (args.length === 0) {
-            await message.reply("❌ Berikan kata yang ingin dicari di KBBI.\nContoh: `!kbbi makan`");
+            await message.reply(`❌ Berikan kata yang ingin dicari di KBBI.\nContoh: \`${prefix || "!"}kbbi makan\``);
             return;
         }
 
@@ -108,7 +114,7 @@ export default {
                 errorMsg = `HTTP ${err.response.status}: ${err.response.statusText}`;
             }
 
-            console.error("KBBI Command Error:", err);
+            console.error("[KBBI]", err);
             await message.reply(`❌ Terjadi kesalahan saat mencari kata di KBBI: ${errorMsg}`);
         }
     }

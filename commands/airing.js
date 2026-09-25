@@ -1,3 +1,9 @@
+/**
+ * Airing Schedule — Weekly anime broadcasting schedule from AniList.
+ *
+ * @module commands/airing
+ */
+
 import { getAiringSchedule, formatAiringTime } from "../services/anilist.js";
 
 const DAY_NAMES_ID = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -177,7 +183,7 @@ export default {
             await sock.sendMessage(message.chat, { text: text.trim() }, { quoted: message });
 
         } catch (err) {
-            console.error("[Airing Command Error]:", err);
+            console.error("[AIRING]", err);
             if (err.code === "ETIMEDOUT" || err.code === "ECONNABORTED") {
                 await message.reply("❌ Server AniList sedang sibuk atau timeout. Silakan coba beberapa saat lagi.");
             } else if (err.response?.status === 429) {

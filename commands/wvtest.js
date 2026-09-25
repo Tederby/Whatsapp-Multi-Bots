@@ -12,6 +12,8 @@
  * 6. !wvtest audio          — Deep audio playback and decoding sandbox audit
  * 7. !wvtest links          — URI schemes, intent URLs, and native interception audit
  * 8. !wvtest lifecycle      — State retention audit across scrolling and app backgrounding
+ *
+ * @module commands/wvtest
  */
 
 import { randomUUID } from "crypto";
@@ -35,7 +37,7 @@ const DEFAULT_AUTO_DELETE_MS = 180000; // 3 minutes for testing sessions
 export default {
     name: "wvtest",
     aliases: ["webviewtest", "wvprobe", "wtest"],
-    category: "tools",
+    category: "owner",
     description: "Empirical diagnostic suite and size boundary probes for WhatsApp in-app webviews",
     usage: "!wvtest [suite|probe|proto|form|audio|links|lifecycle] [-k/--keep]",
 
@@ -82,11 +84,11 @@ export default {
                     `┃\n` +
                     `┃ 📱 *Langkah Pengujian:* Buka pesan webview di atas.\n` +
                     `┃ Test runner otomatis akan mengaudit 50+ kapabilitas browser:\n` +
-                    `┃ • IndexedDB Real Read/Write Transaction\n` +
-                    `┃ • WebAssembly Real Bytecode Execution\n` +
-                    `┃ • Outbound Fetch (CORS & Localhost) & WebSocket Handshake\n` +
-                    `┃ • Deep Window Host Bridge Inspection\n` +
-                    `┃ • HTML5 Video & FontFace API Sandbox\n` +
+                    `┃ ⋄ IndexedDB Real Read/Write Transaction\n` +
+                    `┃ ⋄ WebAssembly Real Bytecode Execution\n` +
+                    `┃ ⋄ Outbound Fetch (CORS & Localhost) & WebSocket Handshake\n` +
+                    `┃ ⋄ Deep Window Host Bridge Inspection\n` +
+                    `┃ ⋄ HTML5 Video & FontFace API Sandbox\n` +
                     `┃\n` +
                     `┃ 📋 Gunakan tombol *'Salin Ringkasan'* di webview untuk\n` +
                     `┃ mendokumentasikan temuan ke chat ini.\n` +
@@ -94,7 +96,7 @@ export default {
                     `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
                 );
             } catch (err) {
-                console.error("[wvtest suite error]", err);
+                console.error("[WVTEST]", err);
                 return message.reply(`❌ Gagal meluncurkan diagnostic suite: ${err.message}`);
             }
         }
@@ -121,9 +123,9 @@ export default {
                             html,
                         });
                         scheduleDeletion(sent);
-                        console.log(`[wvtest probe] Dispatched ${sizeKb}KB (${exactBytes}B)`);
+                        console.log(`[WVTEST] Dispatched probe ${sizeKb}KB (${exactBytes}B)`);
                     } catch (probeErr) {
-                        console.error(`[wvtest probe] Failed ${sizeKb}KB:`, probeErr.message);
+                        console.error(`[WVTEST] Failed ${sizeKb}KB:`, probeErr.message);
                     }
                     if (i < rangeSizesKb.length - 1) {
                         await new Promise(r => setTimeout(r, 2000));
@@ -133,7 +135,7 @@ export default {
                 return await update(
                     `╭━━━〔 🔬 RANGE PROBE SELESAI 〕━━━\n` +
                     `┃ ${rangeSizesKb.length} stansa probe terkalibrasi telah dikirim:\n` +
-                    rangeSizesKb.map(k => `┃ • ${k >= 1024 ? "🔴" : "🟡"} ${k} KB (${(k * 1024).toLocaleString()} Bytes)`).join("\n") + "\n" +
+                    rangeSizesKb.map(k => `┃ ⋄ ${k >= 1024 ? "🔴" : "🟡"} ${k} KB (${(k * 1024).toLocaleString()} Bytes)`).join("\n") + "\n" +
                     `┃\n` +
                     `┃ 💡 *Cara Membaca Hasil:* Nomor probe tertinggi yang\n` +
                     `┃ muncul di layar Anda adalah titik batas eksak (drop ceiling)\n` +
@@ -149,8 +151,8 @@ export default {
                     `╭━━━〔 🔬 *STANZA SIZE PROBE* 〕━━━\n` +
                     `┃ Gunakan untuk menguji batas ukuran payload stansa:\n` +
                     `┃\n` +
-                    `┃ • \`${prefix}wvtest probe <angka_kb>\` (Contoh: \`${prefix}wvtest probe 1024\`)\n` +
-                    `┃ • \`${prefix}wvtest probe range\` (Kirim stansa 950KB - 1300KB)\n` +
+                    `┃ ⋄ \`${prefix}wvtest probe <angka_kb>\` (Contoh: \`${prefix}wvtest probe 1024\`)\n` +
+                    `┃ ⋄ \`${prefix}wvtest probe range\` (Kirim stansa 950KB - 1300KB)\n` +
                     `┃\n` +
                     `┃ Tambahkan \`--keep\` agar kartu probe tidak otomatis terhapus.\n` +
                     `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
@@ -377,12 +379,13 @@ export default {
 
                 return message.reply(
                     `🔬 *Proto Mutation '${protoCase}' Berhasil Di-Relay!*\n` +
-                    `• Title: ${testTitle}\n` +
-                    `• BotJid: \`${targetBotJid}\`\n` +
-                    `• Sections: ${sectionsArray.length}\n` +
+                    `⋄ Title: ${testTitle}\n` +
+                    `⋄ BotJid: \`${targetBotJid}\`\n` +
+                    `⋄ Sections: ${sectionsArray.length}\n` +
                     `Periksa di chat apakah WhatsApp me-render payload mutasi ini.`
                 );
             } catch (err) {
+                console.error("[WVTEST]", err);
                 return message.reply(`❌ Proto mutation gagal di-relay: ${err.message}`);
             }
         }
@@ -411,6 +414,7 @@ export default {
                     `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
                 );
             } catch (err) {
+                console.error("[WVTEST]", err);
                 return message.reply(`❌ Gagal mengirim kartu form: ${err.message}`);
             }
         }
@@ -426,6 +430,7 @@ export default {
                 scheduleDeletion(sent);
                 return message.reply("🔗 Kartu uji URI scheme & link interception berhasil dikirim!");
             } catch (err) {
+                console.error("[WVTEST]", err);
                 return message.reply(`❌ Gagal mengirim kartu links: ${err.message}`);
             }
         }
@@ -441,6 +446,7 @@ export default {
                 scheduleDeletion(sent);
                 return message.reply("🎵 Kartu uji audio sandbox & oscillator decoding berhasil dikirim!");
             } catch (err) {
+                console.error("[WVTEST]", err);
                 return message.reply(`❌ Gagal mengirim kartu audio: ${err.message}`);
             }
         }
@@ -456,6 +462,7 @@ export default {
                 scheduleDeletion(sent);
                 return message.reply("⏱️ Kartu uji lifecycle & state persistence berhasil dikirim!");
             } catch (err) {
+                console.error("[WVTEST]", err);
                 return message.reply(`❌ Gagal mengirim kartu lifecycle: ${err.message}`);
             }
         }

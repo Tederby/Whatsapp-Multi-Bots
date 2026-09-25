@@ -4,6 +4,8 @@
  * Owner/BotAdmin only. Scans all participants in the current group
  * and saves any LID→PN mappings found. Useful for pre-populating
  * the identity_map so !profile works immediately for all members.
+ *
+ * @module commands/scanids
  */
 
 import { scanGroupIdentities, getIdentityCount } from "../lib/database.js";
@@ -30,16 +32,19 @@ export default {
             const totalMappings = getIdentityCount();
 
             await update(
-                `✅ *Scan Selesai*\n\n` +
-                `📊 *Hasil:*\n` +
-                `• Peserta di-scan: ${total}\n` +
-                `• Mapping baru tersimpan: ${saved}\n` +
-                `• Total mapping di database: ${totalMappings}\n\n` +
-                `_Mapping ini membantu bot mengenali profil member yang menggunakan LID (Linked Device ID) di grup._`
+                `╭━━━〔 🆔 SCAN IDENTITAS 〕━━━\n` +
+                `┃ Status : ✅ Selesai\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `╭───「 📊 Hasil 」\n` +
+                `│ ⋄ Peserta di-scan        : ${total}\n` +
+                `│ ⋄ Mapping baru tersimpan  : ${saved}\n` +
+                `│ ⋄ Total mapping database : ${totalMappings}\n` +
+                `╰──────────────\n\n` +
+                `_Mapping ini membantu bot mengenali profil member yang menggunakan LID di grup._`
             );
         } catch (error) {
-            console.error("[SCANIDS CMD]", error);
-            message.reply("Terjadi kesalahan saat scanning identitas grup.");
+            console.error("[SCANIDS]", error);
+            message.reply("❌ Terjadi kesalahan saat scanning identitas grup.");
         }
     },
 };

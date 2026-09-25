@@ -1,3 +1,9 @@
+/**
+ * Set Profile Picture — Upload and crop custom bot profile picture for the user.
+ *
+ * @module commands/setpfp
+ */
+
 import { downloadContentFromMessage } from "baileys";
 import { Jimp } from "jimp";
 import path from "path";
@@ -21,7 +27,7 @@ export default {
             const userData = getUser(normalizedSender);
 
             if (!userData.registered) {
-                return message.reply(`❌ Kamu harus terdaftar terlebih dahulu untuk menggunakan fitur ini. Ketik \`${prefix}register\` untuk mendaftar.`);
+                return message.reply(`❌ Kamu harus terdaftar terlebih dahulu untuk menggunakan fitur ini. Ketik \`${prefix || "!"}register\` untuk mendaftar.`);
             }
 
             if (args[0] && (args[0].toLowerCase() === "delete" || args[0].toLowerCase() === "remove")) {
@@ -103,7 +109,15 @@ export default {
                     return message.reply("❌ Gagal mengambil gambar dari link. Pastikan link valid dan langsung menuju ke file gambar.");
                 }
             } else {
-                return message.reply(`❌ Kirim atau reply gambar dengan caption \`${prefix}setpfp\`\nAtau gunakan link: \`${prefix}setpfp https://...\`\nUntuk menghapus: \`${prefix}setpfp delete\``);
+                return message.reply(
+                    `╭━━━〔 🖼️ SET PROFILE PFP 〕━━━\n` +
+                    `┃ Atur foto profil bot kustom.\n` +
+                    `┃\n` +
+                    `┃ ⋄ \`${prefix || "!"}setpfp\` (balas / kirim gambar)\n` +
+                    `┃ ⋄ \`${prefix || "!"}setpfp <url_gambar>\`\n` +
+                    `┃ ⋄ \`${prefix || "!"}setpfp delete\` (hapus foto kustom)\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━`
+                );
             }
 
             if (!buffer) {
@@ -145,10 +159,10 @@ export default {
             // Update database
             setPfp(normalizedSender, filename);
 
-            return message.reply("✅ Foto profil custom berhasil diperbarui! Cek dengan perintah `!profile`.");
+            return message.reply(`✅ Foto profil custom berhasil diperbarui! Cek dengan perintah \`${prefix || "!"}profile\`.`);
 
         } catch (error) {
-            console.error("[SETPFP CMD]", error);
+            console.error("[SETPFP]", error);
             message.reply("❌ Terjadi kesalahan saat memproses gambar. Pastikan file/link yang diberikan adalah gambar yang valid.");
         }
     }

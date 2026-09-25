@@ -1,3 +1,7 @@
+/**
+ * Delete — Delete a message in a group (bot messages or user messages if bot is admin).
+ */
+
 export default {
     name: "delete",
     aliases: ["del"],
@@ -21,7 +25,7 @@ export default {
             }
 
             if (!quotedMessage || !quotedKey || !quotedSender) {
-                return message.reply("Harap kutip pesan yang ingin dihapus!");
+                return message.reply("❌ Harap reply pesan yang ingin dihapus!");
             }
 
             // Pengecekan apakah pesan yang direply adalah dari bot itu sendiri
@@ -32,12 +36,12 @@ export default {
 
             // Jika bukan pesan bot dan pengirim perintah bukan admin, tolak
             if (!isQuotedFromBot && !isGroupAdmins) {
-                return message.reply("Kamu bukan admin grup dan hanya bisa menghapus pesan dari bot.");
+                return message.reply("❌ Kamu bukan admin grup dan hanya bisa menghapus pesan dari bot.");
             }
 
             // Jika bukan pesan bot dan bot bukan admin, tolak
             if (!isQuotedFromBot && !isBotGroupAdmins) {
-                return message.reply("Bot bukan admin grup, tidak bisa menghapus pesan pengguna lain.");
+                return message.reply("❌ Bot bukan admin grup, tidak bisa menghapus pesan pengguna lain.");
             }
 
             // Hapus pesan menggunakan context key dari pesan yang dikutip
@@ -51,8 +55,8 @@ export default {
             });
 
         } catch (error) {
-            console.error('Delete command error:', error);
-            message.reply("Gagal menghapus pesan.");
+            console.error('[DELETE]', error);
+            message.reply("❌ Gagal menghapus pesan.");
         }
     }
-};
+};

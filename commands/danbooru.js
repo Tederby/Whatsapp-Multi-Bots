@@ -1,3 +1,9 @@
+/**
+ * Danbooru — Gacha random anime art or search posts by tags/ID/URL.
+ *
+ * @module commands/danbooru
+ */
+
 import { fetchDanbooruPost, sendDanbooruMessage, validateDanbooruTags, fetchDanbooruByTags, getFuzzyTagSuggestions } from "../lib/danbooru.js";
 
 export default {
@@ -6,7 +12,7 @@ export default {
     category: "anime",
     description: "Gacha gambar random dari Danbooru, atau cari spesifik menggunakan Tag/ID/Link",
     usage: "!d [tag1] [tag2] atau !d [post_id/URL]",
-    async handler({ message, args, sock }) {
+    async handler({ message, args, sock, prefix }) {
         args = args.map(arg => arg.toLowerCase());
         let isGacha = false;
 
@@ -34,7 +40,7 @@ export default {
                 }
 
                 if (!postData) {
-                    await message.reply("Ampas banget gacha lu hari ini ngab, udah 3 kali ngeroll dapet ID zonk semua wkwkwk. Coba lagi ntar atau gunakan `!dnew` untuk melihat art terbaru!");
+                    await message.reply(`⚠️ Gacha belum berhasil setelah 3 kali percobaan. Coba lagi beberapa saat lagi atau gunakan \`${prefix || "!"}dnew\` untuk melihat art terbaru!`);
                     return;
                 }
 
@@ -96,7 +102,7 @@ export default {
                     errorMsg += `\n\nMungkin maksud kamu: \`${suggestions.slice(0, 5).join('`, `')}\`?`;
                 }
 
-                errorMsg += `\n\n💡 *Tip:* Gunakan command \`!tag <kata kunci>\` untuk mencari kamus tag Danbooru jika kamu bingung.`;
+                errorMsg += `\n\n💡 *Tip:* Gunakan command \`${prefix || "!"}tag <kata kunci>\` untuk mencari kamus tag Danbooru jika kamu bingung.`;
 
                 await message.reply(errorMsg);
                 return;
@@ -109,7 +115,7 @@ export default {
             if (err.message === "EXPLICIT_ONLY") {
                 await message.reply("❌ Tidak ditemukan gambar yang aman pada post terbaru untuk tag ini. Gambar NSFW/Explicit otomatis diblokir oleh sistem.");
             } else {
-                console.error(`[Danbooru] Command error:`, err);
+                console.error("[DANBOORU]", err);
                 await message.reply(`❌ Error: ${err.message}`);
             }
         }

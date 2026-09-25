@@ -1,3 +1,7 @@
+/**
+ * YouTube Search — Search YouTube videos with interactive download flow.
+ */
+
 import { searchYouTube } from "../services/youtube.js";
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 import { download, getBestFormatUnderLimit } from "../services/ytdlp.js";
@@ -5,24 +9,8 @@ import { getCachedInfo } from "../services/infoCache.js";
 import fs from "fs";
 import { tryDelete } from "../services/cleanup.js";
 import { downloadQueue } from "../services/downloadQueue.js";
-import { sanitizeFilename } from "../lib/utils.js";
+import { sanitizeFilename, generatePaginator, ITEMS_PER_PAGE } from "../lib/utils.js";
 import setting from "../setting.js";
-
-const ITEMS_PER_PAGE = 5;
-
-function generatePaginator(page, totalPages) {
-    if (totalPages <= 1) return `[ 📄 Page 1/1 ] ─── ━━━━━━━━━━━━━━━━`;
-    let items = [];
-    let startP = Math.max(0, page - 2);
-    let endP = Math.min(totalPages - 1, page + 2);
-    for (let i = startP; i <= endP; i++) {
-        let pNum = i + 1;
-        if (i === page) items.push(`*${pNum}*`);
-        else items.push(`${pNum}`);
-    }
-    let bar = items.join(" ─ ");
-    return `[ 📄 Page ${page + 1}/${totalPages} ] ─── « ─ ${bar} ─ »`;
-}
 
 function generateListText(results, page, query) {
     const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
@@ -82,7 +70,7 @@ export default {
             });
 
         } catch (err) {
-            console.error("[YTSearch]", err);
+            console.error("[YTSEARCH]", err);
             await sock.sendMessage(message.chat, { text: `❌ Terjadi kesalahan: ${err.message || "Gagal mencari video"}`, edit: sentMsg.key });
         }
     }

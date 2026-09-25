@@ -1,3 +1,9 @@
+/**
+ * HTML — Render HTML documents or snippets into interactive WhatsApp webview payloads.
+ *
+ * @module commands/html
+ */
+
 import vm from "node:vm";
 import { sendUI } from "../lib/uiEngine.js";
 import { extractFlagsFromText } from "../lib/flagParser.js";
@@ -287,7 +293,7 @@ export default {
                 }
             }
         } catch (error) {
-            console.error("[HTML Command Error] Failed to render HTML:", error);
+            console.error("[HTML]", error);
             await message.reply("❌ Gagal merender HTML. Pastikan aplikasi WhatsApp Anda mendukung pesan interaktif.");
         }
     }

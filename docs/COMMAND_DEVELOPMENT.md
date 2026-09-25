@@ -345,4 +345,76 @@ await message.reply(captionText);
 > **Complete Technical Specification & Browser Matrix**:
 > For the comprehensive standalone specification, Baileys protobuf envelope deconstruction, Chromium sandbox capability matrix (CSS, Storage, CSP, Web Audio vs HTML5 audio quarantine), and the 1350 KB stanza size ceiling, see [**`docs/WEBVIEW_PAYLOAD.md`**](WEBVIEW_PAYLOAD.md).
 
+---
+
+## 7. Text Output Standardization & Shared Utilities
+
+To maintain visual cohesion across all 64 command modules, WhatsApp text output adheres to a unified box-drawing system.
+
+### Visual Box-Drawing Standard
+
+```
+╭━━━〔 🏷️ TITLE 〕━━━
+┃ ⋄ Label : Value
+┃ ⋄ Status : Active
+┣━━━━━━━━━━━━━━━━━━━━
+┃ Section Notes
+╰━━━━━━━━━━━━━━━━━━━━
+
+╭───「 📦 Sub-section 」
+│ ⋄ Key 1 : Value
+│ ⋄ Key 2 : Value
+╰──────────────
+```
+
+- **Primary Box Headers**: Heavy horizontal borders `╭━━━〔 EMOJI TITLE 〕━━━`, vertical `┃`, divider `┣━━━━━━━━━━━━━━━━━━━━`, footer `╰━━━━━━━━━━━━━━━━━━━━`.
+- **Sub-sections & Groups**: Light line container `╭───「 Title 」`, vertical `│`, footer `╰──────────────`.
+- **Item Bullets**: Standardize on `⋄` (diamond bullet).
+- **Status Emoji Indicators**:
+  - `✅` Success / Registered / Enabled
+  - `⚠️` Warning / Sub-optimal / Missing Permissions
+  - `❌` Error / Validation Failure / Unregistered
+
+### Dynamic Prefix Handling
+
+Handlers must never hardcode `!` in usage cards or reply hints. Always destructure `prefix` from the handler context:
+
+```javascript
+async handler({ message, prefix, ... }) {
+    const p = prefix || "!";
+    if (!args.length) {
+        return message.reply(
+            `╭━━━〔 ℹ️ USAGE 〕━━━\n` +
+            `┃ ❌ Parameter tidak lengkap.\n` +
+            `┃ ⋄ Format: *${p}command <query>*\n` +
+            `╰━━━━━━━━━━━━━━━━━━━━`
+        );
+    }
+}
+```
+
+### Shared Utilities (`lib/utils.js`)
+
+Common formatting helpers are centralized in `lib/utils.js`:
+
+| Export | Type | Description |
+|:---|:---|:---|
+| `ITEMS_PER_PAGE` | `number` (5) | Standard pagination page size constant across all paginator commands. |
+| `generatePaginator(page, totalPages)` | `function` | Generates a uniform pagination footer string: `\n\n[ Page 1 / 5 ]\n◀ Previous • Next ▶`. |
+| `formatUptime(seconds, options)` | `function` | Formats uptime durations. Supports `{ short: false }` for full Indonesian text and `{ short: true }` for compact counters (`1d 4h 12m 30s`). |
+
+### Logging Convention
+
+All command modules catch and log errors using a unified uppercase tag matching the command filename:
+
+```javascript
+try {
+    // Command logic
+} catch (err) {
+    console.error("[COMMAND_NAME]", err);
+    await message.reply("❌ Terjadi kesalahan saat memproses permintaan.");
+}
+```
+
+
 

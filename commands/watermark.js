@@ -1,3 +1,9 @@
+/**
+ * Watermark — Change sticker pack and author metadata on quoted sticker.
+ *
+ * @module commands/watermark
+ */
+
 import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 import { downloadContentFromMessage } from 'baileys';
 import setting from '../setting.js';
@@ -17,8 +23,12 @@ export default {
 
             if (!targetMsg) {
                 return await message.reply(
-                    `❌ Balas (reply/quote) stiker yang ingin diganti watermarknya dengan caption *${prefix}wm*\n\n` +
-                    `Contoh: *${prefix}wm NamaPack|NamaAuthor*`
+                    `╭━━━〔 🏷️ WATERMARK STIKER 〕━━━\n` +
+                    `┃ Balas (reply) stiker yang ingin diganti watermarknya.\n` +
+                    `┃\n` +
+                    `┃ ⋄ \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n` +
+                    `┃ Contoh: \`${prefix || "!"}wm Anime|Tederby\`\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━`
                 );
             }
 
@@ -46,9 +56,12 @@ export default {
                 }
             } else {
                 return await message.reply(
-                    `❌ Masukkan nama pack & author untuk watermark baru.\n\n` +
-                    `Contoh: *${prefix}wm NamaPack|NamaAuthor*\n` +
-                    `(contoh: *${prefix}wm Anime|Tederby*)`
+                    `╭━━━〔 🏷️ WATERMARK STIKER 〕━━━\n` +
+                    `┃ Masukkan nama pack & author watermark baru.\n` +
+                    `┃\n` +
+                    `┃ ⋄ \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n` +
+                    `┃ Contoh: \`${prefix || "!"}wm Anime|Tederby\`\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━`
                 );
             }
 
@@ -76,7 +89,7 @@ export default {
             await sock.sendMessage(message.chat, { sticker: stickerBuffer }, { quoted: message });
 
         } catch (error) {
-            console.error('[ERROR WATERMARK]', error);
+            console.error('[WATERMARK]', error);
             await message.reply('❌ Terjadi kesalahan saat mengganti watermark stiker. Silakan coba lagi nanti.');
         }
     }

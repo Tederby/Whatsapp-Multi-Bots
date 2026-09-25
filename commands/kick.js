@@ -1,3 +1,7 @@
+/**
+ * Kick — Remove a member from the group with confirmation.
+ */
+
 import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
 import { resolveTarget, findParticipant } from '../lib/jidHelper.js';
 
@@ -11,7 +15,7 @@ export default {
     adminOnly: true,
     botAdminRequired: true,
 
-    async handler({ message, sock, groupMetadata, sender }) {
+    async handler({ message, sock, groupMetadata, sender, prefix }) {
         try {
             let rawTarget = null;
             if (message.mentionedJid && message.mentionedJid.length > 0) {
@@ -23,7 +27,15 @@ export default {
             }
 
             if (!rawTarget) {
-                return message.reply("Harap tag member atau reply pesan member yang ingin di-kick!");
+                return message.reply(
+                    "╭━━━〔 👢 KICK MEMBER 〕━━━\n" +
+                    "┃ Mengeluarkan member dari grup.\n" +
+                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                    "╭───「 📖 Penggunaan 」\n" +
+                    `│ ⋄ \`${prefix || "!"}kick @user\`\n` +
+                    `│ ⋄ \`${prefix || "!"}kick\` (reply pesan member)\n` +
+                    "╰──────────────"
+                );
             }
 
             // Resolve ke PN untuk display & mentions
@@ -31,17 +43,17 @@ export default {
             const { baseId: botBaseId } = resolveTarget(sock.user.id);
 
             if (botBaseId === targetBaseId) {
-                return message.reply("Bot tidak bisa kick diri sendiri.");
+                return message.reply("❌ Bot tidak bisa mengeluarkan diri sendiri.");
             }
 
             // Find actual participant JID (bisa LID) untuk API call
             const participantInfo = findParticipant(groupMetadata, targetBaseId);
             if (!participantInfo) {
-                return message.reply("Member tersebut tidak ada di grup ini.");
+                return message.reply("❌ Member tersebut tidak ada di dalam grup ini.");
             }
 
             if (participantInfo.isAdmin) {
-                return message.reply("Tidak bisa mengeluarkan sesama admin grup.");
+                return message.reply("❌ Tidak bisa mengeluarkan sesama Admin grup.");
             }
 
             // Mengirim pesan konfirmasi
@@ -65,21 +77,21 @@ export default {
                         await replySock.sendMessage(
                             replyMessage.chat,
                             {
-                                text: `Berhasil mengeluarkan @${state.targetBaseId} dari grup.`,
+                                text: `✅ Berhasil mengeluarkan @${state.targetBaseId} dari grup.`,
                                 mentions: [state.targetJid]
                             },
                             { quoted: replyMessage }
                         );
                     } catch (error) {
-                        console.error('Kick execution error:', error);
-                        await replyMessage.reply("Gagal mengeluarkan member.");
+                        console.error('[KICK]', error);
+                        await replyMessage.reply("❌ Gagal mengeluarkan member.");
                     }
                     deleteReplyHandler(sentMsg.key.id);
                 } else if (replyText === 'cancel') {
-                    await replyMessage.reply("Proses kick dibatalkan.");
+                    await replyMessage.reply("ℹ️ Proses kick dibatalkan.");
                     deleteReplyHandler(sentMsg.key.id);
                 } else {
-                    await replyMessage.reply("Instruksi tidak dikenali. Ketik *confirm* untuk melanjutkan, atau *cancel* untuk membatalkan.");
+                    await replyMessage.reply("⚠️ Instruksi tidak dikenali. Ketik *confirm* untuk melanjutkan, atau *cancel* untuk membatalkan.");
                 }
             }, {
                 actualTargetJid: participantInfo.participant, // Raw JID untuk API
@@ -90,8 +102,8 @@ export default {
             });
 
         } catch (error) {
-            console.error('Kick command error:', error);
-            message.reply("Terjadi kesalahan saat memproses perintah kick.");
+            console.error('[KICK]', error);
+            message.reply("❌ Terjadi kesalahan saat memproses perintah kick.");
         }
     }
 };

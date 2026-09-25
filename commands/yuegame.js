@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Interactive Webview Snake game center.
+ * @module commands/yuegame
+ */
+
 import { randomUUID } from "crypto";
 
 const html = String.raw`
@@ -502,7 +507,7 @@ snakeDirection(dy>0?'down':'up');
 export default {
     name: "game",
     aliases: ["snake", "yuegame"],
-    category: "game",
+    category: "games",
     description: "Mainkan mini game snake interaktif langsung di WhatsApp",
     usage: "!game",
     async handler({ message, sock, prefix }) {
@@ -565,7 +570,7 @@ export default {
                 }
             );
         } catch (error) {
-            console.error("[ERROR GAME]", error);
+            console.error("[YUEGAME]", error);
             await message.reply(`❌ Gagal meluncurkan game. Pastikan aplikasi WhatsApp mendukung pesan interaktif.`);
         }
     }

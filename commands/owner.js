@@ -1,6 +1,13 @@
+/**
+ * Owner — Display bot owner and bot administrators contact info.
+ *
+ * @module commands/owner
+ */
+
+import axios from "axios";
+import { jidNormalizedUser } from "baileys";
 import setting from "../setting.js";
 import { getAllBotAdmins, resolveUserId } from "../lib/database.js";
-import { jidNormalizedUser } from "baileys";
 
 export default {
     name: "owner",
@@ -66,7 +73,6 @@ export default {
 
         // Kirim gambar beserta teks dan mention, fallback ke text jika gagal
         try {
-            const axios = (await import("axios")).default;
             const response = await axios.get(imageUrl, {
                 responseType: "arraybuffer",
                 headers: {
@@ -87,7 +93,7 @@ export default {
                 { quoted: message }
             );
         } catch (err) {
-            console.error("Owner Image Error:", err.message);
+            console.error("[OWNER]", err.message);
             // Image URL mungkin down atau diblokir — fallback ke text-only
             await sock.sendMessage(
                 message.chat,

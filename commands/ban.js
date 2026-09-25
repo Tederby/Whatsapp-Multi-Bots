@@ -8,6 +8,8 @@
  *   !ban @user   — ban user in this group
  *   !unban @user — unban user
  *   !banlist     — show banned users
+ *
+ * @module commands/ban
  */
 
 import { banUserInGroup, unbanUserInGroup, getGroupBannedUsers, isBotAdmin } from "../lib/database.js";
@@ -23,7 +25,7 @@ export default {
     groupOnly: true,
     adminOnly: true,
 
-    async handler({ message, sock, args, sender, isGroup, groupMetadata, commandName, isOwner }) {
+    async handler({ message, sock, args, sender, isGroup, groupMetadata, commandName, isOwner, prefix }) {
         try {
             const chatId = message.chat;
 
@@ -34,7 +36,7 @@ export default {
                     return message.reply("✅ Tidak ada user yang di-ban di grup ini.");
                 }
 
-                let text = `🚫 *DAFTAR BAN GRUP* 🚫\n\nTotal: ${banned.length} user\n\n`;
+                let text = `╭━━━〔 🚫 DAFTAR BAN GRUP 〕━━━\n┃ Total : ${banned.length} user\n╰━━━━━━━━━━━━━━━━━━━━\n\n`;
                 const mentions = [];
 
                 banned.forEach((userId, i) => {
@@ -43,7 +45,7 @@ export default {
                     mentions.push(userId);
                 });
 
-                text += `\n_Gunakan !unban @user untuk membatalkan ban._`;
+                text += `\n_Gunakan \`${prefix || "!"}unban @user\` untuk membatalkan ban._`;
 
                 return sock.sendMessage(chatId, { text, mentions }, { quoted: message });
             }
@@ -53,7 +55,7 @@ export default {
                 const target = extractTarget(message, args);
 
                 if (!target) {
-                    return message.reply("Tag atau reply pesan user yang ingin di-unban.\n\nContoh: *!unban @user*");
+                    return message.reply(`Tag atau reply pesan user yang ingin di-unban.\n\nContoh: *${prefix || "!"}unban @user*`);
                 }
 
                 unbanUserInGroup(chatId, target.jid);
@@ -73,11 +75,13 @@ export default {
 
             if (!target) {
                 return message.reply(
-                    "Tag atau reply pesan user yang ingin di-ban.\n\n" +
-                    "Contoh:\n" +
-                    "• *!ban @user* — Ban user di grup ini\n" +
-                    "• *!unban @user* — Unban user\n" +
-                    "• *!banlist* — Lihat daftar ban"
+                    `╭━━━〔 🚫 GROUP BAN 〕━━━\n` +
+                    `┃ Tag atau reply pesan user target.\n` +
+                    `┃\n` +
+                    `┃ ⋄ \`${prefix || "!"}ban @user\` — Ban user di grup ini\n` +
+                    `┃ ⋄ \`${prefix || "!"}unban @user\` — Unban user\n` +
+                    `┃ ⋄ \`${prefix || "!"}banlist\` — Lihat daftar ban\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━`
                 );
             }
 
@@ -115,15 +119,15 @@ export default {
             return sock.sendMessage(
                 chatId,
                 {
-                    text: `🚫 @${target.baseId} telah di-ban dari menggunakan bot di grup ini.\n\n_Gunakan !unban @user untuk membatalkan._`,
+                    text: `🚫 @${target.baseId} telah di-ban dari menggunakan bot di grup ini.\n\n_Gunakan \`${prefix || "!"}unban @user\` untuk membatalkan._`,
                     mentions: [target.jid],
                 },
                 { quoted: message }
             );
 
         } catch (error) {
-            console.error("[BAN CMD]", error);
-            message.reply("Terjadi kesalahan saat memproses perintah ban.");
+            console.error("[BAN]", error);
+            message.reply("❌ Terjadi kesalahan saat memproses perintah ban.");
         }
     },
 };

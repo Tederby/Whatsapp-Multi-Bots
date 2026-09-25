@@ -1,3 +1,9 @@
+/**
+ * Danbooru New — Fetch recent anime art posts from Danbooru with safe filtering and interactive rolling.
+ *
+ * @module commands/danbooru-new
+ */
+
 import {
     fetchRandomRecentDanbooru,
     sendDanbooruMessage
@@ -16,23 +22,23 @@ function getHelpMessage(prefix = "!") {
         `╰━━━━━━━━━━━━━━━━━━━━`,
         ``,
         `╭───「 📋 Format Penggunaan 」`,
-        `│ • \`${prefix}dnew\``,
+        `│ ⋄ \`${prefix}dnew\``,
         `│   Ambil 1 art acak dari 30 post terbaru.`,
-        `│ • \`${prefix}dnew <1-30>\`  (Contoh: \`${prefix}dnew 1\`)`,
+        `│ ⋄ \`${prefix}dnew <1-30>\`  (Contoh: \`${prefix}dnew 1\`)`,
         `│   Ambil art urutan ke-N (1 = paling baru).`,
-        `│ • \`${prefix}dnew safe\` atau \`${prefix}dnew gen\``,
+        `│ ⋄ \`${prefix}dnew safe\` atau \`${prefix}dnew gen\``,
         `│   Hanya tampilkan art rating General (100% SFW).`,
-        `│ • \`${prefix}dnew page <angka>\`  (Contoh: \`${prefix}dnew page 2\`)`,
+        `│ ⋄ \`${prefix}dnew page <angka>\`  (Contoh: \`${prefix}dnew page 2\`)`,
         `│   Jelajahi feed halaman berikutnya.`,
-        `│ • \`${prefix}dnew safe page 2\``,
+        `│ ⋄ \`${prefix}dnew safe page 2\``,
         `│   Kombinasi rating General pada halaman 2.`,
         `╰──────────────`,
         ``,
         `╭───「 ⚡ Fitur Interaktif (Reply) 」`,
-        `│ • Balas (reply) gambar dari bot dengan teks:`,
+        `│ ⋄ Balas (reply) gambar dari bot dengan teks:`,
         `│   *next* / *lagi* / *roll* untuk melihat art`,
         `│   terbaru lainnya secara instan tanpa ketik ulang!`,
-        `│ • Balas dengan *!tag* untuk melihat daftar tag.`,
+        `│ ⋄ Balas dengan *!tag* untuk melihat daftar tag.`,
         `╰──────────────`,
         ``,
         `💡 *Aliases:* \`${prefix}dnew\`, \`${prefix}danbooru-new\`, \`${prefix}dlatest\`, \`${prefix}dn\``
@@ -199,7 +205,7 @@ export default {
             }
 
         } catch (err) {
-            console.error("[Danbooru-New] Command error:", err);
+            console.error("[DANBOORU_NEW]", err);
             await message.reply(`❌ Error: ${err.message}`);
         }
     }

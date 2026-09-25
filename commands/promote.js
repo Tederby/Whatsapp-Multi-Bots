@@ -1,3 +1,7 @@
+/**
+ * Promote — Promote a regular group member to Admin.
+ */
+
 import { extractTarget, findParticipant } from '../lib/jidHelper.js';
 
 export default {
@@ -15,7 +19,15 @@ export default {
             const target = extractTarget(message, args);
 
             if (!target) {
-                return message.reply(`Tag, reply, atau masukkan nomor user yang ingin dijadikan Admin.\nContoh: \`${prefix}promote @user\``);
+                return message.reply(
+                    "╭━━━〔 🔼 PROMOTE ADMIN 〕━━━\n" +
+                    "┃ Menaikkan jabatan anggota menjadi Admin grup.\n" +
+                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                    "╭───「 📖 Penggunaan 」\n" +
+                    `│ ⋄ \`${prefix || "!"}promote @user\`\n` +
+                    `│ ⋄ \`${prefix || "!"}promote <nomor>\`\n` +
+                    "╰──────────────"
+                );
             }
 
             // Find participant in group (returns raw JID for API call)
@@ -48,7 +60,7 @@ export default {
                 { quoted: message }
             );
         } catch (error) {
-            console.error("[PROMOTE CMD]", error);
+            console.error("[PROMOTE]", error);
             message.reply("❌ Gagal menaikkan jabatan admin. Pastikan bot adalah admin dan nomor yang dituju valid.");
         }
     }

@@ -1,10 +1,14 @@
+/**
+ * DelBotAdmin — Revoke Bot Admin privileges from a user (System Owner Only).
+ */
+
 import { jidNormalizedUser } from "baileys";
 import { setBotAdmin, resolveUserId, resolveToLid, isBotAdmin } from "../lib/database.js";
 
 export default {
     name: "delbotadmin",
     aliases: ["demote-bot"],
-    category: "system",
+    category: "owner",
     description: "Mencabut jabatan seseorang dari Bot Admin (System Owner Only)",
     usage: "!delbotadmin @user",
     ownerOnly: true,
@@ -22,7 +26,15 @@ export default {
             }
 
             if (!target) {
-                return message.reply(`Tag, reply, atau masukkan nomor user yang ingin dicabut jabatannya.\nContoh: \`${prefix}delbotadmin @user\``);
+                return message.reply(
+                    "╭━━━〔 🛡️ DEL BOT ADMIN 〕━━━\n" +
+                    "┃ Mencabut jabatan user dari Bot Admin.\n" +
+                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                    "╭───「 📖 Penggunaan 」\n" +
+                    `│ ⋄ \`${prefix || "!"}delbotadmin @user\`\n` +
+                    `│ ⋄ \`${prefix || "!"}delbotadmin <nomor>\`\n` +
+                    "╰──────────────"
+                );
             }
 
             // Resolve LID → PN untuk konsistensi
@@ -55,7 +67,7 @@ export default {
                 { quoted: message }
             );
         } catch (error) {
-            console.error("[DELBOTADMIN CMD]", error);
+            console.error("[DELBOTADMIN]", error);
             message.reply("❌ Terjadi kesalahan saat mencabut jabatan Bot Admin.");
         }
     }

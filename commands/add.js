@@ -1,3 +1,7 @@
+/**
+ * Add — Add new members to the group by phone number or mention with confirmation.
+ */
+
 import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
 import { resolveTarget, findParticipant } from '../lib/jidHelper.js';
 import { isBanned, isUserGroupBanned } from '../lib/database.js';
@@ -12,7 +16,7 @@ export default {
     adminOnly: true,
     botAdminRequired: true,
 
-    async handler({ message, sock, groupMetadata, sender, args }) {
+    async handler({ message, sock, groupMetadata, sender, args, prefix }) {
         try {
             let number = "";
             let targetJid = "";
@@ -38,17 +42,26 @@ export default {
                 targetJid = number + "@s.whatsapp.net";
                 displayBaseId = number;
             } else {
-                return message.reply("Harap masukkan nomor WhatsApp, tag, atau reply pesan yang ingin ditambahkan!\nContoh: *!add 6281234567890*");
+                return message.reply(
+                    "╭━━━〔 ➕ ADD MEMBER 〕━━━\n" +
+                    "┃ Menambahkan anggota ke grup via nomor.\n" +
+                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                    "╭───「 📖 Penggunaan 」\n" +
+                    `│ ⋄ \`${prefix || "!"}add <nomor>\`\n` +
+                    `│ ⋄ \`${prefix || "!"}add @user\`\n` +
+                    "╰──────────────\n\n" +
+                    `Contoh: \`${prefix || "!"}add 6281234567890\``
+                );
             }
 
             if (number.length < 10) {
-                return message.reply("Nomor WhatsApp tidak valid. Pastikan nomor dimasukkan dengan benar.");
+                return message.reply("❌ Nomor WhatsApp tidak valid. Pastikan nomor dimasukkan dengan benar.");
             }
 
             // Memeriksa apakah target sudah ada di grup (LID-aware via findParticipant)
             const existing = findParticipant(groupMetadata, displayBaseId);
             if (existing) {
-                return message.reply("Nomor tersebut sudah ada di dalam grup ini.");
+                return message.reply("⚠️ Nomor tersebut sudah ada di dalam grup ini.");
             }
 
             // Pengecekan status ban target
@@ -57,7 +70,7 @@ export default {
             }
 
             if (isUserGroupBanned(message.chat, targetJid)) {
-                return message.reply(`⚠️ Nomor *@${displayBaseId}* saat ini di-ban dari menggunakan bot di grup ini.\nGunakan *!unban @${displayBaseId}* terlebih dahulu jika ingin mengizinkannya.`);
+                return message.reply(`⚠️ Nomor *@${displayBaseId}* saat ini di-ban dari menggunakan bot di grup ini.\nGunakan \`${prefix || "!"}unban @${displayBaseId}\` terlebih dahulu jika ingin mengizinkannya.`);
             }
 
             // Mengirim pesan konfirmasi
@@ -85,7 +98,7 @@ export default {
                             await replySock.sendMessage(
                                 replyMessage.chat, 
                                 { 
-                                    text: `Berhasil menambahkan *@${state.displayBaseId}* ke grup.`,
+                                    text: `✅ Berhasil menambahkan *@${state.displayBaseId}* ke grup.`,
                                     mentions: [state.targetJid]
                                 }, 
                                 { quoted: replyMessage }
@@ -94,7 +107,7 @@ export default {
                             await replySock.sendMessage(
                                 replyMessage.chat, 
                                 { 
-                                    text: `Gagal menambahkan secara langsung karena privasi. Namun WhatsApp secara otomatis mengirimkan tautan undangan grup ke *@${state.displayBaseId}*.`,
+                                    text: `⚠️ Gagal menambahkan secara langsung karena privasi. Namun WhatsApp secara otomatis mengirimkan tautan undangan grup ke *@${state.displayBaseId}*.`,
                                     mentions: [state.targetJid]
                                 }, 
                                 { quoted: replyMessage }
@@ -103,7 +116,7 @@ export default {
                             await replySock.sendMessage(
                                 replyMessage.chat, 
                                 { 
-                                    text: `Gagal, *@${state.displayBaseId}* ternyata sudah ada di dalam grup.`,
+                                    text: `⚠️ Gagal, *@${state.displayBaseId}* ternyata sudah ada di dalam grup.`,
                                     mentions: [state.targetJid]
                                 }, 
                                 { quoted: replyMessage }
@@ -112,28 +125,28 @@ export default {
                             await replySock.sendMessage(
                                 replyMessage.chat, 
                                 { 
-                                    text: `Tidak dapat menambahkan *@${state.displayBaseId}*. (Kode status WA: ${status})`,
+                                    text: `❌ Tidak dapat menambahkan *@${state.displayBaseId}*. (Kode status WA: ${status})`,
                                     mentions: [state.targetJid]
                                 }, 
                                 { quoted: replyMessage }
                             );
                         }
                     } catch (error) {
-                        console.error('Add execution error:', error);
-                        await replyMessage.reply("Terjadi kesalahan fatal saat menambahkan member. Pastikan nomor terdaftar di WhatsApp.");
+                        console.error('[ADD]', error);
+                        await replyMessage.reply("❌ Terjadi kesalahan fatal saat menambahkan member. Pastikan nomor terdaftar di WhatsApp.");
                     }
                     deleteReplyHandler(sentMsg.key.id);
                 } else if (replyText === 'cancel') {
-                    await replyMessage.reply("Proses penambahan member dibatalkan.");
+                    await replyMessage.reply("ℹ️ Proses penambahan member dibatalkan.");
                     deleteReplyHandler(sentMsg.key.id);
                 } else {
-                    await replyMessage.reply("Instruksi tidak dikenali. Ketik *confirm* untuk melanjutkan, atau *cancel* untuk membatalkan.");
+                    await replyMessage.reply("⚠️ Instruksi tidak dikenali. Ketik *confirm* untuk melanjutkan, atau *cancel* untuk membatalkan.");
                 }
             }, { targetJid, displayBaseId, commandName: "add", userId: sender });
 
         } catch (error) {
-            console.error('Add command error:', error);
-            message.reply("Terjadi kesalahan saat memproses perintah add.");
+            console.error('[ADD]', error);
+            message.reply("❌ Terjadi kesalahan saat memproses perintah add.");
         }
     }
 };

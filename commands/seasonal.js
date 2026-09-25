@@ -1,26 +1,15 @@
+/**
+ * Seasonal — Browse seasonal anime charts from AniList.
+ */
+
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 import { getSeasonal, getCurrentSeason, getNextSeason, cleanDescription, formatScore, formatAiringTime } from "../services/anilist.js";
-
-const ITEMS_PER_PAGE = 5;
+import { generatePaginator, ITEMS_PER_PAGE } from "../lib/utils.js";
 
 const SEASON_LABELS = {
     WINTER: "❄️ Winter", SPRING: "🌸 Spring",
     SUMMER: "☀️ Summer", FALL: "🍂 Fall"
 };
-
-function generatePaginator(page, totalPages) {
-    if (totalPages <= 1) return `[ 📄 Page 1/1 ] ─── ━━━━━━━━━━━━━━━━`;
-    let items = [];
-    let startP = Math.max(0, page - 2);
-    let endP = Math.min(totalPages - 1, page + 2);
-    for (let i = startP; i <= endP; i++) {
-        let pNum = i + 1;
-        if (i === page) items.push(`*${pNum}*`);
-        else items.push(`${pNum}`);
-    }
-    let bar = items.join(" ─ ");
-    return `[ 📄 Page ${page + 1}/${totalPages} ] ─── « ─ ${bar} ─ »`;
-}
 
 function generateListText(results, page, season, year) {
     const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
@@ -138,7 +127,7 @@ export default {
             });
 
         } catch (err) {
-            console.error("[Seasonal Command Error]:", err);
+            console.error("[SEASONAL]", err);
             if (err.code === "ETIMEDOUT" || err.code === "ECONNABORTED") {
                 await message.reply("❌ Server AniList sedang sibuk atau timeout. Silakan coba beberapa saat lagi.");
             } else if (err.response?.status === 429) {

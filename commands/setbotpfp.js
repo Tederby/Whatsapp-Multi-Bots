@@ -1,3 +1,9 @@
+/**
+ * Set Bot Profile Picture — Directly update bot WhatsApp avatar without cropping.
+ *
+ * @module commands/setbotpfp
+ */
+
 import { downloadContentFromMessage } from "baileys";
 import sharp from "sharp";
 
@@ -58,7 +64,12 @@ export default {
 
             } else {
                 return message.reply(
-                    `❌ Kirim gambar dengan caption \`${prefix}setbotpfp\`\natau reply ke gambar dengan \`${prefix}setbotpfp\``
+                    `╭━━━〔 🖼️ SET BOT PFP 〕━━━\n` +
+                    `┃ Kirim gambar dengan caption:\n` +
+                    `┃ ⋄ \`${prefix || "!"}setbotpfp\`\n` +
+                    `┃ Atau reply ke gambar dengan:\n` +
+                    `┃ ⋄ \`${prefix || "!"}setbotpfp\`\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━`
                 );
             }
 
@@ -95,13 +106,15 @@ export default {
             });
 
             return message.reply(
-                `✅ Foto profil bot berhasil diperbarui!\n` +
+                `╭━━━〔 🖼️ SET BOT PFP 〕━━━\n` +
+                `┃ Status : ✅ Berhasil diperbarui\n` +
                 `┃ Ukuran : ${imgWidth}×${imgHeight}px\n` +
-                `┃ Info   : Gambar di-upload tanpa di-crop. Frame PFP menampilkan bagian tengah.`
+                `┃ Info   : Gambar di-upload tanpa di-crop.\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━`
             );
 
         } catch (error) {
-            console.error("[SETBOTPFP CMD]", error);
+            console.error("[SETBOTPFP]", error);
             message.reply("❌ Gagal mengatur foto profil bot. Mungkin terkena rate-limit WhatsApp atau gambar tidak valid.");
         }
     }

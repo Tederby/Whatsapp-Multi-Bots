@@ -1,24 +1,13 @@
+/**
+ * Steam — Search Steam games store with text and rich interactive webview UI.
+ */
+
 import axios from "axios";
 import { registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 import { formatRupiah, sendSteamGameDetail, fetchImageAsBase64 } from "../services/steam.js";
 import { getUser, resolveUserId } from "../lib/database.js";
 import { sendUI, renderPage, esc } from "../lib/uiEngine.js";
-
-const ITEMS_PER_PAGE = 5;
-
-function generatePaginator(page, totalPages) {
-    if (totalPages <= 1) return `[ 📄 Page 1/1 ] ─── ━━━━━━━━━━━━━━━━`;
-    let items = [];
-    let startP = Math.max(0, page - 2);
-    let endP = Math.min(totalPages - 1, page + 2);
-    for (let i = startP; i <= endP; i++) {
-        let pNum = i + 1;
-        if (i === page) items.push(`*${pNum}*`);
-        else items.push(`${pNum}`);
-    }
-    let bar = items.join(" ─ ");
-    return `[ 📄 Page ${page + 1}/${totalPages} ] ─── « ─ ${bar} ─ »`;
-}
+import { generatePaginator, ITEMS_PER_PAGE } from "../lib/utils.js";
 
 function generateListText(results, page, query) {
     const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
@@ -511,7 +500,7 @@ export default {
             });
 
         } catch (err) {
-            console.error("Steam Command Error:", err.message);
+            console.error("[STEAM]", err);
             await message.reply(`❌ Terjadi kesalahan saat mencari game di Steam. Coba lagi nanti.`);
         }
     }

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Report bugs, errors, or issues to bot owners.
+ * @module commands/report
+ */
+
 import setting from "../setting.js";
 import { addReport, getReports, deleteReport, markAsReplied } from "../lib/reportsDb.js";
 
@@ -15,9 +20,16 @@ export default {
     },
 
     async handler({ message, sock, args, cleanArgs, flags, rawArgs, sender, pushname, isGroup, groupName, isOwner, prefix }) {
+        const p = prefix || "!";
         const effectiveArgs = cleanArgs || args;
         if (args.length === 0 && effectiveArgs.length === 0) {
-            return message.reply(`❌ Format salah.\nContoh: \`${prefix}report Bot tidak bisa memutar lagu di YouTube\``);
+            return message.reply(
+                `╭━━━〔 🚨 REPORT 〕━━━\n` +
+                `┃ ❌ Harap sertakan pesan laporan atau detail masalah.\n` +
+                `┃ ⋄ Format: *${p}report <pesan>*\n` +
+                `┃ ⋄ Contoh: *${p}report Fitur download error saat memproses link*\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━`
+            );
         }
 
         // ── Owner Flags Management ─────────────────────────────────────
@@ -29,19 +41,21 @@ export default {
                 return message.reply("✅ Belum ada laporan/bug yang masuk.");
             }
 
-            let reply = `🐛 *DAFTAR LAPORAN / BUG* 🐛\n\nTotal: ${reports.length} laporan\n\n`;
+            let reply = `╭━━━〔 🐛 DAFTAR LAPORAN BUG 〕━━━\n` +
+                `┃ Total : ${reports.length} laporan\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
             reports.forEach((rep) => {
                 const date = new Date(rep.timestamp).toLocaleString("id-ID");
-                reply += `╭───「 ID: ${rep.id} 」\n`;
-                reply += `│ 👤 Dari: ${rep.pushname} (@${rep.sender.split("@")[0]})\n`;
-                if (rep.isGroup) reply += `│ 🏢 Grup: ${rep.groupName}\n`;
-                reply += `│ 📅 Waktu: ${date}\n`;
-                reply += `│ 💬 Masalah:\n│ _${rep.text}_\n`;
-                if (rep.replied) reply += `│ ✅ *[Telah Dibalas]*\n`;
+                reply += `╭───「 📋 ID: ${rep.id} 」\n`;
+                reply += `│ ⋄ Pelapor : ${rep.pushname} (@${rep.sender.split("@")[0]})\n`;
+                if (rep.isGroup) reply += `│ ⋄ Grup : ${rep.groupName}\n`;
+                reply += `│ ⋄ Waktu : ${date}\n`;
+                reply += `│ ⋄ Masalah : ${rep.text}\n`;
+                if (rep.replied) reply += `│ ⋄ Status : ✅ Telah Dibalas\n`;
                 reply += `╰──────────────\n\n`;
             });
-            reply += `_Gunakan \`${prefix}report -d <id>\` atau \`--del <id>\` jika bug sudah diperbaiki._\n`;
-            reply += `_Gunakan \`${prefix}report -r <id> <pesan>\` atau \`--reply <id> <pesan>\` untuk membalas._`;
+            reply += `💡 Hapus: *${p}report -d <id>*\n`;
+            reply += `💡 Balas: *${p}report -r <id> <pesan>*`;
 
             return message.reply(reply);
         }
@@ -51,7 +65,7 @@ export default {
             
             const id = parseInt(effectiveArgs[0], 10);
             if (isNaN(id)) {
-                return message.reply(`❌ Masukkan ID laporan yang ingin dihapus.\nContoh: \`${prefix}report -d 1\``);
+                return message.reply(`❌ Masukkan ID laporan yang ingin dihapus.\nContoh: *${p}report -d 1*`);
             }
 
             const success = deleteReport("report", id);
@@ -68,7 +82,7 @@ export default {
             const id = parseInt(effectiveArgs[0], 10);
             const replyMsg = effectiveArgs.slice(1).join(" ");
             if (isNaN(id) || !replyMsg) {
-                return message.reply(`❌ Format salah.\nContoh: \`${prefix}report -r 1 Oke, bug sedang diperbaiki\``);
+                return message.reply(`❌ Format salah.\nContoh: *${p}report -r 1 Oke, bug sedang diperbaiki*`);
             }
 
             const item = getReports("report").find(r => r.id === id);
@@ -76,10 +90,14 @@ export default {
                 return message.reply(`❌ Laporan dengan ID ${id} tidak ditemukan.`);
             }
 
-            const replyText = `🚨 *Pesan dari Owner (Laporan ID ${id})*\n\n"${replyMsg}"\n\n_Laporan aslimu:_\n_${item.text}_`;
+            const replyText = `╭━━━〔 📩 BALASAN OWNER 〕━━━\n` +
+                `┃ ⋄ ID Laporan : ${id}\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `"${replyMsg}"\n\n` +
+                `_Laporan aslimu:_\n_${item.text}_`;
 
             try {
-                // Skenario 1: Reply langsung ke pesan aslinya di chat aslinya
+                // Scenario 1: Reply directly to the original message in the original chat
                 await sock.sendMessage(
                     item.chatId,
                     { text: replyText, mentions: [item.sender] },
@@ -89,7 +107,7 @@ export default {
                 markAsReplied("report", id);
                 return message.reply(`✅ Balasan berhasil dikirim ke @${item.sender.split("@")[0]} di obrolan aslinya.`);
             } catch (err) {
-                // Fallback 1: Gagal membalas pesan (mungkin karena sudah sangat lama). Coba kirim biasa tanpa quoted
+                // Fallback 1: Message expired or unavailable. Send without quoted
                 try {
                     await sock.sendMessage(
                         item.chatId,
@@ -98,7 +116,7 @@ export default {
                     markAsReplied("report", id);
                     return message.reply(`✅ Balasan dikirim ke grup/obrolan tanpa me-reply pesan asli karena pesan asli tidak dapat diakses.`);
                 } catch (err2) {
-                    // Fallback 2: Gagal kirim ke grup (bot di kick, dll). Coba DM langsung user-nya.
+                    // Fallback 2: Bot kicked from group, send via direct message
                     try {
                         await sock.sendMessage(
                             item.sender,
@@ -120,11 +138,16 @@ export default {
         // Notify Owners
         const ownerJids = setting.owner.map(num => num.includes("@s.whatsapp.net") ? num : num + "@s.whatsapp.net");
         
-        let notificationMsg = `🚨 *LAPORAN BUG BARU!* (ID: ${newItem.id})\n\n`;
-        notificationMsg += `👤 *Pelapor:* ${pushname} (@${sender.split("@")[0]})\n`;
-        if (isGroup) notificationMsg += `🏢 *Grup:* ${groupName}\n`;
-        notificationMsg += `\n💬 *Detail Error:*\n_${text}_\n\n`;
-        notificationMsg += `_Gunakan \`${prefix}report --del ${newItem.id}\` jika sudah diselesaikan._`;
+        let notificationMsg = `╭━━━〔 🚨 LAPORAN BUG BARU 〕━━━\n` +
+            `┃ ⋄ ID : ${newItem.id}\n` +
+            `┃ ⋄ Pelapor : ${pushname} (@${sender.split("@")[0]})\n`;
+        if (isGroup) notificationMsg += `┃ ⋄ Grup : ${groupName}\n`;
+        notificationMsg += `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `╭───「 💬 Masalah 」\n` +
+            `│ ${text}\n` +
+            `╰──────────────\n\n` +
+            `💡 Hapus: *${p}report -d ${newItem.id}*\n` +
+            `💡 Balas: *${p}report -r ${newItem.id} <pesan>*`;
 
         let notifyCount = 0;
         for (const ownerJid of ownerJids) {

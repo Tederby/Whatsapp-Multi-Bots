@@ -1,3 +1,9 @@
+/**
+ * Quote Generator — Generate beautiful aesthetic quote cards from messages.
+ *
+ * @module commands/quote
+ */
+
 import { jidNormalizedUser, downloadContentFromMessage } from "baileys";
 import { getUser, resolveUserId } from "../lib/database.js";
 import { generateQuote } from "../lib/quoteGenerator.js";
@@ -26,7 +32,7 @@ export default {
                 // 1. Validasi reply
                 const type = Object.keys(message.quoted.message || {})[0];
                 if (type === "stickerMessage") {
-                    return message.reply("Bot tidak bisa membuat quote dari stiker!");
+                    return message.reply("❌ Bot tidak bisa membuat quote dari stiker!");
                 }
 
                 text = message.quoted.text;
@@ -36,7 +42,7 @@ export default {
                     } else if (type === "videoMessage" && message.quoted.message.videoMessage.caption) {
                         text = message.quoted.message.videoMessage.caption;
                     } else {
-                        return message.reply("Pesan yang di-reply tidak mengandung teks yang bisa di-quote.");
+                        return message.reply("❌ Pesan yang di-reply tidak mengandung teks yang bisa di-quote.");
                     }
                 }
 
@@ -58,16 +64,23 @@ export default {
                         const imgBuffer = Buffer.concat(chunks);
                         contentImageBase64 = `data:image/jpeg;base64,${imgBuffer.toString('base64')}`;
                     } catch (imgErr) {
-                        console.log("[QUOTE CMD] Gagal download gambar konten:", imgErr.message);
+                        console.log("[QUOTE] Gagal download gambar konten:", imgErr.message);
                         // Lanjut tanpa gambar konten
                     }
                 }
             } else {
-                return message.reply(`Gunakan perintah ini dengan mengetik teks atau me-reply pesan teks.\nContoh: \`${prefix}quote Halo\` atau \`${prefix}quote\` sambil me-reply pesan`);
+                return message.reply(
+                    `╭━━━〔 💬 QUOTE GENERATOR 〕━━━\n` +
+                    `┃ Ketik teks atau balas pesan teks.\n` +
+                    `┃\n` +
+                    `┃ ⋄ \`${prefix || "!"}quote <teks>\`\n` +
+                    `┃ ⋄ \`${prefix || "!"}quote\` (balas pesan)\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━`
+                );
             }
 
             if (!targetJid) {
-                return message.reply("Gagal mendapatkan ID pengirim pesan.");
+                return message.reply("❌ Gagal mendapatkan ID pengirim pesan.");
             }
 
             const normalizedTarget = resolveUserId(jidNormalizedUser(targetJid));
@@ -167,8 +180,8 @@ export default {
             );
 
         } catch (error) {
-            console.error("[QUOTE CMD]", error);
-            message.reply("Terjadi kesalahan saat memproses quote gambar.");
+            console.error("[QUOTE]", error);
+            message.reply("❌ Terjadi kesalahan saat memproses quote gambar.");
         }
     }
 };

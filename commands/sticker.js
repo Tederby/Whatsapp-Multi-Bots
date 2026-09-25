@@ -1,3 +1,9 @@
+/**
+ * Sticker — Convert image or short video to WhatsApp sticker with optional custom watermark.
+ *
+ * @module commands/sticker
+ */
+
 import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 import { downloadContentFromMessage } from 'baileys';
 import { convertVideoToWebp, injectWebpExif } from '../lib/mediaConverter.js';
@@ -24,7 +30,14 @@ export default {
             // If user quotes a sticker, redirect them to use !wm
             const isQuotedSticker = !!message.quoted?.message?.stickerMessage;
             if (isQuotedSticker) {
-                return await message.reply(`💡 Untuk mengganti watermark stiker, gunakan command *${prefix}wm*\n\nContoh: *${prefix}wm NamaPack|NamaAuthor*\n\nBalas (reply/quote) stiker yang ingin diganti watermarknya.`);
+                return await message.reply(
+                    `╭━━━〔 💡 GANTI WATERMARK 〕━━━\n` +
+                    `┃ Untuk mengganti watermark stiker, gunakan:\n` +
+                    `┃ ⋄ \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n` +
+                    `┃\n` +
+                    `┃ Balas (reply) stiker yang ingin diubah.\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━`
+                );
             }
 
             const isMedia = isValidMedia(message.message);
@@ -33,7 +46,14 @@ export default {
             const targetMsg = isQuotedMedia ? message.quoted : (isMedia ? message : null);
 
             if (!targetMsg) {
-                return await message.reply(`❌ Kirim gambar/video/dokumen dengan caption *${prefix}s* atau balas (reply) media yang sudah ada.`);
+                return await message.reply(
+                    `╭━━━〔 🎨 STICKER MAKER 〕━━━\n` +
+                    `┃ Kirim atau balas gambar/video pendek.\n` +
+                    `┃\n` +
+                    `┃ ⋄ \`${prefix || "!"}s\`\n` +
+                    `┃ ⋄ \`${prefix || "!"}s Pack|Author\`\n` +
+                    `╰━━━━━━━━━━━━━━━━━━━━`
+                );
             }
 
             const msgContent = targetMsg.message;
@@ -74,7 +94,7 @@ export default {
                     authorName = setting.name || 'Bot Stiker';
                 }
             } else {
-                replyMsg += `\n\n💡 *Tips*: Kamu bisa menambahkan watermark dengan perintah \`${prefix}s NamaPack|NamaAuthor\` (contoh: \`${prefix}s Anime|Tederby\`)`;
+                replyMsg += `\n\n💡 *Tips*: Kamu bisa menambahkan watermark dengan perintah \`${prefix || "!"}s NamaPack|NamaAuthor\` (contoh: \`${prefix || "!"}s Anime|Tederby\`)`;
             }
 
             await message.reply(replyMsg);
@@ -112,7 +132,7 @@ export default {
             await sock.sendMessage(message.chat, { sticker: stickerBuffer }, { quoted: message });
 
         } catch (error) {
-            console.error('[ERROR STICKER]', error);
+            console.error('[STICKER]', error);
             await message.reply('❌ Terjadi kesalahan saat membuat stiker. Silakan coba lagi nanti.');
         }
     }

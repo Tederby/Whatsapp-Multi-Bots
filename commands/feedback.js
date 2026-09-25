@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Submit feedback or suggestions to bot owners.
+ * @module commands/feedback
+ */
+
 import setting from "../setting.js";
 import { addReport, getReports, deleteReport, markAsReplied } from "../lib/reportsDb.js";
 
@@ -15,9 +20,16 @@ export default {
     },
 
     async handler({ message, sock, args, cleanArgs, flags, rawArgs, sender, pushname, isGroup, groupName, isOwner, prefix }) {
+        const p = prefix || "!";
         const effectiveArgs = cleanArgs || args;
         if (args.length === 0 && effectiveArgs.length === 0) {
-            return message.reply(`❌ Format salah.\nContoh: \`${prefix}feedback Tolong tambahkan fitur main tebak-tebakan\``);
+            return message.reply(
+                `╭━━━〔 💡 FEEDBACK 〕━━━\n` +
+                `┃ ❌ Harap sertakan pesan saran atau ide fitur.\n` +
+                `┃ ⋄ Format: *${p}feedback <pesan>*\n` +
+                `┃ ⋄ Contoh: *${p}feedback Tolong tambahkan fitur tebak-tebakan*\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━`
+            );
         }
 
         // ── Owner Flags Management ─────────────────────────────────────
@@ -29,19 +41,21 @@ export default {
                 return message.reply("✅ Belum ada feedback yang masuk.");
             }
 
-            let reply = `📝 *DAFTAR FEEDBACK / SARAN* 📝\n\nTotal: ${feedbacks.length} saran\n\n`;
+            let reply = `╭━━━〔 💡 DAFTAR FEEDBACK 〕━━━\n` +
+                `┃ Total : ${feedbacks.length} saran\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
             feedbacks.forEach((fb) => {
                 const date = new Date(fb.timestamp).toLocaleString("id-ID");
-                reply += `╭───「 ID: ${fb.id} 」\n`;
-                reply += `│ 👤 Dari: ${fb.pushname} (@${fb.sender.split("@")[0]})\n`;
-                if (fb.isGroup) reply += `│ 🏢 Grup: ${fb.groupName}\n`;
-                reply += `│ 📅 Waktu: ${date}\n`;
-                reply += `│ 💬 Pesan:\n│ _${fb.text}_\n`;
-                if (fb.replied) reply += `│ ✅ *[Telah Dibalas]*\n`;
+                reply += `╭───「 📋 ID: ${fb.id} 」\n`;
+                reply += `│ ⋄ Pengirim : ${fb.pushname} (@${fb.sender.split("@")[0]})\n`;
+                if (fb.isGroup) reply += `│ ⋄ Grup : ${fb.groupName}\n`;
+                reply += `│ ⋄ Waktu : ${date}\n`;
+                reply += `│ ⋄ Pesan : ${fb.text}\n`;
+                if (fb.replied) reply += `│ ⋄ Status : ✅ Telah Dibalas\n`;
                 reply += `╰──────────────\n\n`;
             });
-            reply += `_Gunakan \`${prefix}feedback -d <id>\` atau \`--del <id>\` untuk menghapus._\n`;
-            reply += `_Gunakan \`${prefix}feedback -r <id> <pesan>\` atau \`--reply <id> <pesan>\` untuk membalas._`;
+            reply += `💡 Hapus: *${p}feedback -d <id>*\n`;
+            reply += `💡 Balas: *${p}feedback -r <id> <pesan>*`;
 
             return message.reply(reply);
         }
@@ -51,7 +65,7 @@ export default {
             
             const id = parseInt(effectiveArgs[0], 10);
             if (isNaN(id)) {
-                return message.reply(`❌ Masukkan ID feedback yang ingin dihapus.\nContoh: \`${prefix}feedback -d 1\``);
+                return message.reply(`❌ Masukkan ID feedback yang ingin dihapus.\nContoh: *${p}feedback -d 1*`);
             }
 
             const success = deleteReport("feedback", id);
@@ -68,7 +82,7 @@ export default {
             const id = parseInt(effectiveArgs[0], 10);
             const replyMsg = effectiveArgs.slice(1).join(" ");
             if (isNaN(id) || !replyMsg) {
-                return message.reply(`❌ Format salah.\nContoh: \`${prefix}feedback -r 1 Oke, saran diterima\``);
+                return message.reply(`❌ Format salah.\nContoh: *${p}feedback -r 1 Oke, saran diterima*`);
             }
 
             const item = getReports("feedback").find(r => r.id === id);
@@ -76,10 +90,14 @@ export default {
                 return message.reply(`❌ Feedback dengan ID ${id} tidak ditemukan.`);
             }
 
-            const replyText = `📩 *Balasan dari Owner (Feedback ID ${id})*\n\n"${replyMsg}"\n\n_Pesan aslimu:_\n_${item.text}_`;
+            const replyText = `╭━━━〔 📩 BALASAN OWNER 〕━━━\n` +
+                `┃ ⋄ ID Feedback : ${id}\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `"${replyMsg}"\n\n` +
+                `_Pesan aslimu:_\n_${item.text}_`;
 
             try {
-                // Skenario 1: Reply langsung ke pesan aslinya di chat aslinya
+                // Scenario 1: Reply directly to the original message in the original chat
                 await sock.sendMessage(
                     item.chatId,
                     { text: replyText, mentions: [item.sender] },
@@ -89,7 +107,7 @@ export default {
                 markAsReplied("feedback", id);
                 return message.reply(`✅ Balasan berhasil dikirim ke @${item.sender.split("@")[0]} di obrolan aslinya.`);
             } catch (err) {
-                // Fallback 1: Gagal membalas pesan (mungkin karena sudah sangat lama). Coba kirim biasa tanpa quoted
+                // Fallback 1: Message could be expired/unavailable. Send without quoted
                 try {
                     await sock.sendMessage(
                         item.chatId,
@@ -98,7 +116,7 @@ export default {
                     markAsReplied("feedback", id);
                     return message.reply(`✅ Balasan dikirim ke grup/obrolan tanpa me-reply pesan asli karena pesan asli tidak dapat diakses.`);
                 } catch (err2) {
-                    // Fallback 2: Gagal kirim ke grup (bot di kick, dll). Coba DM langsung user-nya.
+                    // Fallback 2: Bot kicked from group, send via direct message
                     try {
                         await sock.sendMessage(
                             item.sender,
@@ -120,11 +138,16 @@ export default {
         // Notify Owners
         const ownerJids = setting.owner.map(num => num.includes("@s.whatsapp.net") ? num : num + "@s.whatsapp.net");
         
-        let notificationMsg = `💡 *FEEDBACK BARU MASUK!* (ID: ${newItem.id})\n\n`;
-        notificationMsg += `👤 *Pengirim:* ${pushname} (@${sender.split("@")[0]})\n`;
-        if (isGroup) notificationMsg += `🏢 *Grup:* ${groupName}\n`;
-        notificationMsg += `\n💬 *Saran:*\n_${text}_\n\n`;
-        notificationMsg += `_Gunakan \`${prefix}feedback --del ${newItem.id}\` jika sudah dibaca._`;
+        let notificationMsg = `╭━━━〔 💡 FEEDBACK BARU 〕━━━\n` +
+            `┃ ⋄ ID : ${newItem.id}\n` +
+            `┃ ⋄ Pengirim : ${pushname} (@${sender.split("@")[0]})\n`;
+        if (isGroup) notificationMsg += `┃ ⋄ Grup : ${groupName}\n`;
+        notificationMsg += `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `╭───「 💬 Pesan 」\n` +
+            `│ ${text}\n` +
+            `╰──────────────\n\n` +
+            `💡 Hapus: *${p}feedback -d ${newItem.id}*\n` +
+            `💡 Balas: *${p}feedback -r ${newItem.id} <pesan>*`;
 
         let notifyCount = 0;
         for (const ownerJid of ownerJids) {

@@ -49,27 +49,28 @@ export default {
                 // Resolve registeredBy untuk display (bisa LID di data lama)
                 const { baseId: regByBaseId } = resolveTarget(config.registeredBy || "");
 
-                return message.reply(
-                    `⚠️ Grup ini sudah terdaftar!\n\n` +
-                    `📅 Terdaftar sejak: ${regDate}\n` +
-                    `📝 Didaftarkan oleh: @${regByBaseId || "unknown"}\n\n` +
-                    `_Gunakan \`${prefix}gunregister\` untuk menghapus registrasi._`
-                );
+                let infoText = `╭━━━〔 ⚠️ GRUP TERDAFTAR 〕━━━\n`;
+                infoText += `┃ 📅 Sejak : ${regDate}\n`;
+                infoText += `┃ 📝 Oleh  : @${regByBaseId || "unknown"}\n`;
+                infoText += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+                infoText += `_Gunakan \`${prefix}gunregister\` untuk menghapus registrasi._`;
+                return message.reply(infoText);
             }
 
             // Resolve sender ke PN agar registeredBy selalu konsisten
             const { jid: resolvedSender } = resolveTarget(sender);
             registerGroup(chatId, resolvedSender);
 
-            return message.reply(
-                `✅ *REGISTRASI GRUP BERHASIL*\n\n` +
-                `Grup ini sekarang terdaftar di database bot.\n` +
-                `Ketik \`${prefix}groupprofile\` untuk melihat info grup.`
-            );
+            let regSuccess = `╭━━━〔 ✅ REGISTRASI GRUP 〕━━━\n`;
+            regSuccess += `┃ Status : Berhasil Terdaftar\n`;
+            regSuccess += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+            regSuccess += `Grup ini sekarang terdaftar di database bot.\n`;
+            regSuccess += `Ketik \`${prefix}groupprofile\` untuk melihat info grup.`;
+            return message.reply(regSuccess);
 
         } catch (error) {
-            console.error("[GREGISTER CMD]", error);
-            message.reply("Terjadi kesalahan saat memproses registrasi grup.");
+            console.error("[GREGISTER]", error);
+            message.reply("❌ Terjadi kesalahan saat memproses registrasi grup.");
         }
     },
 };

@@ -1,8 +1,6 @@
 /**
- * ytdlf — Format Selection Download
- *
- * Step 1: User sends `!ytdlf <url>` → bot fetches info and shows available formats.
- * Step 2: User replies with format IDs (e.g. "137+140") → bot downloads and sends as document.
+ * @fileoverview Download media with interactive format/resolution selection.
+ * @module commands/ytdlf
  */
 
 import fs from "fs";
@@ -26,15 +24,20 @@ import setting from "../setting.js";
 export default {
     name: "ytdlf",
     aliases: ["ytf", "videof", "ytvf", "ytaf", "dlf"],
-    category: "download",
+    category: "downloader",
     description: "Download with manual format selection",
     usage: "!ytdlf <url>",
 
     async handler({ message, sock, args, prefix, sender }) {
+        const p = prefix || "!";
         const url = args[0];
         if (!url || !isUrl(url)) {
             return message.reply(
-                "❌ Masukkan URL yang valid.\nContoh: `!ytdlf https://youtube.com/watch?v=xxx`"
+                `╭━━━〔 🎬 YTDLF 〕━━━\n` +
+                `┃ ❌ Masukkan URL yang valid.\n` +
+                `┃ ⋄ Format: *${p}ytdlf <url>*\n` +
+                `┃ ⋄ Contoh: *${p}ytdlf https://youtube.com/watch?v=xxx*\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━`
             );
         }
 
@@ -61,16 +64,19 @@ export default {
 
         // ── 3. Send overview with thumbnail ─────────────────────────
         const caption = [
-            `📋 *${title}*`,
-            `🕐 ${duration} | 🌐 ${platform}`,
+            `╭━━━〔 🎬 FORMAT SELECTION 〕━━━`,
+            `┃ ⋄ Judul : *${title}*`,
+            `┃ ⋄ Durasi : ${duration}`,
+            `┃ ⋄ Platform : ${platform}`,
+            `╰━━━━━━━━━━━━━━━━━━━━`,
             ``,
-            `📦 *Format yang tersedia:*`,
+            `╭───「 📦 Format Tersedia 」`,
             "```",
             table,
             "```",
+            `╰───────────────────`,
             ``,
-            `💡 Reply pesan ini dengan ID format`,
-            `Contoh: *137+140* (video+audio)`,
+            `💡 Reply pesan ini dengan ID format (misal: *137+140*)`,
         ].join("\n");
 
         let sentMsg;
@@ -186,11 +192,13 @@ async function handleFormatReply({ message, sock, state }) {
 
         // ── Send as document ────────────────────────────────────
         const caption = [
-            `🎬 *${title}*`,
-            `📦 Format: ${formatStr}`,
-            `📏 Durasi: ${duration}`,
-            `🌐 Platform: ${platform}`,
-            `📊 Ukuran: ${formatSize(stat.size)}`,
+            `╭━━━〔 🎬 DOWNLOADED MEDIA 〕━━━`,
+            `┃ ⋄ Judul : *${title}*`,
+            `┃ ⋄ Format : ${formatStr}`,
+            `┃ ⋄ Durasi : ${duration}`,
+            `┃ ⋄ Platform : ${platform}`,
+            `┃ ⋄ Ukuran : ${formatSize(stat.size)}`,
+            `╰━━━━━━━━━━━━━━━━━━━━`,
         ].join("\n");
 
         if (!hasVideo && hasAudio) {
@@ -213,7 +221,7 @@ async function handleFormatReply({ message, sock, state }) {
 
         await statusMsg("✅ Selesai!");
     } catch (err) {
-        console.error("[ytdlf]", err);
+        console.error("[YTDLF]", err);
         await statusMsg("❌ Gagal mengunduh. " + (err.message || "Coba lagi nanti."));
     } finally {
         tryDelete(filePath);

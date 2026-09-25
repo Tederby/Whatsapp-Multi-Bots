@@ -1,15 +1,27 @@
+/**
+ * @fileoverview Download a file from direct URL and send it to WhatsApp.
+ * @module commands/download
+ */
+
 import axios from 'axios';
 import path from 'path';
 
 export default {
     name: 'download',
     aliases: ['dl', 'fetch'],
-    category: 'download',
+    category: 'downloader',
     description: 'Download file dari URL dan mengirimkannya ke WhatsApp',
     usage: '!download <url>',
-    async handler({ message, sock, args }) {
+    async handler({ message, sock, args, prefix }) {
         if (!args.length) {
-            return await message.reply('❌ Harap berikan URL yang ingin didownload.\n\nContoh: !download https://example.com/file.pdf');
+            const p = prefix || "!";
+            return await message.reply(
+                `╭━━━〔 📥 DOWNLOAD 〕━━━\n` +
+                `┃ ❌ Harap berikan URL yang ingin didownload.\n` +
+                `┃ ⋄ Format: *${p}download <url>*\n` +
+                `┃ ⋄ Contoh: *${p}download https://example.com/file.pdf*\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━`
+            );
         }
 
         const url = args[0];
@@ -36,7 +48,7 @@ export default {
             contentType = headResponse.headers['content-type'] || 'application/octet-stream';
             contentLength = parseInt(headResponse.headers['content-length'] || '0', 10);
             
-            // Limit to ~50MB (WhatsApp document limit usually 100MB, but let's be safe for bot's memory/timeout)
+            // Limit to ~100MB (WhatsApp document limit)
             const MAX_SIZE_MB = 100;
             if (contentLength > MAX_SIZE_MB * 1024 * 1024) {
                 return await update(`❌ File terlalu besar (${(contentLength / 1024 / 1024).toFixed(2)} MB). Batas maksimal adalah ${MAX_SIZE_MB} MB.`);
@@ -59,7 +71,7 @@ export default {
                 }
             }
         } catch (metadataError) {
-            console.log('[DOWNLOAD] Gagal mengambil metadata, mencoba dengan info default:', metadataError.message);
+            console.log('[DOWNLOAD] Failed to fetch metadata, using fallback:', metadataError.message);
             // Fallback to extract filename from URL if HEAD fails
             const parsedUrl = new URL(url);
             const basename = path.basename(parsedUrl.pathname);
@@ -68,7 +80,13 @@ export default {
             }
         }
 
-        await update(`📥 Mulai mengunduh file:\n*Nama:* ${fileName}\n*Ukuran:* ${contentLength ? (contentLength / 1024 / 1024).toFixed(2) + ' MB' : 'Tidak diketahui'}\n\nHarap tunggu sebentar...`);
+        await update(
+            `╭━━━〔 📥 DOWNLOAD 〕━━━\n` +
+            `┃ ⋄ Nama : *${fileName}*\n` +
+            `┃ ⋄ Ukuran : *${contentLength ? (contentLength / 1024 / 1024).toFixed(2) + ' MB' : 'Tidak diketahui'}*\n` +
+            `┃ ⋄ Status : Mengunduh & mengirim...\n` +
+            `╰━━━━━━━━━━━━━━━━━━━━`
+        );
 
         try {
             // Send the document directly using the URL (Baileys handles the streaming download)
@@ -81,7 +99,7 @@ export default {
             await update(`✅ Berhasil mengirim file *${fileName}*`);
 
         } catch (error) {
-            console.error('[ERROR DOWNLOAD]', error);
+            console.error('[DOWNLOAD]', error);
             await update('❌ Terjadi kesalahan saat mengunduh atau mengirim file. Pastikan URL dapat diakses secara publik.');
         }
     }

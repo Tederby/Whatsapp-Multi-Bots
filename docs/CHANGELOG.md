@@ -19,6 +19,23 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-09-25 — `[MAJOR]` Full 64-Command Output Standardization, Architecture Unification & Shared Formatting Engine
+- **Shared Formatting Utilities (`lib/utils.js`)**:
+  - Extracted shared pagination logic to `generatePaginator(page, totalPages)` and established `ITEMS_PER_PAGE = 5`, eliminating duplicated pagination footers across 7 search and paginator commands (`anime.js`, `manga.js`, `character.js`, `seasonal.js`, `trending.js`, `steam.js`, `ytsearch.js`).
+  - Added dual-mode `formatUptime(seconds, { short = false })` supporting long descriptive Indonesian text and compact ticker format (`1d 4h 12m 30s`) across system information commands (`info.js`, `menu.js`).
+- **Unified Text Output Design System**:
+  - Standardized all 64 command modules in `commands/` to use consistent heavy box-drawing cards (`╭━━━〔 EMOJI TITLE 〕━━━`, `┃`, `┣━━━━━━━━━━━━━━━━━━━━`, `╰━━━━━━━━━━━━━━━━━━━━`).
+  - Standardized all nested lists and groups into light containers (`╭───「 Title 」`, `│ ⋄ Key : Value`, `╰──────────────`) with uniform `⋄` diamond bullets.
+  - Normalized emoji status markers across the entire suite: `✅` for success / active / registered, `⚠️` for warnings / limits / admin notices, and `❌` for errors / validation failures.
+- **Dynamic Prefix Propagation**:
+  - Audited and updated all 64 command modules to destructure `prefix` from the context argument with fallback `prefix || "!"`, eliminating hardcoded prefixes across error prompts, command usage guides, and interactive menus.
+- **Logging Identifier Harmonization**:
+  - Unified all catch blocks and console diagnostic outputs to use uppercase command tags matching their filename (e.g. `[COMMAND_NAME]`).
+- **Category Canonicalization**:
+  - Fixed miscategorized commands to match canonical documentation categories: `brat.js` (`maker` -> `media`), `bash.js`/`dbfix.js`/`wvtest.js` (`system`/`tools` -> `owner`), `download.js`/`ytdl.js`/`ytdlf.js` (`download` -> `downloader`), `yuegame.js` (`game` -> `games`).
+- **Syntax and Code Quality Verification**:
+  - Added JSDoc `@module` headers across all 64 command files, ensured static top-level ES Module imports, translated internal Indonesian comments to English, and verified 100% clean compilation via system-wide `node -c`.
+
 ### 2026-09-18 — `[MAJOR]` Centralized POSIX-Style CLI Flag Engine & Command Standardization
 - **POSIX Flag Parser Module (`lib/flagParser.js`)**: Added centralized parser supporting long flags (`--flag`), single-letter flags (`-f`), clustered Linux-style short flag combinations (e.g. `!steam -tu` for `--top --ui`, `!ss -mfd` for `--mobile --full --dark`), valued flags (`-w 5`, `--wait=5`), numeric aliases (`-1`), double-dash terminator (`--`), and safe multiline markdown/html text flag extraction.
 - **Pipeline Integration (`handler.js`)**: Wired declarative `cmd.flags` parsing into the message processing pipeline, automatically supplying destructured `flags` and `cleanArgs` to command handlers while ensuring zero regression for legacy commands.

@@ -4,6 +4,8 @@
  * Global user ban: user cannot use bot anywhere.
  * Global group ban: bot stops responding in the group entirely.
  * Owner can ban a group without being in it (by JID).
+ *
+ * @module commands/gban
  */
 
 import {
@@ -40,7 +42,7 @@ export default {
                     return message.reply("✅ Tidak ada user yang di-global-ban.");
                 }
 
-                let reply = `🚫 *GLOBAL BAN LIST* 🚫\n\nTotal: ${banned.length} user\n\n`;
+                let reply = `╭━━━〔 🚫 GLOBAL BAN LIST 〕━━━\n┃ Total : ${banned.length} user\n╰━━━━━━━━━━━━━━━━━━━━\n\n`;
                 const mentions = [];
 
                 banned.forEach(({ userId, data }, i) => {
@@ -51,7 +53,7 @@ export default {
                     mentions.push(userId);
                 });
 
-                reply += `\n_Gunakan \`${prefix}gunban\` @user untuk unban._`;
+                reply += `\n_Gunakan \`${prefix || "!"}gunban @user\` untuk unban._`;
 
                 return sock.sendMessage(message.chat, { text: reply, mentions }, { quoted: message });
             }
@@ -60,7 +62,7 @@ export default {
                 const target = extractTarget(message, args);
 
                 if (!target) {
-                    return message.reply("Tag, reply, atau masukkan nomor user yang ingin di-unban.\n\nContoh: *!gunban @user* atau *!gunban 6281234567890*");
+                    return message.reply(`Tag, reply, atau masukkan nomor user yang ingin di-unban.\n\nContoh: *${prefix || "!"}gunban @user* atau *${prefix || "!"}gunban 6281234567890*`);
                 }
 
                 unbanUser(target.jid);
@@ -81,11 +83,13 @@ export default {
 
                 if (!target) {
                     return message.reply(
-                        "Tag, reply, atau masukkan nomor user yang ingin di-global-ban.\n\n" +
-                        "Contoh:\n" +
-                        `• \`${prefix}gban @user\` — Ban user global\n` +
-                        `• \`${prefix}gunban @user\` — Unban user global\n` +
-                        `• \`${prefix}gbanlist\` — Lihat daftar global ban`
+                        `╭━━━〔 🚫 GLOBAL BAN USER 〕━━━\n` +
+                        `┃ Masukkan target user untuk di-ban global.\n` +
+                        `┃\n` +
+                        `┃ ⋄ \`${prefix || "!"}gban @user [alasan]\` — Ban user global\n` +
+                        `┃ ⋄ \`${prefix || "!"}gunban @user\` — Unban user global\n` +
+                        `┃ ⋄ \`${prefix || "!"}gbanlist\` — Lihat daftar global ban\n` +
+                        `╰━━━━━━━━━━━━━━━━━━━━`
                     );
                 }
 
@@ -119,7 +123,7 @@ export default {
 
                 let reply = `🚫 @${target.baseId} telah di-ban secara *global*.\nUser ini tidak bisa menggunakan bot di mana pun.`;
                 if (reason) reply += `\n\n📝 Alasan: _${reason}_`;
-                reply += `\n\n_Gunakan \`${prefix}gunban @user\` untuk membatalkan._`;
+                reply += `\n\n_Gunakan \`${prefix || "!"}gunban @user\` untuk membatalkan._`;
 
                 return sock.sendMessage(
                     message.chat,
@@ -142,7 +146,7 @@ export default {
                     return message.reply("✅ Tidak ada grup yang di-ban.");
                 }
 
-                let reply = `🚫 *BANNED GROUPS* 🚫\n\nTotal: ${banned.length} grup\n\n`;
+                let reply = `╭━━━〔 🚫 BANNED GROUPS 〕━━━\n┃ Total : ${banned.length} grup\n╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
                 banned.forEach(({ chatId, data }, i) => {
                     reply += `${i + 1}. \`${chatId}\``;
@@ -150,7 +154,7 @@ export default {
                     reply += `\n`;
                 });
 
-                reply += `\n_Gunakan \`${prefix}unbangrup <groupId>\` untuk unban._`;
+                reply += `\n_Gunakan \`${prefix || "!"}unbangrup <groupId>\` untuk unban._`;
 
                 return message.reply(reply);
             }
@@ -162,7 +166,7 @@ export default {
 
                 const groupId = args[0];
                 if (!groupId) {
-                    return message.reply(`Masukkan Group ID yang ingin di-unban.\n\nContoh: \`${prefix}unbangrup 628xxx-xxx@g.us\``);
+                    return message.reply(`Masukkan Group ID yang ingin di-unban.\n\nContoh: \`${prefix || "!"}unbangrup 628xxx-xxx@g.us\``);
                 }
 
                 // Validate format
@@ -191,12 +195,14 @@ export default {
 
                 if (!targetGroup) {
                     return message.reply(
-                        "Masukkan Group ID atau gunakan di dalam grup.\n\n" +
-                        "Contoh:\n" +
-                        `• \`${prefix}bangrup\` — Ban grup saat ini\n` +
-                        `• \`${prefix}bangrup 628xxx-xxx@g.us\` — Ban grup remote\n` +
-                        `• \`${prefix}unbangrup 628xxx-xxx@g.us\` — Unban grup\n` +
-                        `• \`${prefix}bangruplist\` — Lihat semua grup yang di-ban`
+                        `╭━━━〔 🚫 GLOBAL GROUP BAN 〕━━━\n` +
+                        `┃ Masukkan Group ID atau gunakan di grup.\n` +
+                        `┃\n` +
+                        `┃ ⋄ \`${prefix || "!"}bangrup\` — Ban grup saat ini\n` +
+                        `┃ ⋄ \`${prefix || "!"}bangrup <groupId>\` — Ban grup remote\n` +
+                        `┃ ⋄ \`${prefix || "!"}unbangrup <groupId>\` — Unban grup\n` +
+                        `┃ ⋄ \`${prefix || "!"}bangruplist\` — Lihat semua grup yang di-ban\n` +
+                        `╰━━━━━━━━━━━━━━━━━━━━`
                     );
                 }
 
@@ -206,27 +212,31 @@ export default {
 
                 let reply = `🚫 Grup \`${targetGroup}\` telah di-ban.\nBot tidak akan merespon pesan apapun di grup tersebut.`;
                 if (reason) reply += `\n\n📝 Alasan: _${reason}_`;
-                reply += `\n\n_Gunakan \`${prefix}unbangrup ${targetGroup}\` untuk membatalkan._`;
+                reply += `\n\n_Gunakan \`${prefix || "!"}unbangrup ${targetGroup}\` untuk membatalkan._`;
 
                 return message.reply(reply);
             }
 
             // Fallback usage
             return message.reply(
-                `*Global Ban Commands:*\n\n` +
-                `━━ User ━━\n` +
-                `• \`${prefix}gban @user [alasan]\` — Ban user global\n` +
-                `• \`${prefix}gunban @user\` — Unban user global\n` +
-                `• \`${prefix}gbanlist\` — Lihat daftar\n\n` +
-                `━━ Grup ━━\n` +
-                `• \`${prefix}bangrup [groupId]\` — Ban grup\n` +
-                `• \`${prefix}unbangrup <groupId>\` — Unban grup\n` +
-                `• \`${prefix}bangruplist\` — Lihat daftar`
+                `╭━━━〔 🚫 GLOBAL BAN MENU 〕━━━\n` +
+                `┃ Menu manajemen ban user & grup\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `╭───「 👤 User 」\n` +
+                `│ ⋄ \`${prefix || "!"}gban @user [alasan]\` — Ban user global\n` +
+                `│ ⋄ \`${prefix || "!"}gunban @user\` — Unban user global\n` +
+                `│ ⋄ \`${prefix || "!"}gbanlist\` — Lihat daftar ban user\n` +
+                `╰──────────────\n\n` +
+                `╭───「 👥 Grup 」\n` +
+                `│ ⋄ \`${prefix || "!"}bangrup [groupId]\` — Ban grup\n` +
+                `│ ⋄ \`${prefix || "!"}unbangrup <groupId>\` — Unban grup\n` +
+                `│ ⋄ \`${prefix || "!"}bangruplist\` — Lihat daftar ban grup\n` +
+                `╰──────────────`
             );
 
         } catch (error) {
-            console.error("[GBAN CMD]", error);
-            message.reply("Terjadi kesalahan saat memproses perintah global ban.");
+            console.error("[GBAN]", error);
+            message.reply("❌ Terjadi kesalahan saat memproses perintah global ban.");
         }
     },
 };

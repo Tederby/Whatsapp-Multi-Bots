@@ -1,3 +1,9 @@
+/**
+ * Resend — Re-send quoted media messages, converting documents into viewable media where possible.
+ *
+ * @module commands/resend
+ */
+
 import { downloadMediaMessage } from "baileys";
 import Pino from "pino";
 
@@ -154,7 +160,7 @@ export default {
                 { quoted: message, ephemeralExpiration: message.contextInfo?.expiration }
             );
         } catch (err) {
-            console.log("[ERROR RESEND]", err);
+            console.error("[RESEND]", err);
             await message.reply("❌ Terjadi kesalahan saat mendownload atau mengirim ulang media.");
         }
     }

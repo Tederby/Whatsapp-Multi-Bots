@@ -1,5 +1,6 @@
 /**
- * Profile — Display user profile information with database integration.
+ * @fileoverview Display user profile information with database integration.
+ * @module commands/profile
  */
 
 import { jidNormalizedUser } from "baileys";
@@ -16,6 +17,7 @@ export default {
     usage: "!profile [@user/reply]",
 
     async handler({ message, sock, sender, pushname, isGroup, isGroupAdmins, groupMetadata, ownerNumbers, prefix }) {
+        const p = prefix || "!";
         try {
             // ── 1. Determine target ─────────────────────────────────
             let target = null;
@@ -31,10 +33,10 @@ export default {
             }
 
             if (!target) {
-                return message.reply("Gagal mendapatkan target pengguna. Pastikan tag atau reply pesan dengan benar.");
+                return message.reply("❌ Gagal mendapatkan target pengguna. Pastikan tag atau reply pesan dengan benar.");
             }
 
-            // Resolve LID → PN agar database lookup menemukan data yang benar
+            // Resolve LID -> PN so database lookups find correct canonical data
             const normalizedTarget = resolveUserId(jidNormalizedUser(target));
             const targetBaseId = normalizedTarget.split(":")[0].split("@")[0];
 
@@ -51,13 +53,13 @@ export default {
                 if (normalizedTarget === sender) {
                     isTargetAdmin = isGroupAdmins;
                 } else if (groupMetadata && groupMetadata.participants) {
-                    isTargetAdmin = groupMetadata.participants.some(p => {
-                        const pBase = p.id.split(":")[0].split("@")[0];
-                        // Juga cek phoneNumber untuk grup LID mode
-                        const pPhoneBase = p.phoneNumber
-                            ? p.phoneNumber.split(":")[0].split("@")[0]
+                    isTargetAdmin = groupMetadata.participants.some(participant => {
+                        const pBase = participant.id.split(":")[0].split("@")[0];
+                        // Also check phoneNumber for LID group mode
+                        const pPhoneBase = participant.phoneNumber
+                            ? participant.phoneNumber.split(":")[0].split("@")[0]
                             : null;
-                        return (pBase === targetBaseId || pPhoneBase === targetBaseId) && p.admin;
+                        return (pBase === targetBaseId || pPhoneBase === targetBaseId) && participant.admin;
                     });
                 }
             }
@@ -76,7 +78,7 @@ export default {
                 : null;
 
             // ── 5. Build profile display ────────────────────────────
-            let caption = `╭━━━〔 👤 Profile Info 〕━━━\n`;
+            let caption = `╭━━━〔 👤 PROFILE INFO 〕━━━\n`;
 
             if (targetName) {
                 caption += `┃ 📛 Nama  : ${targetName}\n`;
@@ -86,7 +88,7 @@ export default {
                 caption += `┃ 📛 Nama  : -\n`;
             }
 
-            // Cek bot admin dari PN (resolved) DAN LID asli (untuk data lama)
+            // Check bot admin from PN (resolved) and original LID (for legacy data)
             const isTargetBotAdmin = 
                 userData.meta?.isBotAdmin === true ||
                 isBotAdmin(jidNormalizedUser(target));
@@ -115,12 +117,12 @@ export default {
                 caption += `│ ⋄ Status : ✅ Terdaftar\n`;
                 if (regDate) caption += `│ ⋄ Sejak  : ${regDate}\n`;
                 if (isSelf) {
-                    caption += `│   └ _Ketik \`${prefix}register\` untuk pengaturan_\n`;
+                    caption += `│   └ _Ketik \`${p}register\` untuk pengaturan_\n`;
                 }
             } else {
                 caption += `│ ⋄ Status : ❌ Belum terdaftar\n`;
                 if (isSelf) {
-                    caption += `│   └ _Ketik \`${prefix}register\` untuk mendaftar_\n`;
+                    caption += `│   └ _Ketik \`${p}register\` untuk mendaftar_\n`;
                 }
             }
             caption += `╰──────────────\n\n`;
@@ -131,9 +133,9 @@ export default {
             const hasAnilist = !!userData.meta?.anilistUsername;
             if (hasMal || hasSteam || hasAnilist) {
                 caption += `╭───「 🔗 Linked Accounts 」\n`;
-                if (hasSteam) caption += `│ 🎮 Steam   : https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
-                if (hasMal) caption += `│ 🎌 MAL     : https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
-                if (hasAnilist) caption += `│ 🌸 AniList : https://anilist.co/user/${userData.meta.anilistUsername}\n`;
+                if (hasSteam) caption += `│ ⋄ Steam   : https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
+                if (hasMal) caption += `│ ⋄ MAL     : https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
+                if (hasAnilist) caption += `│ ⋄ AniList : https://anilist.co/user/${userData.meta.anilistUsername}\n`;
                 caption += `╰──────────────\n\n`;
             }
 
@@ -188,7 +190,7 @@ export default {
             }
 
             if (isDefault) {
-                caption += `\n\n💡 *Tips*: Gunakan perintah \`${prefix}setpfp\` untuk memasang PFP kustom, atau \`${prefix}setpfp delete\` untuk menghapusnya.`;
+                caption += `\n\n💡 *Tips*: Gunakan perintah *${p}setpfp* untuk memasang PFP kustom, atau *${p}setpfp delete* untuk menghapusnya.`;
             }
 
             await sock.sendMessage(
@@ -202,8 +204,8 @@ export default {
             );
 
         } catch (error) {
-            console.error("[PROFILE CMD]", error);
-            message.reply("Terjadi kesalahan sistem saat memproses profil.");
+            console.error("[PROFILE]", error);
+            message.reply("❌ Terjadi kesalahan sistem saat memproses profil.");
         }
     },
 };

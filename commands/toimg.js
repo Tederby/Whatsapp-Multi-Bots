@@ -1,3 +1,9 @@
+/**
+ * To Image / Video — Convert static or animated stickers to image or video files.
+ *
+ * @module commands/toimg
+ */
+
 import { downloadContentFromMessage } from 'baileys';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -12,7 +18,7 @@ export default {
     category: 'media',
     description: 'Mengubah stiker menjadi gambar atau video',
     usage: '!toimg (reply to a sticker)',
-    async handler({ message, sock }) {
+    async handler({ message, sock, prefix }) {
         try {
             // Check for sticker message
             const isQuotedSticker = message.quoted?.message?.stickerMessage;
@@ -20,7 +26,7 @@ export default {
             const targetMsg = isQuotedSticker ? message.quoted : (isSticker ? message : null);
 
             if (!targetMsg) {
-                return await message.reply('❌ Balas (reply) stiker yang ingin diubah menjadi gambar/video dengan caption *!toimg*.');
+                return await message.reply(`❌ Balas (reply) stiker yang ingin diubah menjadi gambar/video dengan caption *${prefix || "!"}toimg*.`);
             }
 
             const stickerMsg = targetMsg.message.stickerMessage;
@@ -75,7 +81,7 @@ export default {
                 }
 
             } catch (ffmpegErr) {
-                console.error('[FFMPEG ERROR]', ffmpegErr);
+                console.error('[TOIMG:FFMPEG]', ffmpegErr);
                 await message.reply('❌ Gagal mengonversi stiker. Pastikan server memiliki ffmpeg yang terinstal.');
             } finally {
                 // Cleanup
@@ -84,7 +90,7 @@ export default {
             }
 
         } catch (error) {
-            console.error('[ERROR TOIMG]', error);
+            console.error('[TOIMG]', error);
             await message.reply('❌ Terjadi kesalahan internal saat memproses stiker.');
         }
     }

@@ -84,8 +84,8 @@ export default {
             );
 
         } catch (error) {
-            console.error("[GROUPPROFILE CMD]", error);
-            message.reply("Terjadi kesalahan saat menampilkan info grup.");
+            console.error("[GROUPPROFILE]", error);
+            message.reply("❌ Terjadi kesalahan saat menampilkan info grup.");
         }
     },
 };

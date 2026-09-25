@@ -1,8 +1,6 @@
 /**
- * Register — User registration command.
- *
- * Scalable design: stores basic metadata now, extensible via meta bag
- * for future features (XP, level, bio, etc.)
+ * @fileoverview User registration and profile configuration (MAL, Steam, AniList, display modes).
+ * @module commands/register
  */
 
 import { registerUser, unregisterUser, isRegistered, getUser, saveUser, resolveUserId } from "../lib/database.js";
@@ -100,11 +98,12 @@ export default {
     usage: "!register [name/unreg/mal/anilist/steam/unlink/mode] [value]",
 
     async handler({ message, args, sender, pushname, prefix, sock }) {
+        const p = prefix || "!";
         try {
-            // Safety net: pastikan sender selalu PN, bukan LID
+            // Safety net: ensure sender is normalized PN canonical ID, not raw LID
             sender = resolveUserId(sender);
 
-            // ── Direct sub-commands (tanpa harus reply menu) ────────
+            // ── Direct sub-commands (without replying to menu) ──────
             if (args && args.length > 0) {
                 const cmd = args[0].toLowerCase();
 
@@ -114,11 +113,11 @@ export default {
                     return;
                 }
 
-                // !register name <nama baru>
+                // !register name <new name>
                 if (cmd === "name") {
                     const newName = args.slice(1).join(" ").trim();
                     if (!newName) {
-                        return message.reply(`❌ Berikan nama baru.\nContoh: \`${prefix}register name Tederby\``);
+                        return message.reply(`❌ Berikan nama baru.\nContoh: *${p}register name Tederby*`);
                     }
                     if (!isRegistered(sender)) registerUser(sender, pushname);
                     const user = getUser(sender);
@@ -140,7 +139,12 @@ export default {
                 if (cmd === "unlink") {
                     const service = (args[1] || "").toLowerCase();
                     if (service !== "mal" && service !== "steam" && service !== "anilist") {
-                        return message.reply(`❌ Pilih akun yang ingin dilepas:\n• \`${prefix}register unlink mal\`\n• \`${prefix}register unlink anilist\`\n• \`${prefix}register unlink steam\``);
+                        return message.reply(
+                            `❌ Pilih akun yang ingin dilepas:\n` +
+                            `• *${p}register unlink mal*\n` +
+                            `• *${p}register unlink anilist*\n` +
+                            `• *${p}register unlink steam*`
+                        );
                     }
                     const user = getUser(sender);
                     user.meta = user.meta || {};
@@ -157,7 +161,11 @@ export default {
                 if (cmd === "mode" || cmd === "display") {
                     const mode = (args[1] || "").toLowerCase();
                     if (mode !== "ui" && mode !== "text") {
-                        return message.reply(`❌ Pilih mode yang valid:\n• \`${prefix}register mode ui\` (Tampilan interaktif)\n• \`${prefix}register mode text\` (Teks biasa)`);
+                        return message.reply(
+                            `❌ Pilih mode yang valid:\n` +
+                            `• *${p}register mode ui* (Tampilan interaktif)\n` +
+                            `• *${p}register mode text* (Teks biasa)`
+                        );
                     }
                     if (!isRegistered(sender)) registerUser(sender, pushname);
                     const user = getUser(sender);
@@ -168,7 +176,7 @@ export default {
                 }
             }
 
-            // ── No sub-command: tampilkan info + menu ───────────────
+            // ── No sub-command: display info + menu ─────────────────
             let user;
             let isNewUser = false;
 
@@ -188,7 +196,7 @@ export default {
             const displayMode = user.meta?.displayMode ?? "text";
             const displayModeLabel = displayMode === "ui" ? "UI Interaktif" : "Teks Biasa (Default)";
 
-            let caption = `╭━━━〔 📝 Registrasi 〕━━━\n`;
+            let caption = `╭━━━〔 📝 REGISTRASI 〕━━━\n`;
             if (isNewUser) {
                 caption += `┃ ✅ *Registrasi Berhasil!*\n`;
                 caption += `┃ Selamat datang di database bot.\n`;
@@ -201,27 +209,25 @@ export default {
             caption += `┃ 📅 Tanggal : ${regDate}\n`;
             caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-            caption += `╭━━━〔 ⚙️ Menu Pengaturan 〕━━━\n`;
-            caption += `┃ Balas pesan ini, atau gunakan langsung:\n`;
+            caption += `╭━━━〔 ⚙️ PENGATURAN 〕━━━\n`;
+            caption += `┃ Balas pesan ini, atau gunakan perintah langsung:\n`;
             caption += `┃\n`;
             caption += `┃ ⚙️ *Akun*\n`;
-            caption += `┃ ⋄ \`name <nama baru>\` ganti nama\n`;
-            caption += `┃ ⋄ \`unreg\` hapus registrasi\n`;
+            caption += `┃ ⋄ *name <nama baru>* — ganti nama\n`;
+            caption += `┃ ⋄ *unreg* — hapus registrasi\n`;
             caption += `┃\n`;
             caption += `┃ 🖥️ *Tampilan*\n`;
-            caption += `┃ ⋄ \`mode ui\` tampilan interaktif (default)\n`;
-            caption += `┃ ⋄ \`mode text\` tampilan teks biasa\n`;
+            caption += `┃ ⋄ *mode ui* — tampilan interaktif\n`;
+            caption += `┃ ⋄ *mode text* — tampilan teks biasa\n`;
             caption += `┃\n`;
             caption += `┃ 🔗 *Link Akun*\n`;
-            caption += `┃ ⋄ \`mal <username>\` tautkan MAL\n`;
-            caption += `┃ ⋄ \`anilist <username>\` tautkan AniList\n`;
-            caption += `┃ ⋄ \`steam <custom_url/steamid>\` tautkan Steam\n`;
-            caption += `┃ ⋄ \`unlink mal\` lepas MAL\n`;
-            caption += `┃ ⋄ \`unlink anilist\` lepas AniList\n`;
-            caption += `┃ ⋄ \`unlink steam\` lepas Steam\n`;
+            caption += `┃ ⋄ *mal <username>* — tautkan MAL\n`;
+            caption += `┃ ⋄ *anilist <username>* — tautkan AniList\n`;
+            caption += `┃ ⋄ *steam <id>* — tautkan Steam\n`;
+            caption += `┃ ⋄ *unlink <mal/anilist/steam>* — lepas tautan\n`;
             caption += `┃\n`;
-            caption += `┃ 💡 _Bisa juga langsung:_\n`;
-            caption += "┃ _`" + prefix + "register mode ui`_\n";
+            caption += `┃ 💡 _Contoh langsung:_\n`;
+            caption += `┃ _*${p}register mode ui*_\n`;
             caption += `╰━━━━━━━━━━━━━━━━━━━━`;
 
             const sentMsg = await sock.sendMessage(message.chat, { text: caption }, { quoted: message });
@@ -233,8 +239,8 @@ export default {
             });
 
         } catch (error) {
-            console.error("[REGISTER CMD]", error);
-            message.reply("Terjadi kesalahan saat memproses registrasi.");
+            console.error("[REGISTER]", error);
+            message.reply("❌ Terjadi kesalahan saat memproses registrasi.");
         }
     },
 };
@@ -326,17 +332,19 @@ async function replyHandler({ message, sock, state }) {
         return;
     }
 
-    // ── Fallback: perintah tidak dikenali ────────────────────────────────
+    // ── Fallback: unrecognized command ─────────────────────────────────
     await message.reply(
-        "❌ Perintah tidak dikenali.\n\n" +
-        "Pilihan yang tersedia:\n" +
-        "⋄ `name <nama baru>` — ganti nama\n" +
-        "⋄ `mode <ui/text>` — atur preferensi tampilan\n" +
-        "⋄ `unreg` — hapus registrasi\n" +
-        "⋄ `mal <username>` — tautkan MAL\n" +
-        "⋄ `anilist <username>` — tautkan AniList\n" +
-        "⋄ `steam <id>` — tautkan Steam\n" +
-        "⋄ `unlink mal/anilist/steam` — lepas tautan"
+        `╭━━━〔 ⚙️ PENGATURAN REGISTRASI 〕━━━\n` +
+        `┃ ❌ Perintah tidak dikenali.\n` +
+        `┃\n` +
+        `┃ ⋄ *name <nama baru>* — ganti nama\n` +
+        `┃ ⋄ *mode <ui/text>* — preferensi tampilan\n` +
+        `┃ ⋄ *unreg* — hapus registrasi\n` +
+        `┃ ⋄ *mal <username>* — tautkan MAL\n` +
+        `┃ ⋄ *anilist <username>* — tautkan AniList\n` +
+        `┃ ⋄ *steam <id>* — tautkan Steam\n` +
+        `┃ ⋄ *unlink <mal/anilist/steam>* — lepas tautan\n` +
+        `╰━━━━━━━━━━━━━━━━━━━━`
     );
 }
 

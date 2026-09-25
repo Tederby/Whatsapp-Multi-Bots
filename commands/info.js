@@ -5,6 +5,7 @@
 import os from "os";
 import { getAllCommands } from "./_registry.js";
 import { getDBStats } from "../lib/database.js";
+import { formatUptime } from "../lib/utils.js";
 import setting from "../setting.js";
 
 /** Format bytes to human-readable. */
@@ -14,20 +15,6 @@ function formatBytes(bytes) {
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return (bytes / Math.pow(k, i)).toFixed(1) + " " + sizes[i];
-}
-
-/** Format seconds to human-readable uptime. */
-function formatUptime(seconds) {
-    const d = Math.floor(seconds / 86400);
-    const h = Math.floor((seconds % 86400) / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    const parts = [];
-    if (d > 0) parts.push(`${d} hari`);
-    if (h > 0) parts.push(`${h} jam`);
-    if (m > 0) parts.push(`${m} menit`);
-    if (s > 0 || parts.length === 0) parts.push(`${s} detik`);
-    return parts.join(" ");
 }
 
 export default {
@@ -102,8 +89,8 @@ export default {
             await message.reply(text);
 
         } catch (error) {
-            console.error("[INFO CMD]", error);
-            message.reply("Terjadi kesalahan saat mengambil informasi bot.");
+            console.error("[INFO]", error);
+            message.reply("❌ Terjadi kesalahan saat mengambil informasi bot.");
         }
     },
 };

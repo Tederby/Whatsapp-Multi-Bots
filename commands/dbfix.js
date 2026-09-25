@@ -8,6 +8,8 @@
  *  - PFP directory ↔ database sync
  *
  * Reports all actions taken with statistics.
+ *
+ * @module commands/dbfix
  */
 
 import { repairDatabase } from "../lib/database.js";
@@ -15,7 +17,7 @@ import { repairDatabase } from "../lib/database.js";
 export default {
     name: "dbfix",
     aliases: ["dbrepair", "fixdb", "dbclean"],
-    category: "system",
+    category: "owner",
     description: "Memperbaiki dan membersihkan database bot (System Owner Only)",
     usage: "!dbfix",
     ownerOnly: true,
@@ -61,7 +63,7 @@ export default {
 
             await update(text);
         } catch (error) {
-            console.error("[DBFIX CMD]", error);
+            console.error("[DBFIX]", error);
             await update("❌ Terjadi kesalahan saat memperbaiki database: " + error.message);
         }
     }

@@ -1,3 +1,9 @@
+/**
+ * Markdown — Render raw markdown text into an interactive styled WhatsApp webview payload.
+ *
+ * @module commands/markdown
+ */
+
 import { sendUI } from "../lib/uiEngine.js";
 import { extractFlagsFromText } from "../lib/flagParser.js";
 
@@ -423,7 +429,7 @@ export default {
                 }
             }
         } catch (error) {
-            console.error("[Markdown Command Error] Failed to render markdown:", error);
+            console.error("[MARKDOWN]", error);
             await message.reply("❌ Gagal merender markdown. Pastikan aplikasi WhatsApp Anda mendukung pesan interaktif.");
         }
     }

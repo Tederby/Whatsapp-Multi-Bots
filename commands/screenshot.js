@@ -1,3 +1,9 @@
+/**
+ * Screenshot — Capture full-page, desktop, or mobile screenshots of websites using Puppeteer.
+ *
+ * @module commands/screenshot
+ */
+
 import puppeteer from "puppeteer";
 import puppeteerQueue from "../services/puppeteerQueue.js";
 
@@ -68,22 +74,25 @@ export default {
         wait:   { type: "number",  char: "w", aliases: ["wait"], default: null },
     },
 
-    async handler({ message, args, cleanArgs, flags, sock }) {
+    async handler({ message, args, cleanArgs, flags, sock, prefix }) {
         const effectiveArgs = cleanArgs || args;
         if (args.length === 0 && effectiveArgs.length === 0) {
             await message.reply(
-                "❌ Berikan URL website yang ingin di-screenshot.\n\n" +
-                "Contoh:\n" +
-                "• `!ss google.com`\n" +
-                "• `!ss -m https://github.com`\n" +
-                "• `!ss reddit.com -mfd` _(kombinasi: mobile, fullpage, dark)_\n" +
-                "• `!ss -w 5 reddit.com -fd` _(tunggu 5 detik + fullpage + dark)_\n\n" +
-                "╭───「 🏷️ Flags 」\n" +
-                "│ `-m, --mobile` — Tampilan mobile\n" +
-                "│ `-f, --full`   — Full-page (seluruh halaman)\n" +
-                "│ `-d, --dark`   — Dark mode\n" +
-                "│ `-w, --wait [detik]` — Tunggu ekstra (default 2s, max 15s)\n" +
-                "╰──────────────"
+                `╭━━━〔 📸 SCREENSHOT WEB 〕━━━\n` +
+                `┃ Mengambil screenshot tampilan website.\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `╭───「 📖 Penggunaan 」\n` +
+                `│ ⋄ \`${prefix || "!"}ss google.com\`\n` +
+                `│ ⋄ \`${prefix || "!"}ss -m https://github.com\`\n` +
+                `│ ⋄ \`${prefix || "!"}ss reddit.com -mfd\`\n` +
+                `│ ⋄ \`${prefix || "!"}ss -w 5 reddit.com -fd\`\n` +
+                `╰──────────────\n\n` +
+                `╭───「 🏷️ Flags 」\n` +
+                `│ ⋄ -m, --mobile : Tampilan mobile\n` +
+                `│ ⋄ -f, --full   : Full-page (seluruh halaman)\n` +
+                `│ ⋄ -d, --dark   : Dark mode\n` +
+                `│ ⋄ -w, --wait   : Tunggu ekstra (detik, max 15s)\n` +
+                `╰──────────────`
             );
             return;
         }

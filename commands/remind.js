@@ -1,3 +1,9 @@
+/**
+ * Remind — Schedule one-time relative or absolute time reminders.
+ *
+ * @module commands/remind
+ */
+
 import { addReminder, hasReminder } from "../services/reminder.js";
 import { resolveUserId } from "../lib/database.js";
 
@@ -54,18 +60,30 @@ export default {
     description: "Membuat pengingat (waktu relatif / waktu spesifik).",
     usage: "!remind 10m Cek oven\n!remind 1d 12h Bayar tagihan\n!remind 31/12/2026 23:59 Happy New Year!",
 
-    async handler({ message, rawArgs, sender }) {
+    async handler({ message, rawArgs, sender, prefix }) {
         // Resolve sender to PN for consistent reminder key
         sender = resolveUserId(sender);
         const chatId = message.chat;
 
         if (!rawArgs || rawArgs.trim() === "") {
-            return message.reply(`❌ Format salah. Contoh:\n\n*Durasi:*\n!remind 10m Cek oven\n!remind 1d 12h Bayar tagihan\n\n*Tanggal Spesifik:*\n!remind 20:30 Nonton bola\n!remind 31/12/2026 23:59 Tahun Baru`);
+            return message.reply(
+                `╭━━━〔 ⏰ SET REMINDER 〕━━━\n` +
+                `┃ Buat pengingat waktu relatif atau spesifik.\n` +
+                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+                `╭───「 ⏳ Durasi Relatif 」\n` +
+                `│ ⋄ \`${prefix || "!"}remind 10m Cek oven\`\n` +
+                `│ ⋄ \`${prefix || "!"}remind 1d 12h Bayar tagihan\`\n` +
+                `╰──────────────\n\n` +
+                `╭───「 📅 Waktu Spesifik 」\n` +
+                `│ ⋄ \`${prefix || "!"}remind 20:30 Nonton bola\`\n` +
+                `│ ⋄ \`${prefix || "!"}remind 31/12/2026 23:59 Tahun Baru\`\n` +
+                `╰──────────────`
+            );
         }
 
         // Cek limitasi 1 remind per user per chat
         if (hasReminder(sender, chatId)) {
-            return message.reply("⚠️ Kamu masih memiliki pengingat yang aktif di obrolan ini.\nKetik *!unremind* untuk membatalkannya terlebih dahulu.");
+            return message.reply(`⚠️ Kamu masih memiliki pengingat yang aktif di obrolan ini.\nKetik *${prefix || "!"}unremind* untuk membatalkannya terlebih dahulu.`);
         }
 
         let raw = rawArgs.trim();
@@ -103,7 +121,7 @@ export default {
 
         // 3. Validasi akhir
         if (!triggerTime || !messageStr) {
-            return message.reply("❌ Gagal mem-parsing waktu atau pesan kosong.\nPastikan formatnya benar. Contoh: `!remind 15m Angkat jemuran`");
+            return message.reply(`❌ Gagal mem-parsing waktu atau pesan kosong.\nPastikan formatnya benar. Contoh: \`${prefix || "!"}remind 15m Angkat jemuran\``);
         }
 
         // Limitasi maksimal 30 hari
@@ -120,7 +138,7 @@ export default {
             addReminder(sender, chatId, triggerTime, messageStr);
             message.reply(`✅ Pengingat berhasil diset untuk:\n*🗓️ ${formatTime(triggerTime)}*`);
         } catch (error) {
-            console.error(error);
+            console.error("[REMIND]", error);
             message.reply("❌ Gagal membuat pengingat.");
         }
     }

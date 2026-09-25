@@ -1,3 +1,7 @@
+/**
+ * Demote — Demote a group admin to regular member with self-demote confirmation.
+ */
+
 import { registerReplyHandler, deleteReplyHandler } from './_registry.js';
 import { extractTarget, findParticipant, resolveTarget } from '../lib/jidHelper.js';
 
@@ -16,7 +20,15 @@ export default {
             const target = extractTarget(message, args);
 
             if (!target) {
-                return message.reply(`Tag, reply, atau masukkan nomor user yang ingin diturunkan jabatannya.\nContoh: \`${prefix}demote @user\``);
+                return message.reply(
+                    "╭━━━〔 🔽 DEMOTE ADMIN 〕━━━\n" +
+                    "┃ Menurunkan jabatan Admin menjadi anggota biasa.\n" +
+                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
+                    "╭───「 📖 Penggunaan 」\n" +
+                    `│ ⋄ \`${prefix || "!"}demote @user\`\n` +
+                    `│ ⋄ \`${prefix || "!"}demote <nomor>\`\n` +
+                    "╰──────────────"
+                );
             }
 
             // Find participant in group (returns raw JID for API call)
@@ -72,15 +84,15 @@ export default {
                                 { quoted: replyMessage }
                             );
                         } catch (error) {
-                            console.error("[DEMOTE CMD]", error);
+                            console.error("[DEMOTE]", error);
                             await replyMessage.reply("❌ Gagal menurunkan jabatan admin.");
                         }
                         deleteReplyHandler(sentMsg.key.id);
                     } else if (replyText === 'cancel') {
-                        await replyMessage.reply("Proses demote dibatalkan.");
+                        await replyMessage.reply("ℹ️ Proses demote dibatalkan.");
                         deleteReplyHandler(sentMsg.key.id);
                     } else {
-                        await replyMessage.reply("Instruksi tidak dikenali. Ketik *confirm* untuk melanjutkan, atau *cancel* untuk membatalkan.");
+                        await replyMessage.reply("⚠️ Instruksi tidak dikenali. Ketik *confirm* untuk melanjutkan, atau *cancel* untuk membatalkan.");
                     }
                 }, {
                     actualTargetJid: participantInfo.participant,
@@ -104,7 +116,7 @@ export default {
                 { quoted: message }
             );
         } catch (error) {
-            console.error("[DEMOTE CMD]", error);
+            console.error("[DEMOTE]", error);
             message.reply("❌ Gagal menurunkan jabatan admin. Pastikan bot adalah admin dan nomor yang dituju valid.");
         }
     }

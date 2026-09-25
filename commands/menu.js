@@ -1,6 +1,11 @@
+/**
+ * Menu — Interactive category navigation and full command listing (text & UI modes).
+ */
+
 import { getAllCommands, registerReplyHandler, deleteReplyHandler } from "./_registry.js";
 import { getUser, resolveUserId } from "../lib/database.js";
 import { sendUI, renderPage, esc } from "../lib/uiEngine.js";
+import { formatUptime } from "../lib/utils.js";
 import setting from "../setting.js";
 
 /** Display name for each category. */
@@ -20,19 +25,6 @@ const CATEGORY_LABELS = {
 
 /** Fallback label for commands without a category. */
 const DEFAULT_CATEGORY = "📦 Lainnya";
-
-function formatUptime(seconds) {
-    const d = Math.floor(seconds / (3600 * 24));
-    const h = Math.floor(seconds % (3600 * 24) / 3600);
-    const m = Math.floor(seconds % 3600 / 60);
-    const s = Math.floor(seconds % 60);
-    const parts = [];
-    if (d > 0) parts.push(`${d}d`);
-    if (h > 0) parts.push(`${h}h`);
-    if (m > 0) parts.push(`${m}m`);
-    if (s > 0 || parts.length === 0) parts.push(`${s}s`);
-    return parts.join(" ");
-}
 
 function getGroupedCommands() {
     const commands = getAllCommands();
@@ -57,7 +49,7 @@ function getOrderedCategories(groups) {
 function getHeader(timeoutSec) {
     let text = `╭━━━〔 👾 ${setting.name || "Bot Menu"} 👾 〕━━━\n`;
     text += `┃ 💻 Prefix : [ ${setting.prefixes.join(" / ")} ]\n`;
-    text += `┃ ⏱️ Uptime : ${formatUptime(process.uptime())}\n`;
+    text += `┃ ⏱️ Uptime : ${formatUptime(process.uptime(), { short: true })}\n`;
     if (timeoutSec > 0) {
         text += `┃ ⚠️ Menu akan timeout dalam ${timeoutSec} detik\n`;
     }
@@ -173,7 +165,7 @@ function generateMenuUI({ initialCategory = null, isAll = false, prefix = "!" } 
 
     const safeCategories = JSON.stringify(categoriesData).replace(/</g, '\\u003c');
     const safeCommands = JSON.stringify(commandsData).replace(/</g, '\\u003c');
-    const uptimeStr = formatUptime(process.uptime());
+    const uptimeStr = formatUptime(process.uptime(), { short: true });
     const prefixesStr = setting.prefixes?.join(" ") || prefix;
 
     const menuStyles = `
