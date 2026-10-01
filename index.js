@@ -237,8 +237,10 @@ function handleConnectionUpdate(update, sock) {
 
     console.log(`${TAG} | Closed connection, status: ${reason} (${status})`);
 
-    // Persist shutdown time for downtime tracking
-    saveShutdownTime(reason);
+    // Persist shutdown time for downtime tracking (ignore internal stream restart)
+    if (reason !== "restartRequired") {
+      saveShutdownTime(reason);
+    }
 
     if (lastDisconnect?.error) {
       console.error(`${TAG} | Error details:`, lastDisconnect.error?.message || lastDisconnect.error);

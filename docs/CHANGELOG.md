@@ -19,6 +19,10 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-01 — `[PATCH]` Announcer Lifecycle `restartRequired` Disconnect Filter
+- **Handshake Reconnect Guard (`index.js`, `lib/announcer.js`)**: Filtered Baileys internal `restartRequired` (status 515) disconnects from triggering `saveShutdownTime()`. Prevents normal pairing/re-authentication stream restarts from overwriting genuine shutdown downtime records or falsely reporting transient handshake reconnects as downtime.
+- **Defensive Metadata Fallback (`lib/announcer.js`)**: Added fallback in `handleStartup()` to treat stale `restartRequired` records as clean `first_startup` sessions instead of displaying an erroneous shutdown notification.
+
 ### 2026-10-01 — `[PATCH]` WhatsApp Channel Announcer Typography & Formatting Modernization
 - **Channel-Optimized Typography (`lib/announcer.js`)**: Replaced dense box-drawing frames (`╭━━━`, `┃`, `╰━━━`) with clean newsletter formatting designed specifically for WhatsApp Channels, eliminating jagged mobile line wraps caused by vertical border characters.
 - **Improved Spacing & Hierarchy**: Top-level bullet items now use bullet glyphs (`•`) with paragraph separation, distinct section dividers (`────────────────────────`), and formatted timestamps/badges.
