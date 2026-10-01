@@ -38,13 +38,14 @@ SSH_USER=deploy
 > - **Prefer SSH key authentication** over password-based login.
 > - **Restrict `SSH_HOST`** to localhost (`127.0.0.1`) unless remote access is genuinely required.
 >
-> **Visual Branding** (optional):
+> **Visual Branding & Announcements** (optional):
 > ```ini
 > OWNER_IMAGE=https://example.com/owner.jpg
 > CHANNEL_URL=https://whatsapp.com/channel/xxxx
 > STICKER_PACK=WhatsApp Multi-Bots
 > STICKER_AUTHOR=Tederby
 > ```
+> `CHANNEL_URL` serves dual purpose: displayed in `!info` output AND used by the Channel Announcer (`lib/announcer.js`) for automated bot status notifications and manual `!announce` broadcasts.
 
 ---
 
@@ -163,3 +164,49 @@ On startup, `lib/diagnostics.js` executes automated pre-flight checks and prints
 - Optional API key validation (`GEMINI_API_KEY`, `STEAM_API_KEY`, `YOUTUBE_API_KEY`).
 - SQLite database connection and WAL mode confirmation.
 - Session directory accessibility.
+
+---
+
+## 6. Channel Announcer
+
+The bot can automatically send status notifications (startup/downtime) and manual announcements to a WhatsApp Channel.
+
+### Prerequisites
+
+1. Create a WhatsApp Channel or use an existing one.
+2. Add the bot's WhatsApp account as **admin or owner** of the channel.
+3. Set `CHANNEL_URL` in `.env` to the channel's invite URL:
+   ```ini
+   CHANNEL_URL=https://whatsapp.com/channel/0029VbB1Xqv1noz03aqgWx0s
+   ```
+
+### Per-Bot Channel Override
+
+Each bot instance can target a different channel by overriding `CHANNEL_URL` in `ecosystem.config.cjs`:
+
+```javascript
+{
+  name: "bot1",
+  env: {
+    CHANNEL_URL: "https://whatsapp.com/channel/xxx"  // bot1's channel
+  }
+}
+```
+
+### Automated Behavior
+
+- **Startup**: On every successful connection, the bot resolves the channel JID from the URL, calculates downtime since last shutdown, and posts a status message.
+- **Shutdown Tracking**: Shutdown timestamps are persisted to `sessions/shutdown_<botId>.json` on graceful shutdown and connection close events.
+- **Debounce**: Rapid restarts (< 60s apart) suppress duplicate notifications.
+
+### Manual Commands
+
+| Command | Description |
+|:---|:---|
+| `!announce text <text>` | Broadcast free-text to channel |
+| `!announce changelog [N]` | Broadcast last N entries from `docs/CHANGELOG.md` |
+| `!announce resolve <url>` | Resolve channel URL to JID (setup helper) |
+| `!announce status` | Show current channel config, resolution state, and toggle |
+| `!announce on / off` | Enable/disable announcer for this bot instance |
+| `!announce on -g / off -g` | Enable/disable announcer globally (all bot instances) |
+| `!announce -p <...>` | Preview message without sending |

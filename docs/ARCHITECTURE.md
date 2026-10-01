@@ -243,3 +243,65 @@ const payload = Buffer.from(JSON.stringify({
 
 > For complete protocol specifications, standalone Baileys implementation, the empirical Chromium capability matrix, stanza size boundaries, and copy chip mechanics, see [**`docs/WEBVIEW_PAYLOAD.md`**](WEBVIEW_PAYLOAD.md).
 
+---
+
+## 7. Channel Announcer (`lib/announcer.js`)
+
+The bot includes a broadcast announcement system that sends automated status notifications and manual messages to a WhatsApp Channel (Newsletter).
+
+### Channel Resolution
+
+The announcer resolves the channel JID from `CHANNEL_URL` (in `.env` or `ecosystem.config.cjs`) at runtime:
+
+```
+connection === "open"
+  ├─→ Read setting.branding.channelUrl
+  ├─→ Extract invite code from URL
+  ├─→ sock.newsletterMetadata("invite", code)
+  │     → { id: "120363xxx@newsletter", name: "...", ... }
+  ├─→ Cache resolved JID in module memory
+  └─→ All subsequent sends use cached JID
+```
+
+If `CHANNEL_URL` is empty, invalid, or resolution fails, the announcer silently disables itself (no crash, no retry).
+
+### Automated Notifications
+
+**Startup Notification**: On every `connection: "open"`, the bot:
+1. Resolves the channel JID (if not already cached)
+2. Reads the shutdown timestamp from `sessions/shutdown_<botId>.json`
+3. Calculates downtime duration
+4. Sends a formatted status message to the channel
+5. Deletes the shutdown file
+
+**Shutdown Persistence**: On graceful shutdown (`SIGTERM`/`SIGINT`) and on `connection: "close"` events, the bot writes the current timestamp and disconnect reason to `sessions/shutdown_<botId>.json`.
+
+**Debounce**: Startup notifications are suppressed if the last one was sent less than 60 seconds ago, preventing spam during rapid restart cycles.
+
+### Manual Announcements (`!announce`)
+
+Owner-only command supporting:
+- `!announce text <text>` — free-text broadcast (alias: `txt`)
+- `!announce changelog [N]` — auto-parse and broadcast the last N entries from `docs/CHANGELOG.md`
+- `!announce resolve <url>` — resolve a channel URL to its JID (setup helper)
+- `!announce status` — show current channel config, resolution state, and toggle
+- `!announce on / off` — enable/disable announcer for this bot instance
+- `!announce on -g / off -g` — enable/disable announcer globally (all bot instances)
+- `--preview` / `-p` flag — preview message without sending
+- `--global` / `-g` flag — apply toggle action across all instances
+
+### Multi-Bot Behavior
+
+Each bot instance independently:
+- Resolves its own `CHANNEL_URL` (per-instance override in `ecosystem.config.cjs` or global `.env`)
+- Sends its own startup notification with its own `BOT_NAME`
+- Maintains its own shutdown timestamp in `sessions/shutdown_<botId>.json`
+
+Multiple bots posting to the same channel is intentional — each reports its own status independently.
+
+### Future Extension
+
+The `sendAnnouncement(sock, { text, image? })` API accepts a generic content object, designed to support:
+- **Community Announcement Groups** — add a second target JID
+- **Image status cards** — pass `{ image: buffer, caption }` (Puppeteer-generated)
+- **Multi-channel broadcast** — iterate over an array of target JIDs

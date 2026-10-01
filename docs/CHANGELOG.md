@@ -19,6 +19,25 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-01 — `[PATCH]` Announce Command Subcommand Disambiguation & Framework Standardization
+- **Explicit `text` Subcommand (`commands/announce.js`)**: Replaced the catch-all free-text fallback (`!announce <text>`) with an explicit `!announce text <text>` (alias: `txt`) subcommand. This eliminates the collision where `!announce on` / `!announce off` was ambiguous — previously it could be interpreted as either a toggle command or a free-text broadcast of the literal word "on"/"off". All actions are now explicit subcommands: `text`, `changelog`, `resolve`, `status`, `on`/`off`.
+- **Unknown Subcommand Guard**: Bare `!announce` or unrecognized subcommands (e.g. `!announce foo`) now show the usage help card instead of silently broadcasting the text.
+- **Framework Standards Harmonization**:
+  - Added top-level `try/catch` with unified `[ANNOUNCE]` uppercase error logging and user-facing error feedback.
+  - Standardized dynamic prefix fallback (`const p = prefix || "!"`) and replaced round bullets with canonical diamond `⋄` bullets.
+  - Replaced manual preview loop duplication in `commands/announce.js` by exporting `formatChangelogMessage` directly from `lib/announcer.js`.
+  - Converted Markdown bolding (`**...**`) to native WhatsApp single asterisks (`*...*`) in changelog broadcasts.
+- **Lifecycle Debounce & Record Preservation**: Moved the 60-second debounce check to the very beginning of `handleStartup()` in `lib/announcer.js`, preventing rapid connection flaps from deleting persistent shutdown records before status notifications can be delivered.
+- **Documentation**: Synchronized `docs/ARCHITECTURE.md` §7, `docs/CONFIGURATION_DEPLOYMENT.md` §6, and `.env.example` with current subcommand signatures and options.
+
+### 2026-10-01 — `[MINOR]` WhatsApp Channel Announcer System
+- **Channel Announcer Module (`lib/announcer.js`)**: Added automated broadcast system for WhatsApp Channels (Newsletters). Resolves channel JID at runtime from existing `CHANNEL_URL` config via `sock.newsletterMetadata("invite", code)`, caching the result in module memory per socket session.
+- **Automated Bot Status Notifications**: On every `connection: "open"`, the bot sends a startup notification to the configured channel with bot name, timestamp (WIB), calculated downtime duration, and shutdown reason. Shutdown timestamps persisted to `sessions/shutdown_<botId>.json` on graceful shutdown (`SIGTERM`/`SIGINT`) and connection close events. 60-second debounce prevents spam during rapid restart cycles.
+- **Owner Command (`!announce`)**: Added `commands/announce.js` (aliases: `ann`, `broadcast`, `changelog`) supporting free-text broadcast (`!announce <text>`), auto-parsed changelog broadcast (`!announce changelog [N]`), channel URL-to-JID resolution helper (`!announce resolve <url>`), channel status check (`!announce status`), and preview mode (`-p` / `--preview` flag). Quoted message text supported as input source.
+- **CHANGELOG.md Parser**: Integrated defensive regex-based parser (`parseChangelog(count)`) that extracts date, impact badge, title, and bullet points from the `### ` header format used in `docs/CHANGELOG.md`.
+- **Multi-Bot Independence**: Each bot instance independently resolves its own `CHANNEL_URL` (per-instance override via `ecosystem.config.cjs` or global `.env`), sends its own startup notification with its own `BOT_NAME`, and maintains its own shutdown file. Multiple bots posting to the same channel is supported.
+- **Documentation**: Updated `docs/ARCHITECTURE.md` §7, `docs/CONFIGURATION_DEPLOYMENT.md` §6, and `.env.example` with channel announcer specifications.
+
 ### 2026-09-25 — `[MAJOR]` Full 64-Command Output Standardization, Architecture Unification & Shared Formatting Engine
 - **Shared Formatting Utilities (`lib/utils.js`)**:
   - Extracted shared pagination logic to `generatePaginator(page, totalPages)` and established `ITEMS_PER_PAGE = 5`, eliminating duplicated pagination footers across 7 search and paginator commands (`anime.js`, `manga.js`, `character.js`, `seasonal.js`, `trending.js`, `steam.js`, `ytsearch.js`).

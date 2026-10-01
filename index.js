@@ -35,6 +35,7 @@ import { resolveTarget } from "./lib/jidHelper.js";
 import setting from "./setting.js";
 import { logger as log } from "./lib/logger.js";
 import { runDiagnostics } from "./lib/diagnostics.js";
+import { handleStartup, saveShutdownTime } from "./lib/announcer.js";
 
 // ── Initialize command registry (must happen after all static imports settle) ─
 await initCommands();
@@ -122,15 +123,16 @@ function suspendProgram(reason) {
 
 async function gracefulShutdown(signal) {
   console.log(`${TAG} | Received ${signal}, shutting down gracefully...`);
+  saveShutdownTime(signal);
   if (currentSock) {
     try {
       currentSock.end();
       console.log(`${TAG} | WebSocket closed cleanly.`);
     } catch (e) {
-      // Abaikan error saat cleanup
+      // Ignore cleanup errors
     }
   }
-  // Beri waktu 2 detik untuk cleanup sebelum exit
+  // Allow 2 seconds for cleanup before exit
   setTimeout(() => process.exit(0), 2000);
 }
 
@@ -235,6 +237,9 @@ function handleConnectionUpdate(update, sock) {
 
     console.log(`${TAG} | Closed connection, status: ${reason} (${status})`);
 
+    // Persist shutdown time for downtime tracking
+    saveShutdownTime(reason);
+
     if (lastDisconnect?.error) {
       console.error(`${TAG} | Error details:`, lastDisconnect.error?.message || lastDisconnect.error);
     }
@@ -329,6 +334,11 @@ function handleConnectionUpdate(update, sock) {
     registryInterval = setInterval(() => {
       upsertBotRegistry(BOT_ID, myJid);
     }, 60000);
+
+    // ── Channel Announcer: resolve channel + send startup notification ──
+    handleStartup(sock).catch(err => {
+      log.warn("ANNOUNCER", `Startup notification failed: ${err.message}`);
+    });
   }
 }
 
