@@ -19,6 +19,12 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-01 — `[PATCH]` WhatsApp Channel Announcer Typography & Formatting Modernization
+- **Channel-Optimized Typography (`lib/announcer.js`)**: Replaced dense box-drawing frames (`╭━━━`, `┃`, `╰━━━`) with clean newsletter formatting designed specifically for WhatsApp Channels, eliminating jagged mobile line wraps caused by vertical border characters.
+- **Improved Spacing & Hierarchy**: Top-level bullet items now use bullet glyphs (`•`) with paragraph separation, distinct section dividers (`────────────────────────`), and formatted timestamps/badges.
+- **Nested Sub-Bullet Support**: Preserved sub-item indentation in `parseChangelog()` and rendered child bullets with subtle indicators (`  ◦ `) under their parent items instead of flattening them into top-level bullets.
+- **Lifecycle Status Card Modernization**: Reformatted automated startup and downtime notifications into clean, borderless status cards.
+
 ### 2026-10-01 — `[PATCH]` Announce Command Subcommand Disambiguation & Framework Standardization
 - **Explicit `text` Subcommand (`commands/announce.js`)**: Replaced the catch-all free-text fallback (`!announce <text>`) with an explicit `!announce text <text>` (alias: `txt`) subcommand. This eliminates the collision where `!announce on` / `!announce off` was ambiguous — previously it could be interpreted as either a toggle command or a free-text broadcast of the literal word "on"/"off". All actions are now explicit subcommands: `text`, `changelog`, `resolve`, `status`, `on`/`off`.
 - **Unknown Subcommand Guard**: Bare `!announce` or unrecognized subcommands (e.g. `!announce foo`) now show the usage help card instead of silently broadcasting the text.
