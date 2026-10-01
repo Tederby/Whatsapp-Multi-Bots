@@ -19,6 +19,11 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-01 — `[PATCH]` Honest Downtime Tracking — Preserve First Disconnect Timestamp
+- **First-Disconnect Preservation (`lib/announcer.js`)**: `saveShutdownTime()` now preserves the timestamp from the *first* disconnect event instead of overwriting it on every subsequent call. Previously, a `SIGINT` during graceful shutdown would overwrite the original disconnect timestamp (e.g., `loggedOut`), causing downtime to appear as only a few seconds instead of the actual minutes/hours the bot was unreachable.
+- **Reason Chaining**: When multiple shutdown events occur before a successful reconnect, reasons are chained with ` → ` separator (e.g., `connectionLost → loggedOut → SIGINT`). Consecutive duplicate reasons are deduplicated to keep the chain readable.
+- **Impact**: Channel status notifications now show accurate downtime durations measured from the moment service was actually lost, not from the last lifecycle event before restart.
+
 ### 2026-10-01 — `[PATCH]` Announcer Lifecycle `restartRequired` Disconnect Filter
 - **Handshake Reconnect Guard (`index.js`, `lib/announcer.js`)**: Filtered Baileys internal `restartRequired` (status 515) disconnects from triggering `saveShutdownTime()`. Prevents normal pairing/re-authentication stream restarts from overwriting genuine shutdown downtime records or falsely reporting transient handshake reconnects as downtime.
 - **Defensive Metadata Fallback (`lib/announcer.js`)**: Added fallback in `handleStartup()` to treat stale `restartRequired` records as clean `first_startup` sessions instead of displaying an erroneous shutdown notification.
