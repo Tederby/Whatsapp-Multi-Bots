@@ -19,6 +19,14 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-03 — `[MINOR]` Comprehensive Media Converter Command (`!convert`)
+- **New Command Module (`commands/convert.js`)**: Added `!convert` (aliases: `cvt`, `conv`) supporting audio, video, image, sticker, and document media format conversions.
+- **Smart Default Conversion Matrix**: Automatically selects default conversion target when invoked without format argument (Video ➔ MP4, Audio/VN ➔ MP3, Static Sticker ➔ JPG, Animated Sticker ➔ MP4, WebP ➔ JPG). Full usage guide card rendered when executed without media.
+- **Cross-Format Support & Audio Extraction**: Supports video-to-audio extraction (`mp3`, `ogg`, `wav`, `m4a`, `flac`, `ptt`), circle video note (`ptv`), high-quality palette-based GIF generation, and image conversions (`jpg`, `png`, `webp`).
+- **POSIX Flag Schema (`lib/flagParser.js`)**: Declarative flags `--doc` (`-d`) to preserve original output as WhatsApp document without re-compression, `--compress` (`-c`) for aggressive CRF 30 / 720p compression, `--ptt` (`-p`) for voice note, and `--ptv` (`-v`) for video note.
+- **FFprobe-Free Media Probing (`lib/mediaConverter.js`)**: Implemented `probeMedia()` using FFmpeg diagnostic stderr inspection directly, eliminating system dependency on `ffprobe` binary.
+- **VPS Protection & Concurrency (`services/mediaQueue.js`)**: Introduced dedicated `mediaQueue` limiting concurrent conversions to 2 processes to protect host CPU and RAM, combined with 50 MB input limit, 100 MB output guard, isolated temp directories (`./temp/${botId}/`), and guaranteed `finally` cleanup.
+
 ### 2026-10-01 — `[PATCH]` Honest Downtime Tracking — Preserve First Disconnect Timestamp
 - **First-Disconnect Preservation (`lib/announcer.js`)**: `saveShutdownTime()` now preserves the timestamp from the *first* disconnect event instead of overwriting it on every subsequent call. Previously, a `SIGINT` during graceful shutdown would overwrite the original disconnect timestamp (e.g., `loggedOut`), causing downtime to appear as only a few seconds instead of the actual minutes/hours the bot was unreachable.
 - **Reason Chaining**: When multiple shutdown events occur before a successful reconnect, reasons are chained with ` → ` separator (e.g., `connectionLost → loggedOut → SIGINT`). Consecutive duplicate reasons are deduplicated to keep the chain readable.
