@@ -416,5 +416,46 @@ try {
 }
 ```
 
+---
+
+## 8. Media Processing and Conversion Architecture
+
+The framework provides an end-to-end media transcoding pipeline orchestrated by `commands/convert.js`, `lib/mediaConverter.js`, and `services/mediaQueue.js`.
+
+### Supported Inputs and Formats
+
+The media converter accepts media via direct caption or quoted reply across three input channels:
+1. **Direct Media**: `imageMessage`, `videoMessage`, `audioMessage`, `ptvMessage`.
+2. **Documents**: `documentMessage` containing media streams (preserves high-fidelity audio/video sent without WhatsApp compression).
+3. **Stickers**: `stickerMessage` (both static and animated WebP stickers are accepted as valid input media).
+
+| Target Category | Supported Formats | Delivery Mode |
+|:---|:---|:---|
+| **Video** | `mp4`, `webm`, `gif`, `ptv` | `videoMessage` (streaming playback; fallback to document if >64 MB) |
+| **Audio** | `mp3`, `ogg`, `wav`, `m4a`, `flac`, `ptt` | `audioMessage` (`ptt: true` for voice notes; `wav`/`flac` as document) |
+| **Image** | `jpg`, `png`, `webp` | `imageMessage` (clean image; `--doc` preserves raw bitstream) |
+
+### Smart Default Conversion Matrix
+
+When invoked with media but without a target format (`!convert`), the engine applies a context-aware default:
+- **Video Input** ➔ `mp4` (re-encodes stream, applies compression)
+- **Audio / Voice Note Input** ➔ `mp3` (extracts/re-encodes to universal audio)
+- **Static Sticker Input** ➔ `jpg` (extracts full-resolution image)
+- **Animated Sticker Input** ➔ `mp4` (converts animated WebP into playable MP4)
+- **WebP Image Input** ➔ `jpg` (converts WebP graphic into standard JPEG)
+
+### Re-Encoding & Compression
+
+Commands support re-encoding media of the same format (e.g. `!convert mp4` on an MP4 video or `!convert jpg` on a JPEG) to re-align PTS timestamps, fix container issues, or apply bitrate reduction. Passing `--compress` (`-c`) engages aggressive optimization (CRF 30 / 720p scaling for video, 96 kbps for audio).
+
+### Concurrency and Host Safety
+
+Media transcoding is CPU/RAM-intensive and strictly guarded:
+- **Concurrency Throttling (`services/mediaQueue.js`)**: Maximum 2 concurrent FFmpeg operations; excess requests wait with queue position feedback.
+- **Input Limit**: 50 MB ceiling (`MAX_INPUT_SIZE`).
+- **Output Limit**: 100 MB ceiling (`MAX_OUTPUT_SIZE`) matching WhatsApp document transport limits.
+- **Probe Hardening**: `probeMedia()` and `convertMedia()` leverage `-analyzeduration 100M -probesize 100M` to reliably parse complex animated stickers and variable-frame-rate inputs.
+- **Storage Isolation**: Temporary artifacts are isolated to `./temp/${botId}/` with unique timestamps and cryptographically random tokens, with guaranteed deletion in `finally` blocks.
+
 
 

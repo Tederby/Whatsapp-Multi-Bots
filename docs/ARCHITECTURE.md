@@ -180,6 +180,9 @@ Manages yt-dlp media extractions with concurrency throttling (`maxConcurrent: 4`
 ### Puppeteer Queue (`services/puppeteerQueue.js`)
 Serializes Chromium browser instances used for generating quote graphics (`!quote`) and rendering website screenshots (`!screenshot`). Enforces strict single-instance or limited-concurrency execution to prevent high RAM consumption on low-tier VPS environments.
 
+### Media Queue (`services/mediaQueue.js`)
+Throttles FFmpeg conversion workloads with concurrency limiting (`maxConcurrent: 2`). Coordinates media format transcoding (`!convert`), protects host CPU and RAM from concurrent transcoding spikes, and sends queue position notifications when worker slots are occupied.
+
 ### Cleanup Service (`services/cleanup.js`)
 Periodically scans temporary directories (`temp/`) and purges expired media files and cached artifacts based on configured retention thresholds (`setting.ytdlp.fileExpiry`).
 

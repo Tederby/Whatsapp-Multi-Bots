@@ -19,6 +19,12 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-05 — `[PATCH]` Media Converter Sticker Input Hardening & Documentation Sync
+- **Sticker Input Normalization (`commands/convert.js`, `lib/mediaConverter.js`)**: Ensured quoted and direct sticker messages (`stickerMessage`) are fully recognized as valid input media across all format conversions (`png`, `jpg`, `mp4`, `gif`, `webp`), with smart defaults extracting static stickers to `jpg` and animated stickers to `mp4`.
+- **FFmpeg Decoding Hardening**: Added `-analyzeduration 100M -probesize 100M` before `-i` in both `probeMedia()` and `convertMedia()`, preventing "unspecified size" decoder failures on animated WebP stickers and complex streams.
+- **Shorthand Aliases**: Added natural language aliases `audio` (➔ `mp3`), `video` (➔ `mp4`), and `image`/`img` (➔ `jpg`) to `FORMAT_ALIASES`.
+- **Documentation Synchronization**: Updated `docs/COMMAND_DEVELOPMENT.md` with §8 detailing media conversion architecture, input channels, and VPS guards, and added `mediaQueue` to `docs/ARCHITECTURE.md` §5.
+
 ### 2026-10-03 — `[MINOR]` Comprehensive Media Converter Command (`!convert`)
 - **New Command Module (`commands/convert.js`)**: Added `!convert` (aliases: `cvt`, `conv`) supporting audio, video, image, sticker, and document media format conversions.
 - **Smart Default Conversion Matrix**: Automatically selects default conversion target when invoked without format argument (Video ➔ MP4, Audio/VN ➔ MP3, Static Sticker ➔ JPG, Animated Sticker ➔ MP4, WebP ➔ JPG). Full usage guide card rendered when executed without media.

@@ -48,6 +48,10 @@ const FORMAT_ALIASES = {
     jpeg: "jpg",
     png: "png",
     webp: "webp",
+    audio: "mp3",
+    video: "mp4",
+    image: "jpg",
+    img: "jpg",
 };
 
 /**
@@ -169,7 +173,7 @@ export default {
                 `┃\n` +
                 `┃ 📌 *Cara Penggunaan:*\n` +
                 `┃ ⋄ Kirim media dengan caption \`${p}convert [format]\`\n` +
-                `┃ ⋄ Atau balas (reply) media dengan \`${p}convert [format]\`\n` +
+                `┃ ⋄ Atau balas (reply) media/stiker/dokumen dengan \`${p}convert [format]\`\n` +
                 `┃\n` +
                 `┃ 🎯 *Format yang Didukung:*\n` +
                 `┃ ⋄ *Video*  : \`mp4\`, \`webm\`, \`gif\`, \`ptv\`\n` +
