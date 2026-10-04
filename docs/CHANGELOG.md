@@ -19,6 +19,13 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-05 — `[MINOR]` Danbooru Per-Chat Deduplication & Interactive Multi-User Reply Handler
+- **Per-Chat Seen Tracking (`lib/danbooru.js`)**: Implemented `seenPostsByChat` in-memory tracking indexed by chat JID (`message.chat`), ensuring repeated calls to `!danbooru` (`!d`) and `!danbooru-new` (`!dnew`) avoid duplicate image IDs in both private chats and group chats. Automatically records sent post IDs via `sendDanbooruMessage`.
+- **Multi-Page Exclusion & Tag Paging**: Enhanced `fetchDanbooruByTags` and `fetchRandomRecentDanbooru` with `excludeIds` parameter, automatically scanning up to 3–5 pages when previous posts have been seen and raising `ALL_SEEN` notification if all available safe posts were already viewed in the chat.
+- **Group Multi-User Reply Handler (`handler.js`, `commands/danbooru.js`, `commands/danbooru-new.js`)**: Introduced `allowAnyUser` flag in reply handler state, enabling any participant in a group to reply with `"n"`, `"next"`, `"lagi"`, `"roll"`, `"acak"`, or `"more"` without getting blocked by the original sender check (`handler.js`).
+- **Recursive Reply Rolling**: Registered recursive reply handler on `!danbooru` search results and gacha messages, allowing continuous chaining of `next` queries with identical tags or gacha modes.
+- **Periodic Cleanup Purge (`services/cleanup.js`)**: Hooked `clearSeenDanbooruPosts()` into the periodic cleanup cycle (`cleanupInterval`), resetting accumulated seen ID sets to preserve VPS memory.
+
 ### 2026-10-05 — `[PATCH]` Media Converter Sticker Input Hardening & Documentation Sync
 - **Sticker Input Normalization (`commands/convert.js`, `lib/mediaConverter.js`)**: Ensured quoted and direct sticker messages (`stickerMessage`) are fully recognized as valid input media across all format conversions (`png`, `jpg`, `mp4`, `gif`, `webp`), with smart defaults extracting static stickers to `jpg` and animated stickers to `mp4`.
 - **FFmpeg Decoding Hardening**: Added `-analyzeduration 100M -probesize 100M` before `-i` in both `probeMedia()` and `convertMedia()`, preventing "unspecified size" decoder failures on animated WebP stickers and complex streams.

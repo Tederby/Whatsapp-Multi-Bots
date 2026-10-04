@@ -130,7 +130,7 @@ let msgHandler = async (upsert, sock, message) => {
         if (message.quoted && message.contextInfo?.stanzaId && !cmd) {
             const entry = getReplyHandler(message.contextInfo.stanzaId);
             if (entry) {
-                if (entry.state.userId !== ctx.sender) {
+                if (!entry.state.allowAnyUser && entry.state.userId !== ctx.sender) {
                     await message.reply("❌ Hanya pengirim asli yang bisa memproses interaksi ini");
                     return;
                 }

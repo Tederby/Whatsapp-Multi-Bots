@@ -166,6 +166,9 @@ registerReplyHandler(messageKey, {
 });
 ```
 
+> **Group Multi-User Reply Handlers (`allowAnyUser`)**: By default, `handler.js` verifies that the replying sender matches `entry.state.userId`. To allow any participant in a group to reply (e.g. for media browsing or image rolling like `!danbooru`), set `allowAnyUser: isGroup` in the handler state.
+```
+
 ---
 
 ## 7. UI and Text Formatting Standard

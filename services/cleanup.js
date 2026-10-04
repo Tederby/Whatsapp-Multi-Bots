@@ -15,6 +15,7 @@ import setting from "../setting.js";
 import { cleanupExpiredReplyHandlers } from "../commands/_registry.js";
 import { purgeExpired as purgeInfoCache } from "./infoCache.js";
 import { purgeOldClaims } from "../lib/database.js";
+import { clearSeenDanbooruPosts } from "../lib/danbooru.js";
 import db from "../lib/db.js";
 import { logger } from "../lib/logger.js";
 
@@ -46,10 +47,11 @@ export function initCleanup() {
         let filesPurged = cleanupTempFiles(tempDir, cfg.fileExpiry);
         let statesPurged = cleanupExpiredReplyHandlers(cfg.stateExpiry);
         let cachePurged = purgeInfoCache();
+        let danbooruPurged = clearSeenDanbooruPosts();
         purgeOldClaims(5 * 60 * 1000); // 5 mins
 
-        if (filesPurged + statesPurged + cachePurged > 0) {
-            logger.info("CLEANUP", `files: ${filesPurged}, states: ${statesPurged}, cache: ${cachePurged}`);
+        if (filesPurged + statesPurged + cachePurged + danbooruPurged > 0) {
+            logger.info("CLEANUP", `files: ${filesPurged}, states: ${statesPurged}, cache: ${cachePurged}, danbooru: ${danbooruPurged}`);
         }
     }, cfg.cleanupInterval);
 

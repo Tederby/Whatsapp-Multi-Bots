@@ -4,7 +4,151 @@
  * @module commands/danbooru
  */
 
-import { fetchDanbooruPost, sendDanbooruMessage, validateDanbooruTags, fetchDanbooruByTags, getFuzzyTagSuggestions } from "../lib/danbooru.js";
+import {
+    fetchDanbooruPost,
+    sendDanbooruMessage,
+    validateDanbooruTags,
+    fetchDanbooruByTags,
+    getFuzzyTagSuggestions,
+    getSeenPosts
+} from "../lib/danbooru.js";
+import { registerReplyHandler } from "./_registry.js";
+
+/**
+ * Attach interactive reply handler to roll art or inspect tags
+ */
+function attachDanbooruReplyHandler({ sentKeyId, sender, isGroup, tags = [], corrections = {}, isGacha = false, postData = null, sock, prefix = "!" }) {
+    if (!sentKeyId) return;
+
+    registerReplyHandler(
+        sentKeyId,
+        async ({ message: replyMsg, sock: replySock, state }) => {
+            const replyText = (replyMsg.text || "").trim().toLowerCase();
+
+            // Next / Lagi / Roll handler
+            if (["next", "lagi", "roll", "acak", "gacha", "n", "more"].includes(replyText)) {
+                try {
+                    const excludeIds = getSeenPosts(replyMsg.chat);
+
+                    if (state.isGacha) {
+                        let nextPost = null;
+                        let attempts = 0;
+                        const maxAttempts = 10;
+
+                        while (attempts < maxAttempts) {
+                            attempts++;
+                            const randomId = Math.floor(Math.random() * 12000000) + 1;
+                            if (excludeIds.has(randomId)) continue;
+                            try {
+                                const tempPost = await fetchDanbooruPost(randomId);
+                                if (tempPost.rating === 'e') continue;
+                                if (excludeIds.has(tempPost.id)) continue;
+                                nextPost = tempPost;
+                                break;
+                            } catch {
+                                // Ignore and retry
+                            }
+                        }
+
+                        if (!nextPost) {
+                            await replyMsg.reply(`⚠️ Gacha belum berhasil menemukan gambar baru setelah beberapa percobaan. Coba lagi beberapa saat lagi.`);
+                            return;
+                        }
+
+                        const newSent = await sendDanbooruMessage({
+                            postData: nextPost,
+                            sock: replySock,
+                            message: replyMsg,
+                            isAutoDetect: false,
+                            isGacha: true
+                        });
+
+                        if (newSent?.key?.id) {
+                            attachDanbooruReplyHandler({
+                                sentKeyId: newSent.key.id,
+                                sender: state.userId,
+                                isGroup: state.isGroup,
+                                tags: [],
+                                corrections: {},
+                                isGacha: true,
+                                postData: nextPost,
+                                sock: replySock,
+                                prefix: state.prefix
+                            });
+                        }
+                        return;
+                    }
+
+                    // Tags search mode
+                    if (state.tags && state.tags.length > 0) {
+                        const nextPost = await fetchDanbooruByTags(state.tags, { excludeIds });
+                        const newSent = await sendDanbooruMessage({
+                            postData: nextPost,
+                            sock: replySock,
+                            message: replyMsg,
+                            isAutoDetect: false,
+                            isGacha: false,
+                            usedTags: state.tags,
+                            corrections: state.corrections
+                        });
+
+                        if (newSent?.key?.id) {
+                            attachDanbooruReplyHandler({
+                                sentKeyId: newSent.key.id,
+                                sender: state.userId,
+                                isGroup: state.isGroup,
+                                tags: state.tags,
+                                corrections: state.corrections,
+                                isGacha: false,
+                                postData: nextPost,
+                                sock: replySock,
+                                prefix: state.prefix
+                            });
+                        }
+                        return;
+                    }
+                } catch (err) {
+                    if (err.message === "EXPLICIT_ONLY") {
+                        await replyMsg.reply("❌ Tidak ditemukan gambar aman selanjutnya untuk tag ini. Gambar NSFW/Explicit otomatis diblokir.");
+                    } else if (err.message === "ALL_SEEN") {
+                        await replyMsg.reply("⚠️ Semua gambar aman untuk tag ini sudah pernah ditampilkan di chat ini! Riwayat akan di-reset pada fase cleanup berkala.");
+                    } else {
+                        await replyMsg.reply(`❌ Gagal mengambil art selanjutnya: ${err.message}`);
+                    }
+                }
+                return;
+            }
+
+            // Tag shortcut
+            if (["tag", "!tag", "tags", "!tags"].includes(replyText)) {
+                const currentPost = state.postData;
+                if (!currentPost) return;
+
+                const tagsText = [
+                    `🏷️ *Tags untuk Post ${currentPost.id}*`,
+                    "",
+                    `👤 *Character:* ${currentPost.tag_string_character || 'Original'}`,
+                    `©️ *Copyright:* ${currentPost.tag_string_copyright || 'Original'}`,
+                    `🎨 *Artist:* ${currentPost.tag_string_artist || 'Unknown'}`,
+                    `📝 *General:* ${currentPost.tag_string_general ? currentPost.tag_string_general.split(' ').slice(0, 20).join(', ') : 'N/A'}`
+                ].join("\n");
+
+                await replyMsg.reply(tagsText);
+            }
+        },
+        {
+            userId: sender,
+            allowAnyUser: isGroup, // Allows any participant in groups to reply next!
+            isGroup,
+            tags,
+            corrections,
+            isGacha,
+            postData,
+            commandName: "danbooru",
+            prefix
+        }
+    );
+}
 
 export default {
     name: "danbooru",
@@ -12,7 +156,7 @@ export default {
     category: "anime",
     description: "Gacha gambar random dari Danbooru, atau cari spesifik menggunakan Tag/ID/Link",
     usage: "!d [tag1] [tag2] atau !d [post_id/URL]",
-    async handler({ message, args, sock, prefix }) {
+    async handler({ message, args, sock, prefix, sender, isGroup }) {
         args = args.map(arg => arg.toLowerCase());
         let isGacha = false;
 
@@ -22,29 +166,45 @@ export default {
                 isGacha = true;
                 let postData = null;
                 let attempts = 0;
-                const maxAttempts = 3;
+                const maxAttempts = 10;
+                const excludeIds = getSeenPosts(message.chat);
 
                 await message.reply("🎲 Mengambil post random (Gacha)...");
 
                 while (attempts < maxAttempts) {
                     attempts++;
                     const randomId = Math.floor(Math.random() * 12000000) + 1;
+                    if (excludeIds.has(randomId)) continue;
                     try {
                         const tempPost = await fetchDanbooruPost(randomId);
                         if (tempPost.rating === 'e') continue;
+                        if (excludeIds.has(tempPost.id)) continue;
                         postData = tempPost;
                         break;
-                    } catch (err) {
+                    } catch {
                         // Ignore error and try again
                     }
                 }
 
                 if (!postData) {
-                    await message.reply(`⚠️ Gacha belum berhasil setelah 3 kali percobaan. Coba lagi beberapa saat lagi atau gunakan \`${prefix || "!"}dnew\` untuk melihat art terbaru!`);
+                    await message.reply(`⚠️ Gacha belum berhasil setelah beberapa kali percobaan. Coba lagi beberapa saat lagi atau gunakan \`${prefix || "!"}dnew\` untuk melihat art terbaru!`);
                     return;
                 }
 
-                await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha });
+                const sent = await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha });
+                if (sent?.key?.id) {
+                    attachDanbooruReplyHandler({
+                        sentKeyId: sent.key.id,
+                        sender,
+                        isGroup,
+                        tags: [],
+                        corrections: {},
+                        isGacha: true,
+                        postData,
+                        sock,
+                        prefix
+                    });
+                }
                 return;
             }
 
@@ -53,7 +213,20 @@ export default {
             // 2. URLs (if they paste a link directly)
             if (firstArg.includes("danbooru.donmai.us/posts/")) {
                 const postData = await fetchDanbooruPost(firstArg);
-                await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false });
+                const sent = await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false });
+                if (sent?.key?.id) {
+                    attachDanbooruReplyHandler({
+                        sentKeyId: sent.key.id,
+                        sender,
+                        isGroup,
+                        tags: [],
+                        corrections: {},
+                        isGacha: false,
+                        postData,
+                        sock,
+                        prefix
+                    });
+                }
                 return;
             }
 
@@ -63,12 +236,38 @@ export default {
                 const { validTags, corrections } = await validateDanbooruTags([firstArg]);
                 if (validTags.length > 0) {
                     // It's a valid numeric tag (e.g. '100', '1999').
-                    const postData = await fetchDanbooruByTags(validTags);
-                    await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false, usedTags: validTags, corrections });
+                    const postData = await fetchDanbooruByTags(validTags, { excludeIds: getSeenPosts(message.chat) });
+                    const sent = await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false, usedTags: validTags, corrections });
+                    if (sent?.key?.id) {
+                        attachDanbooruReplyHandler({
+                            sentKeyId: sent.key.id,
+                            sender,
+                            isGroup,
+                            tags: validTags,
+                            corrections,
+                            isGacha: false,
+                            postData,
+                            sock,
+                            prefix
+                        });
+                    }
                 } else {
                     // Not a tag, treat as ID
                     const postData = await fetchDanbooruPost(firstArg);
-                    await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false });
+                    const sent = await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false });
+                    if (sent?.key?.id) {
+                        attachDanbooruReplyHandler({
+                            sentKeyId: sent.key.id,
+                            sender,
+                            isGroup,
+                            tags: [],
+                            corrections: {},
+                            isGacha: false,
+                            postData,
+                            sock,
+                            prefix
+                        });
+                    }
                 }
                 return;
             }
@@ -108,12 +307,27 @@ export default {
                 return;
             }
 
-            const postData = await fetchDanbooruByTags(validTags);
-            await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false, usedTags: validTags, corrections });
+            const postData = await fetchDanbooruByTags(validTags, { excludeIds: getSeenPosts(message.chat) });
+            const sent = await sendDanbooruMessage({ postData, sock, message, isAutoDetect: false, isGacha: false, usedTags: validTags, corrections });
+            if (sent?.key?.id) {
+                attachDanbooruReplyHandler({
+                    sentKeyId: sent.key.id,
+                    sender,
+                    isGroup,
+                    tags: validTags,
+                    corrections,
+                    isGacha: false,
+                    postData,
+                    sock,
+                    prefix
+                });
+            }
 
         } catch (err) {
             if (err.message === "EXPLICIT_ONLY") {
                 await message.reply("❌ Tidak ditemukan gambar yang aman pada post terbaru untuk tag ini. Gambar NSFW/Explicit otomatis diblokir oleh sistem.");
+            } else if (err.message === "ALL_SEEN") {
+                await message.reply("⚠️ Semua gambar aman untuk tag ini sudah pernah ditampilkan di chat ini! Riwayat akan di-reset pada fase cleanup berkala.");
             } else {
                 console.error("[DANBOORU]", err);
                 await message.reply(`❌ Error: ${err.message}`);

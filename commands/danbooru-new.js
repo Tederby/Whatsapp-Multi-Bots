@@ -6,7 +6,8 @@
 
 import {
     fetchRandomRecentDanbooru,
-    sendDanbooruMessage
+    sendDanbooruMessage,
+    getSeenPosts
 } from "../lib/danbooru.js";
 import { registerReplyHandler } from "./_registry.js";
 
@@ -48,7 +49,7 @@ function getHelpMessage(prefix = "!") {
 /**
  * Register recursive interactive reply handler for rapid rolling
  */
-function attachRecentReplyHandler({ sentKeyId, sender, ratingFilter, page, postData, sock }) {
+function attachRecentReplyHandler({ sentKeyId, sender, isGroup, ratingFilter, page, postData, sock }) {
     if (!sentKeyId) return;
 
     registerReplyHandler(
@@ -59,9 +60,11 @@ function attachRecentReplyHandler({ sentKeyId, sender, ratingFilter, page, postD
             // Next / Lagi / Roll handler
             if (["next", "lagi", "roll", "acak", "gacha", "n", "more"].includes(replyText)) {
                 try {
+                    const excludeIds = getSeenPosts(replyMsg.chat);
                     const result = await fetchRandomRecentDanbooru({
                         ratingFilter: state.ratingFilter,
                         page: state.page,
+                        excludeIds,
                     });
 
                     const newSent = await sendDanbooruMessage({
@@ -80,6 +83,7 @@ function attachRecentReplyHandler({ sentKeyId, sender, ratingFilter, page, postD
                         attachRecentReplyHandler({
                             sentKeyId: newSent.key.id,
                             sender: state.userId,
+                            isGroup: state.isGroup,
                             ratingFilter: state.ratingFilter,
                             page: state.page,
                             postData: result.post,
@@ -87,7 +91,11 @@ function attachRecentReplyHandler({ sentKeyId, sender, ratingFilter, page, postD
                         });
                     }
                 } catch (err) {
-                    await replyMsg.reply(`❌ Gagal mengambil art selanjutnya: ${err.message}`);
+                    if (err.message === "ALL_SEEN") {
+                        await replyMsg.reply("⚠️ Semua gambar aman pada feed recent saat ini sudah pernah ditampilkan di chat ini! Riwayat akan di-reset pada fase cleanup berkala.");
+                    } else {
+                        await replyMsg.reply(`❌ Gagal mengambil art selanjutnya: ${err.message}`);
+                    }
                 }
                 return;
             }
@@ -111,6 +119,8 @@ function attachRecentReplyHandler({ sentKeyId, sender, ratingFilter, page, postD
         },
         {
             userId: sender,
+            allowAnyUser: isGroup, // Allows any participant in group chat to reply
+            isGroup,
             ratingFilter,
             page,
             postData,
@@ -131,7 +141,7 @@ export default {
         safe: { type: "boolean", char: "s", aliases: ["safe", "sfw", "gen"] },
     },
 
-    async handler({ message, sock, args, cleanArgs, flags, prefix, sender }) {
+    async handler({ message, sock, args, cleanArgs, flags, prefix, sender, isGroup }) {
         const rawLowerArgs = (args || []).map(arg => arg.toLowerCase());
 
         // 1. Check for Help Flag
@@ -175,10 +185,12 @@ export default {
         }
 
         try {
+            const excludeIds = specificIndex !== null ? new Set() : getSeenPosts(message.chat);
             const result = await fetchRandomRecentDanbooru({
                 ratingFilter,
                 page,
                 specificIndex,
+                excludeIds,
             });
 
             const sent = await sendDanbooruMessage({
@@ -197,6 +209,7 @@ export default {
                 attachRecentReplyHandler({
                     sentKeyId: sent.key.id,
                     sender,
+                    isGroup,
                     ratingFilter,
                     page: result.page,
                     postData: result.post,
@@ -205,6 +218,10 @@ export default {
             }
 
         } catch (err) {
+            if (err.message === "ALL_SEEN") {
+                await message.reply("⚠️ Semua gambar aman pada feed recent saat ini sudah pernah ditampilkan di chat ini! Riwayat akan di-reset pada fase cleanup berkala.");
+                return;
+            }
             console.error("[DANBOORU_NEW]", err);
             await message.reply(`❌ Error: ${err.message}`);
         }
