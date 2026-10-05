@@ -4,26 +4,30 @@
  * Manages user reminders with persistent storage in the centralized SQLite database.
  * Previously used per-bot JSON files which were prone to data loss and race conditions.
  *
- * Key improvements over JSON:
+ * Key improvements:
  *  - Atomic writes via SQLite transactions (no data loss on crash)
  *  - UNIQUE constraint prevents duplicate reminders (no race conditions)
  *  - Shared database works correctly with multi-bot setup
  *  - Timers are properly cleared on reconnect to prevent zombie callbacks
+ *  - Full mention and JID preservation across PN and LID addressing modes
+ *  - Centralized logger integration (no unhandled ReferenceError)
  */
 
 import db from "../lib/db.js";
 import { isBanned, isGroupBanned, isUserGroupBanned } from "../lib/database.js";
+import { resolveTarget } from "../lib/jidHelper.js";
 import { logger } from "../lib/logger.js";
+import setting from "../setting.js";
 
-const BOT_ID = process.env.BOT_ID || "default";
+const BOT_ID = setting.botId || process.env.BOT_ID || "default";
 
 // ── Prepared Statements ─────────────────────────────────────────────────────
 const stmts = {
     getAll: db.prepare("SELECT * FROM reminders WHERE bot_id = ?"),
     getOne: db.prepare("SELECT * FROM reminders WHERE user_id = ? AND chat_id = ?"),
     insert: db.prepare(`
-        INSERT INTO reminders (id, user_id, chat_id, trigger_time, message, created_at, bot_id)
-        VALUES (@id, @user_id, @chat_id, @trigger_time, @message, @created_at, @bot_id)
+        INSERT INTO reminders (id, user_id, chat_id, trigger_time, message, mentions, created_at, bot_id)
+        VALUES (@id, @user_id, @chat_id, @trigger_time, @message, @mentions, @created_at, @bot_id)
     `),
     remove: db.prepare("DELETE FROM reminders WHERE user_id = ? AND chat_id = ?"),
     removeById: db.prepare("DELETE FROM reminders WHERE id = ?"),
@@ -62,10 +66,44 @@ async function _triggerReminder(reminder) {
         return;
     }
 
+    // Resolve creator PN/baseId
+    const creatorTarget = resolveTarget(user_id);
+    const creatorJid = creatorTarget.jid || user_id;
+    const creatorBase = creatorTarget.baseId || user_id.split("@")[0];
+
+    // Parse stored mentions
+    let storedMentions = [];
+    try {
+        if (reminder.mentions) {
+            storedMentions = JSON.parse(reminder.mentions);
+        }
+    } catch {
+        storedMentions = [];
+    }
+
+    // Extract any additional manual mentions from text (@nomor)
+    const textMentionNums = [...(message.matchAll(/@(\d{10,16})/g) || [])].map(m => m[1]);
+    const textMentionJids = textMentionNums.map(num => resolveTarget(num + "@s.whatsapp.net").jid).filter(Boolean);
+
+    // Combine all mentions (creator + stored mentions + text mentions)
+    const allMentions = Array.from(new Set([
+        creatorJid,
+        ...storedMentions,
+        ...textMentionJids
+    ])).filter(Boolean);
+
+    // Format notification text using heavy box-drawing cards
+    const cardLines = [
+        "╭━━━〔 ⏰ PENGINGAT 〕━━━",
+        `┃ 👤 Pengingat untuk @${creatorBase}`,
+        `┃ 💬 Catatan : ${message}`,
+        "╰━━━━━━━━━━━━━━━━━━━━━"
+    ];
+
     try {
         await globalSock.sendMessage(chat_id, {
-            text: `⏰ *REMINDER*\n\n@${user_id.split("@")[0]}\n\n${message}`,
-            mentions: [user_id],
+            text: cardLines.join("\n"),
+            mentions: allMentions,
         });
     } catch (err) {
         logger.error("REMINDER", `Gagal mengirim reminder ke ${user_id} di ${chat_id}: ${err.message}`);
@@ -87,7 +125,7 @@ async function _triggerReminder(reminder) {
  * @param {object} sock Baileys socket instance
  */
 export function initReminders(sock) {
-    // Fix #15: Clear existing timers before re-init to prevent zombie callbacks
+    // Clear existing timers before re-init to prevent zombie callbacks
     clearAllTimers();
 
     globalSock = sock;
@@ -119,7 +157,7 @@ export function initReminders(sock) {
     }
 
     if (triggeredCount > 0 || scheduledCount > 0) {
-        console.log(color("[REMINDER]", "yellow"), `Loaded: ${scheduledCount} scheduled, ${triggeredCount} triggered immediately.`);
+        logger.info("REMINDER", `Loaded: ${scheduledCount} scheduled, ${triggeredCount} triggered immediately.`);
     }
 }
 
@@ -135,13 +173,35 @@ export function hasReminder(userId, chatId) {
 }
 
 /**
+ * Retrieve active reminder details for a user in a specific chat.
+ * @param {string} userId
+ * @param {string} chatId
+ * @returns {object|null}
+ */
+export function getReminder(userId, chatId) {
+    const row = stmts.getOne.get(userId, chatId);
+    if (!row) return null;
+    let mentions = [];
+    try {
+        mentions = JSON.parse(row.mentions || "[]");
+    } catch {
+        mentions = [];
+    }
+    return {
+        ...row,
+        mentions
+    };
+}
+
+/**
  * Add a new reminder.
  * @param {string} userId
  * @param {string} chatId
  * @param {number} triggerTime Unix timestamp in ms
  * @param {string} message
+ * @param {string[]} [mentions=[]] Array of mentioned JIDs
  */
-export function addReminder(userId, chatId, triggerTime, message) {
+export function addReminder(userId, chatId, triggerTime, message, mentions = []) {
     if (hasReminder(userId, chatId)) {
         throw new Error("Reminder sudah ada");
     }
@@ -152,6 +212,7 @@ export function addReminder(userId, chatId, triggerTime, message) {
         chat_id: chatId,
         trigger_time: triggerTime,
         message,
+        mentions: JSON.stringify(mentions),
         created_at: Date.now(),
         bot_id: BOT_ID,
     };
@@ -187,3 +248,4 @@ export function removeReminder(userId, chatId) {
     const result = stmts.remove.run(userId, chatId);
     return result.changes > 0;
 }
+

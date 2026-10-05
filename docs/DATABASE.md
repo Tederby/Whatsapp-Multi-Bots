@@ -110,6 +110,7 @@ Stores scheduled user reminder tasks.
 | `chat_id` | `TEXT` | Target chat JID where reminder will be sent. |
 | `trigger_time` | `INTEGER` | Unix millisecond timestamp for reminder firing. |
 | `message` | `TEXT` | Reminder note content. |
+| `mentions` | `TEXT` | JSON serialized array of mentioned JIDs (default `'[]'`). |
 | `created_at` | `INTEGER` | Unix millisecond timestamp when reminder was created. |
 | `bot_id` | `TEXT` | Bot instance responsible for dispatching the reminder. |
 

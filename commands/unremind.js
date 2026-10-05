@@ -5,6 +5,8 @@
  */
 
 import { removeReminder } from "../services/reminder.js";
+import { resolveTarget } from "../lib/jidHelper.js";
+import { logger } from "../lib/logger.js";
 
 export default {
     name: "unremind",
@@ -15,17 +17,25 @@ export default {
 
     async handler({ message, sender }) {
         try {
+            const { jid: canonicalSender } = resolveTarget(sender);
+            const resolvedSender = canonicalSender || sender;
             const chatId = message.chat;
-            const isRemoved = removeReminder(sender, chatId);
+            const isRemoved = removeReminder(resolvedSender, chatId);
 
             if (isRemoved) {
-                message.reply("✅ Pengingat aktifmu di obrolan ini telah dibatalkan.");
+                const lines = [
+                    "╭━━━〔 ✅ PENGINGAT DIBATALKAN 〕━━━",
+                    "┃ Pengingat aktifmu di obrolan ini telah berhasil dihapus.",
+                    "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                ];
+                await message.reply(lines.join("\n"));
             } else {
-                message.reply("⚠️ Kamu tidak memiliki pengingat yang aktif di obrolan ini.");
+                await message.reply("⚠️ Kamu tidak memiliki pengingat yang aktif di obrolan ini.");
             }
         } catch (err) {
-            console.error("[UNREMIND]", err);
-            message.reply("❌ Gagal membatalkan pengingat.");
+            logger.error("UNREMIND", err);
+            await message.reply("❌ Gagal membatalkan pengingat.");
         }
     }
 };
+

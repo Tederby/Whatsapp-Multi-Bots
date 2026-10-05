@@ -19,6 +19,24 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-05 — `[MINOR]` Reminder Subsystem Modernization & Startup ReferenceError Bugfix
+- **Fatal Startup Crash Fix (`services/reminder.js`)**: Resolved `ReferenceError: color is not defined` triggered in `initReminders()` during startup/reconnect when stored reminders existed in SQLite. Replaced dangling `console.log(color(...))` with centralized `logger.info("REMINDER", ...)`.
+- **Addressing & Mention Preservation (`services/reminder.js`, `commands/remind.js`, `lib/db.js`)**:
+  - Added `mentions TEXT DEFAULT '[]'` column to SQLite `reminders` table with safe, backward-compatible migration.
+  - Extracted interactive tags (`message.mentionedJid`), quoted message participant tags, and plain-text mentions (`@number`, `@lid`) via `extractMentions()`.
+  - Normalized all mentioned identities to canonical PN JIDs via `resolveTarget()` from `lib/jidHelper.js`, properly bridging LID/PN addressing modes.
+  - Dispatched notifications with combined creator + target participant mentions so tagged users are actively hyperlinked and notified on WhatsApp.
+- **Timezone & VPS Hardening (`commands/remind.js`)**:
+  - Integrated `moment-timezone` anchored to `Asia/Jakarta` (WIB, UTC+7), preventing 7-hour timezone skew on UTC-configured VPS environments.
+  - Hardened absolute time parsers (`HH:mm`, `DD/MM/YYYY HH:mm`, `YYYY-MM-DD HH:mm`) and added natural Indonesian duration parsing (`hari`, `jam`, `menit`, `detik`).
+  - Added 24-day ceiling (`MAX_REMINDER_DAYS = 24`) to eliminate Node.js 32-bit signed integer `setTimeout` overflow bugs (`> 2,147,483,647 ms`).
+- **Feature Expansion & Subcommands (`commands/remind.js`, `commands/unremind.js`)**:
+  - Introduced POSIX flag schema `--list` (`-l`) and `--cancel` (`-c`).
+  - Added `!remind list` / `!remind status` subcommand displaying active reminder, WIB target time, remaining duration, and cancellation hints.
+  - Implemented automatic status inspection when invoking bare `!remind` with an active reminder.
+- **Design System Harmonization**: Standardized all reminder output cards across `remind.js`, `unremind.js`, and `_triggerReminder()` to use heavy box-drawing frames (`╭━━━〔 ⏰ PENGINGAT 〕━━━`, `┃`, `╰━━━━━━━━━`).
+- **Multi-Bot Concurrency (`services/reminder.js`)**: Switched `BOT_ID` resolution to `setting.botId || process.env.BOT_ID || "default"` for instance consistency.
+
 ### 2026-10-05 — `[MINOR]` Danbooru Per-Chat Deduplication & Interactive Multi-User Reply Handler
 - **Per-Chat Seen Tracking (`lib/danbooru.js`)**: Implemented `seenPostsByChat` in-memory tracking indexed by chat JID (`message.chat`), ensuring repeated calls to `!danbooru` (`!d`) and `!danbooru-new` (`!dnew`) avoid duplicate image IDs in both private chats and group chats. Automatically records sent post IDs via `sendDanbooruMessage`.
 - **Multi-Page Exclusion & Tag Paging**: Enhanced `fetchDanbooruByTags` and `fetchRandomRecentDanbooru` with `excludeIds` parameter, automatically scanning up to 3–5 pages when previous posts have been seen and raising `ALL_SEEN` notification if all available safe posts were already viewed in the chat.
