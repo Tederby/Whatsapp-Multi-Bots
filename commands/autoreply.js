@@ -1,5 +1,7 @@
 /**
  * Autoreply — Manage per-group automated text and sticker responses.
+ * Note: Text responses are protected against command self-execution exploits
+ * via automatic Zero-Width Space (\u200B) prepending during dispatch in lib/autoDetect.js.
  */
 
 import fs from "fs";
@@ -82,6 +84,9 @@ export default {
                     triggerToDelete = textArgs.replace(/^--(del|delete)\s*|^-d\s*/i, "").trim().toLowerCase();
                 }
 
+                // Strip accidental zero-width unicode characters
+                triggerToDelete = triggerToDelete.replace(/^[\u200B\u200C\u200D\uFEFF]+/, "").trim();
+
                 if (!triggerToDelete) {
                     return await message.reply(`❌ Masukkan kata kunci atau index yang ingin dihapus, atau reply pesan yang ingin dihapus trigger-nya.\nContoh: \`${prefix}autoreply -d halo\` atau \`${prefix}autoreply -d 1\``);
                 }
@@ -135,7 +140,8 @@ export default {
             // Add auto reply
             const splitArgs = textArgs.split("|");
 
-            let trigger = splitArgs[0] ? splitArgs[0].trim() : "";
+            // Strip accidental zero-width unicode characters from trigger key
+            let trigger = splitArgs[0] ? splitArgs[0].replace(/^[\u200B\u200C\u200D\uFEFF]+/, "").trim() : "";
             let responseText = splitArgs.slice(1).join("|").trim();
 
             let responseType = "text";
@@ -179,7 +185,7 @@ export default {
                     const hash = Buffer.from(quotedStickerMsg.fileSha256).toString('base64');
                     trigger = `sticker:${hash}`;
                 } else if (quotedText) {
-                    trigger = quotedText.trim();
+                    trigger = quotedText.replace(/^[\u200B\u200C\u200D\uFEFF]+/, "").trim();
                 } else {
                     return await message.reply("❌ Harap reply teks atau stiker untuk trigger-nya.");
                 }

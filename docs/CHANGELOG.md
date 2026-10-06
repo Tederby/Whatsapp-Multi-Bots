@@ -19,6 +19,17 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-06 — `[PATCH]` Autoreply Anti-Exploit Zero-Width Unicode Guard & Backward Compatibility
+- **Command Self-Execution Mitigation (`lib/autoDetect.js`)**: Eliminated exploit where auto-reply triggers configured with bot command prefixes (e.g. `!remind 10m yahaha` or `$ bash`) triggered self-execution when WhatsApp relayed the bot's response back into the socket (`fromMe: true` pipeline in `index.js`).
+- **Zero-Width Space (`\u200B`) Prefixing**:
+  - Dynamically prepends Unicode Zero-Width Space (`\u200B`) at dispatch time to outgoing text auto-replies.
+  - Visually renders completely clean and seamless in WhatsApp clients.
+  - Neutralizes `parseCommand()` in `lib/commandParser.js` because `text.trim()[0]` resolves to `\u200B` rather than an authorized command prefix (`!`, `.`, `#`, `/`, `-`, `$`), preventing both self-execution and cross-bot trigger loops in multi-bot environments.
+- **Strict Text Scope**: Preserved raw WebP sticker buffer handling (`type === "sticker"`) without string alterations, keeping sticker responses completely uncorrupted.
+- **Zero-Migration Backward Compatibility (`lib/autoDetect.js`, `commands/autoreply.js`)**:
+  - Maintained 100% backward compatibility for all existing triggers stored in SQLite (`groups.auto_replies`), protecting existing triggers immediately upon deployment without database schema migrations.
+  - Hardened `commands/autoreply.js` trigger input and deletion routines (`-d` / `--del`) by stripping accidental leading zero-width unicode characters (`\u200B`, `\u200C`, `\u200D`, `\uFEFF`) from pasted or quoted trigger keys.
+
 ### 2026-10-05 — `[MINOR]` Reminder Subsystem Modernization & Startup ReferenceError Bugfix
 - **Fatal Startup Crash Fix (`services/reminder.js`)**: Resolved `ReferenceError: color is not defined` triggered in `initReminders()` during startup/reconnect when stored reminders existed in SQLite. Replaced dangling `console.log(color(...))` with centralized `logger.info("REMINDER", ...)`.
 - **Addressing & Mention Preservation (`services/reminder.js`, `commands/remind.js`, `lib/db.js`)**:
