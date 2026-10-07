@@ -12,9 +12,9 @@ function generateListText(results, page, query) {
     const end = start + ITEMS_PER_PAGE;
     const currentItems = results.slice(start, end);
 
-    let text = `╭━━━〔 🎭 CHARACTER SEARCH 〕━━━\n`;
-    text += `┃ 🔍 *Query* : ${query}\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `🎭 *CHARACTER SEARCH*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Query : ${query}\n\n`;
 
     currentItems.forEach((char, index) => {
         const name = char.name?.full || "N/A";
@@ -25,15 +25,15 @@ function generateListText(results, page, query) {
         const primaryMedia = char.media?.edges?.[0]?.node;
         const mediaTitle = primaryMedia?.title?.romaji || "N/A";
 
-        text += `╭───「 ${start + index + 1}. ${name} 」\n`;
-        if (native) text += `│ 🔤 *Native* : ${native}\n`;
-        text += `│ 🌟 *Favs*   : ${favourites}\n`;
-        text += `│ 📺 *From*   : ${mediaTitle}\n`;
-        text += `╰──────────────\n\n`;
+        text += `*${start + index + 1}. ${name}*\n`;
+        if (native) text += `⋄ Native : ${native}\n`;
+        text += `⋄ Favs : ${favourites}\n`;
+        text += `⋄ From : ${mediaTitle}\n\n`;
     });
 
     text += generatePaginator(page, totalPages) + "\n\n";
-    text += `💡 _Reply angka (1-${currentItems.length}) untuk detail. Ketik "n" next, "b" back._`;
+    text += `*ℹ️ Notes:* Reply angka (1-${currentItems.length}) untuk detail. Ketik "n" next, "b" back.\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -52,14 +52,15 @@ export default {
     async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
         const effectiveArgs = cleanArgs || args;
         if (args.length === 0 && effectiveArgs.length === 0) {
+            const p = prefix || "!";
             await message.reply(
-                "╭━━━〔 🎭 CHARACTER SEARCH 〕━━━\n" +
-                "┃ Mencari karakter anime/manga dari AniList.\n" +
-                "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                "╭───「 📖 Penggunaan 」\n" +
-                `│ ⋄ \`${prefix || "!"}character <nama>\`\n` +
-                `│ ⋄ \`${prefix || "!"}char <nama> -t\` (hasil teratas)\n` +
-                "╰──────────────"
+                "🎭 *CHARACTER SEARCH*\n" +
+                "────────────────────────\n" +
+                "Mencari karakter anime/manga dari AniList.\n\n" +
+                "*📖 Penggunaan*\n" +
+                `⋄ \`${p}character <nama>\`\n` +
+                `⋄ \`${p}char <nama> -t\` (hasil teratas)\n` +
+                "────────────────────────"
             );
             return;
         }
@@ -157,14 +158,14 @@ async function sendCharacterDetail(char, message, sock) {
     const charUrl = char.siteUrl || `https://anilist.co/character/${char.id}`;
     const imageUrl = char.image?.large || null;
 
-    let captionText = `╭━━━〔 🎭 CHARACTER 〕━━━\n`;
-    captionText += `┃ 🏷️ *Nama*      : ${name}\n`;
-    if (native) captionText += `┃ 🔤 *Native*    : ${native}\n`;
-    if (altNames) captionText += `┃ 📝 *Alias*     : ${altNames}\n`;
-    captionText += `┃ 🎂 *Umur*      : ${age}\n`;
-    captionText += `┃ ⚧️ *Gender*    : ${gender}\n`;
-    captionText += `┃ 🌟 *Favorites* : ${favourites}\n`;
-    captionText += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let captionText = `🎭 *CHARACTER DETAIL*\n`;
+    captionText += `────────────────────────\n`;
+    captionText += `⋄ Nama : ${name}\n`;
+    if (native) captionText += `⋄ Native : ${native}\n`;
+    if (altNames) captionText += `⋄ Alias : ${altNames}\n`;
+    captionText += `⋄ Umur : ${age}\n`;
+    captionText += `⋄ Gender : ${gender}\n`;
+    captionText += `⋄ Favorites : ${favourites}\n`;
 
     // Description (truncated for readability)
     if (description && description !== "Tidak ada sinopsis.") {
@@ -172,29 +173,30 @@ async function sendCharacterDetail(char, message, sock) {
         const truncated = description.length > maxLen
             ? description.substring(0, maxLen).trim() + "..."
             : description;
-        captionText += `📝 *Deskripsi:*\n${truncated}\n\n`;
+        captionText += `\n*📝 Deskripsi*\n${truncated}\n`;
     }
 
     // Media appearances with voice actors
     const mediaEdges = char.media?.edges || [];
     if (mediaEdges.length > 0) {
-        captionText += `╭───「 📺 Muncul Di 」\n`;
+        captionText += `\n*📺 Muncul Di*\n`;
         mediaEdges.forEach((edge, i) => {
             const mediaTitle = edge.node?.title?.romaji || "N/A";
             const format = edge.node?.format || "";
             const vaName = edge.voiceActors?.[0]?.name?.full || null;
 
-            captionText += `│ ${i + 1}. ${mediaTitle}`;
+            captionText += `⋄ ${i + 1}. ${mediaTitle}`;
             if (format) captionText += ` [${format}]`;
             captionText += `\n`;
             if (vaName && i === 0) {
-                captionText += `│    🎙️ VA: ${vaName}\n`;
+                captionText += `  🎙️ VA: ${vaName}\n`;
             }
         });
-        captionText += `╰──────────────\n\n`;
     }
 
-    captionText += `🔗 *AniList:* ${charUrl}`;
+    captionText += `\n*🔗 Tautan*\n`;
+    captionText += `⋄ AniList : ${charUrl}\n`;
+    captionText += `────────────────────────`;
 
     if (imageUrl) {
         await sock.sendMessage(

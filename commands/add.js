@@ -42,15 +42,16 @@ export default {
                 targetJid = number + "@s.whatsapp.net";
                 displayBaseId = number;
             } else {
+                const p = prefix || "!";
                 return message.reply(
-                    "╭━━━〔 ➕ ADD MEMBER 〕━━━\n" +
-                    "┃ Menambahkan anggota ke grup via nomor.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}add <nomor>\`\n` +
-                    `│ ⋄ \`${prefix || "!"}add @user\`\n` +
-                    "╰──────────────\n\n" +
-                    `Contoh: \`${prefix || "!"}add 6281234567890\``
+                    "➕ *ADD MEMBER*\n" +
+                    "────────────────────────\n" +
+                    "Menambahkan anggota ke grup via nomor.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}add <nomor>\`\n` +
+                    `⋄ \`${p}add @user\`\n\n` +
+                    `*ℹ️ Notes:* Contoh: \`${p}add 6281234567890\`\n` +
+                    "────────────────────────"
                 );
             }
 

@@ -23,11 +23,12 @@ export default {
         const url = args[0];
         if (!url || !isUrl(url)) {
             return message.reply(
-                `╭━━━〔 🎬 YTDL 〕━━━\n` +
-                `┃ ❌ Masukkan URL yang valid.\n` +
-                `┃ ⋄ Format: *${p}ytdl <url>*\n` +
-                `┃ ⋄ Contoh: *${p}ytdl https://youtube.com/watch?v=xxx*\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━`
+                `🎬 *YTDL*\n` +
+                `────────────────────────\n` +
+                `❌ Masukkan URL yang valid.\n` +
+                `⋄ Format: *${p}ytdl <url>*\n` +
+                `⋄ Contoh: *${p}ytdl https://youtube.com/watch?v=xxx*\n` +
+                `────────────────────────`
             );
         }
 
@@ -73,12 +74,13 @@ export default {
                     mimetype: "video/mp4",
                     fileName: `${sanitizeFilename(title)}.mp4`,
                     caption: [
-                        `╭━━━〔 🎬 VIDEO DOWNLOAD 〕━━━`,
-                        `┃ ⋄ Judul : *${title}*`,
-                        `┃ ⋄ Durasi : ${duration}`,
-                        `┃ ⋄ Platform : ${platform}`,
-                        `┃ ⋄ Ukuran : ${formatSize(stat.size)}`,
-                        `╰━━━━━━━━━━━━━━━━━━━━`,
+                        `🎬 *VIDEO DOWNLOAD*`,
+                        `────────────────────────`,
+                        `⋄ Judul : *${title}*`,
+                        `⋄ Durasi : ${duration}`,
+                        `⋄ Platform : ${platform}`,
+                        `⋄ Ukuran : ${formatSize(stat.size)}`,
+                        `────────────────────────`,
                         `💡 Gunakan *${p}ytdlf* untuk opsi format & resolusi manual.`,
                     ].join("\n"),
                 }, { quoted: message, ephemeralExpiration: message.contextInfo?.expiration });
@@ -88,11 +90,12 @@ export default {
                 await sock.sendMessage(message.chat, {
                     video: fs.readFileSync(filePath),
                     caption: [
-                        `╭━━━〔 🎬 VIDEO DOWNLOAD 〕━━━`,
-                        `┃ ⋄ Judul : *${title}*`,
-                        `┃ ⋄ Durasi : ${duration}`,
-                        `┃ ⋄ Platform : ${platform}`,
-                        `╰━━━━━━━━━━━━━━━━━━━━`,
+                        `🎬 *VIDEO DOWNLOAD*`,
+                        `────────────────────────`,
+                        `⋄ Judul : *${title}*`,
+                        `⋄ Durasi : ${duration}`,
+                        `⋄ Platform : ${platform}`,
+                        `────────────────────────`,
                         `💡 Gunakan *${p}ytdlf* untuk opsi format & resolusi manual.`,
                     ].join("\n"),
                 }, { quoted: message, ephemeralExpiration: message.contextInfo?.expiration });

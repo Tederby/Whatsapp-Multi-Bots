@@ -32,12 +32,12 @@ export default {
 
     if (!text || !text.trim()) {
       return message.reply(
-        `╭━━━〔 🟩 BRAT STICKER 〕━━━\n` +
-        `┃ Masukkan teks atau balas pesan teks.\n` +
-        `┃\n` +
-        `┃ ⋄ \`${prefix || "!"}brat <teks>\`\n` +
-        `┃ ⋄ Balas pesan dengan \`${prefix || "!"}brat\`\n` +
-        `╰━━━━━━━━━━━━━━━━━━━━`
+        `🟩 *BRAT STICKER*\n` +
+        `────────────────────────\n` +
+        `Masukkan teks atau balas pesan teks.\n\n` +
+        `⋄ \`${prefix || "!"}brat <teks>\`\n` +
+        `⋄ Balas pesan dengan \`${prefix || "!"}brat\`\n` +
+        `────────────────────────`
       );
     }
 

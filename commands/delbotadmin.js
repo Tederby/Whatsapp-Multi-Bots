@@ -26,14 +26,15 @@ export default {
             }
 
             if (!target) {
+                const p = prefix || "!";
                 return message.reply(
-                    "╭━━━〔 🛡️ DEL BOT ADMIN 〕━━━\n" +
-                    "┃ Mencabut jabatan user dari Bot Admin.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}delbotadmin @user\`\n` +
-                    `│ ⋄ \`${prefix || "!"}delbotadmin <nomor>\`\n` +
-                    "╰──────────────"
+                    "🛡️ *DEL BOT ADMIN*\n" +
+                    "────────────────────────\n" +
+                    "Mencabut jabatan user dari Bot Admin.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}delbotadmin @user\`\n` +
+                    `⋄ \`${p}delbotadmin <nomor>\`\n` +
+                    "────────────────────────"
                 );
             }
 

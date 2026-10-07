@@ -33,11 +33,12 @@ export default {
         const url = args[0];
         if (!url || !isUrl(url)) {
             return message.reply(
-                `╭━━━〔 🎬 YTDLF 〕━━━\n` +
-                `┃ ❌ Masukkan URL yang valid.\n` +
-                `┃ ⋄ Format: *${p}ytdlf <url>*\n` +
-                `┃ ⋄ Contoh: *${p}ytdlf https://youtube.com/watch?v=xxx*\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━`
+                `🎬 *YTDLF*\n` +
+                `────────────────────────\n` +
+                `❌ Masukkan URL yang valid.\n` +
+                `⋄ Format: *${p}ytdlf <url>*\n` +
+                `⋄ Contoh: *${p}ytdlf https://youtube.com/watch?v=xxx*\n` +
+                `────────────────────────`
             );
         }
 
@@ -64,19 +65,19 @@ export default {
 
         // ── 3. Send overview with thumbnail ─────────────────────────
         const caption = [
-            `╭━━━〔 🎬 FORMAT SELECTION 〕━━━`,
-            `┃ ⋄ Judul : *${title}*`,
-            `┃ ⋄ Durasi : ${duration}`,
-            `┃ ⋄ Platform : ${platform}`,
-            `╰━━━━━━━━━━━━━━━━━━━━`,
+            `🎬 *FORMAT SELECTION*`,
+            `────────────────────────`,
+            `⋄ Judul : *${title}*`,
+            `⋄ Durasi : ${duration}`,
+            `⋄ Platform : ${platform}`,
             ``,
-            `╭───「 📦 Format Tersedia 」`,
+            `*📦 Format Tersedia*`,
             "```",
             table,
             "```",
-            `╰───────────────────`,
             ``,
             `💡 Reply pesan ini dengan ID format (misal: *137+140*)`,
+            `────────────────────────`,
         ].join("\n");
 
         let sentMsg;
@@ -192,13 +193,14 @@ async function handleFormatReply({ message, sock, state }) {
 
         // ── Send as document ────────────────────────────────────
         const caption = [
-            `╭━━━〔 🎬 DOWNLOADED MEDIA 〕━━━`,
-            `┃ ⋄ Judul : *${title}*`,
-            `┃ ⋄ Format : ${formatStr}`,
-            `┃ ⋄ Durasi : ${duration}`,
-            `┃ ⋄ Platform : ${platform}`,
-            `┃ ⋄ Ukuran : ${formatSize(stat.size)}`,
-            `╰━━━━━━━━━━━━━━━━━━━━`,
+            `🎬 *DOWNLOADED MEDIA*`,
+            `────────────────────────`,
+            `⋄ Judul : *${title}*`,
+            `⋄ Format : ${formatStr}`,
+            `⋄ Durasi : ${duration}`,
+            `⋄ Platform : ${platform}`,
+            `⋄ Ukuran : ${formatSize(stat.size)}`,
+            `────────────────────────`,
         ].join("\n");
 
         if (!hasVideo && hasAudio) {

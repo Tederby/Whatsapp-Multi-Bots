@@ -32,15 +32,15 @@ export default {
             const totalMappings = getIdentityCount();
 
             await update(
-                `╭━━━〔 🆔 SCAN IDENTITAS 〕━━━\n` +
-                `┃ Status : ✅ Selesai\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
-                `╭───「 📊 Hasil 」\n` +
-                `│ ⋄ Peserta di-scan        : ${total}\n` +
-                `│ ⋄ Mapping baru tersimpan  : ${saved}\n` +
-                `│ ⋄ Total mapping database : ${totalMappings}\n` +
-                `╰──────────────\n\n` +
-                `_Mapping ini membantu bot mengenali profil member yang menggunakan LID di grup._`
+                `🆔 *SCAN IDENTITAS*\n` +
+                `────────────────────────\n` +
+                `⋄ Status : ✅ Selesai\n\n` +
+                `*📊 Hasil*\n` +
+                `⋄ Peserta di-scan : ${total}\n` +
+                `⋄ Mapping baru tersimpan : ${saved}\n` +
+                `⋄ Total mapping database : ${totalMappings}\n\n` +
+                `*ℹ️ Catatan:* Mapping ini membantu bot mengenali profil member yang menggunakan LID di grup.\n` +
+                `────────────────────────`
             );
         } catch (error) {
             console.error("[SCANIDS]", error);

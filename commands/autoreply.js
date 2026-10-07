@@ -30,16 +30,17 @@ export default {
             const config = getGroupConfig(chat);
 
             if (!textArgs && !message.quoted) {
+                const p = prefix || "!";
                 return await message.reply(
-                    "╭━━━〔 🤖 AUTOREPLY 〕━━━\n" +
-                    "┃ Pengaturan balasan otomatis grup ini.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix}autoreply <trigger> | <balasan>\`\n` +
-                    `│ ⋄ \`${prefix}autoreply -l\` (lihat daftar)\n` +
-                    `│ ⋄ \`${prefix}autoreply -d <trigger/index>\` (hapus)\n` +
-                    "╰──────────────\n\n" +
-                    `_Dapat juga me-reply pesan/stiker dengan \`${prefix}ar trigger|\`_`
+                    "🤖 *AUTOREPLY*\n" +
+                    "────────────────────────\n" +
+                    "Pengaturan balasan otomatis grup ini.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}autoreply <trigger> | <balasan>\`\n` +
+                    `⋄ \`${p}autoreply -l\` (lihat daftar)\n` +
+                    `⋄ \`${p}autoreply -d <trigger/index>\` (hapus)\n\n` +
+                    `*ℹ️ Catatan:* Dapat juga me-reply pesan/stiker dengan \`${p}ar trigger|\`\n` +
+                    "────────────────────────"
                 );
             }
 
@@ -52,17 +53,18 @@ export default {
                     return await message.reply("⚠️ Belum ada auto-reply yang disetel di grup ini.");
                 }
 
-                let listMsg = `╭━━━〔 📝 DAFTAR AUTOREPLY 〕━━━\n`;
-                listMsg += `┃ Total: ${keys.length} auto-reply\n`;
-                listMsg += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+                let listMsg = `📝 *DAFTAR AUTOREPLY*\n`;
+                listMsg += `────────────────────────\n`;
+                listMsg += `⋄ Total : ${keys.length} auto-reply\n\n`;
                 keys.forEach((key, index) => {
                     const displayKey = key.startsWith("sticker:") ? "[Stiker]" : key;
                     const displayRes = replies[key].type === "sticker" ? "[Balasan Stiker]" : replies[key].text;
-                    listMsg += `╭───「 ${index + 1}. ${displayKey} 」\n`;
-                    listMsg += `│ 💬 *Balasan:* ${displayRes}\n`;
-                    listMsg += `╰──────────────\n\n`;
+                    listMsg += `*${index + 1}. ${displayKey}*\n`;
+                    listMsg += `⋄ Balasan : ${displayRes}\n\n`;
                 });
-                listMsg += `_Gunakan \`${prefix}autoreply -d <kata/nomor>\` untuk menghapus._`;
+                const p = prefix || "!";
+                listMsg += `*ℹ️ Catatan:* Gunakan \`${p}autoreply -d <kata/nomor>\` untuk menghapus.\n`;
+                listMsg += `────────────────────────`;
 
                 return await message.reply(listMsg.trim());
             }
@@ -226,10 +228,11 @@ export default {
             const displayKey = trigger.startsWith("sticker:") ? "[Stiker]" : trigger;
             const displayRes = responseType === "sticker" ? "[Balasan Stiker]" : responseText;
 
-            let successMsg = `╭━━━〔 ✅ AUTOREPLY DITAMBAHKAN 〕━━━\n`;
-            successMsg += `┃ 🎯 Trigger : ${displayKey}\n`;
-            successMsg += `┃ 💬 Balasan : ${displayRes}\n`;
-            successMsg += `╰━━━━━━━━━━━━━━━━━━━━`;
+            let successMsg = `✅ *AUTOREPLY DITAMBAHKAN*\n`;
+            successMsg += `────────────────────────\n`;
+            successMsg += `⋄ Trigger : ${displayKey}\n`;
+            successMsg += `⋄ Balasan : ${displayRes}\n`;
+            successMsg += `────────────────────────`;
 
             await message.reply(successMsg);
         } catch (error) {

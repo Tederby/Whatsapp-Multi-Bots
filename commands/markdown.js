@@ -371,20 +371,19 @@ export default {
         let content = message.quoted?.text ? message.quoted.text.trim() : extracted.cleanText;
 
         if (!content) {
+            const p = prefix || "!";
             return message.reply(
-                `╭━━━〔 📝 *MARKDOWN RENDERER* 〕━━━\n` +
-                `┃ *Format:* \`${prefix}md <teks_markdown>\`\n` +
-                `┃ *Atau:* Balas pesan berisi teks dengan \`${prefix}md\`\n` +
-                `┃\n` +
-                `┃ *Contoh:*\n` +
-                `┃ \`${prefix}md -k # Judul\\n**tebal** dan *miring*\`\n` +
-                `┃\n` +
-                `┃ *Flag:*\n` +
-                `┃ \`-k, --keep\` — Webview permanen (tidak auto-hapus)\n` +
-                `┃\n` +
-                `┃ Teks yang diberikan akan dirender\n` +
-                `┃ sebagai markdown dalam webview.\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━━`
+                `📝 *MARKDOWN RENDERER*\n` +
+                `────────────────────────\n` +
+                `*Format:*\n` +
+                `⋄ \`${p}md <teks_markdown>\`\n` +
+                `⋄ Balas pesan berisi teks dengan \`${p}md\`\n\n` +
+                `*Contoh:*\n` +
+                `⋄ \`${p}md -k # Judul\\n**tebal** dan *miring*\`\n\n` +
+                `*Flag:*\n` +
+                `⋄ \`-k, --keep\` — Webview permanen (tidak auto-hapus)\n\n` +
+                `*ℹ️ Notes:* Teks yang diberikan akan dirender sebagai markdown dalam webview.\n` +
+                `────────────────────────`
             );
         }
 

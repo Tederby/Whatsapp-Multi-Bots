@@ -22,16 +22,17 @@ export default {
     async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
         try {
             if (args.length === 0 && (!flags || !flags.self)) {
+                const p = prefix || "!";
                 await message.reply(
-                    "╭━━━〔 🌸 ANILIST PROFILE 〕━━━\n" +
-                    "┃ Mencari informasi profil user AniList.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}anilist <username>\`\n` +
-                    `│ ⋄ \`${prefix || "!"}anilist -s\` (profil sendiri)\n` +
-                    `│ ⋄ \`${prefix || "!"}anilist @user\` (tag user)\n` +
-                    "╰──────────────\n\n" +
-                    `💡 _Tautkan akun via \`${prefix || "!"}register anilist <username>\`_`
+                    "🌸 *ANILIST PROFILE*\n" +
+                    "────────────────────────\n" +
+                    "Mencari informasi profil user AniList.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}anilist <username>\`\n` +
+                    `⋄ \`${p}anilist -s\` (profil sendiri)\n` +
+                    `⋄ \`${p}anilist @user\` (tag user)\n\n` +
+                    `*ℹ️ Notes:* Tautkan akun via \`${p}register anilist <username>\`\n` +
+                    "────────────────────────"
                 );
                 return;
             }

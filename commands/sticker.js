@@ -31,12 +31,12 @@ export default {
             const isQuotedSticker = !!message.quoted?.message?.stickerMessage;
             if (isQuotedSticker) {
                 return await message.reply(
-                    `╭━━━〔 💡 GANTI WATERMARK 〕━━━\n` +
-                    `┃ Untuk mengganti watermark stiker, gunakan:\n` +
-                    `┃ ⋄ \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n` +
-                    `┃\n` +
-                    `┃ Balas (reply) stiker yang ingin diubah.\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `💡 *GANTI WATERMARK*\n` +
+                    `────────────────────────\n` +
+                    `Untuk mengganti watermark stiker, gunakan:\n` +
+                    `⋄ Format: \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n\n` +
+                    `*ℹ️ Notes:* Balas (reply) stiker yang ingin diubah.\n` +
+                    `────────────────────────`
                 );
             }
 
@@ -47,12 +47,13 @@ export default {
 
             if (!targetMsg) {
                 return await message.reply(
-                    `╭━━━〔 🎨 STICKER MAKER 〕━━━\n` +
-                    `┃ Kirim atau balas gambar/video pendek.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}s\`\n` +
-                    `┃ ⋄ \`${prefix || "!"}s Pack|Author\`\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🎨 *STICKER MAKER*\n` +
+                    `────────────────────────\n` +
+                    `Kirim atau balas gambar/video pendek.\n\n` +
+                    `*📖 Contoh*\n` +
+                    `⋄ \`${prefix || "!"}s\`\n` +
+                    `⋄ \`${prefix || "!"}s Pack|Author\`\n` +
+                    `────────────────────────`
                 );
             }
 

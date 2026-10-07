@@ -84,43 +84,40 @@ async function showInfoMenu(message, sock, chatId, config, meta, prefix) {
     const threshold = meta.trackingThreshold || 10;
     const periodDays = meta.trackingPeriodDays || 30;
 
-    let caption = `╭━━━〔 📊 SIDER TRACKING 〕━━━\n`;
+    let caption = `📊 *SIDER TRACKING*\n`;
+    caption += `────────────────────────\n`;
     if (isActive) {
         const elapsed = meta.trackingStartedAt
             ? Math.floor((Date.now() - meta.trackingStartedAt) / 86400000)
             : 0;
-        caption += `┃ ℹ️ *Tracking sedang AKTIF*\n`;
-        caption += `┃ 📅 Berjalan : ${elapsed} / ${periodDays} hari\n`;
-        caption += `┃ 🎯 Threshold: < ${threshold} pesan\n`;
-        caption += `┃ 👥 Tercatat : ${allCounts.length} member\n`;
+        caption += `⋄ Status : ✅ AKTIF\n`;
+        caption += `⋄ Berjalan : ${elapsed} / ${periodDays} hari\n`;
+        caption += `⋄ Threshold : < ${threshold} pesan\n`;
+        caption += `⋄ Tercatat : ${allCounts.length} member\n`;
     } else {
-        caption += `┃ ℹ️ *Tracking sedang NONAKTIF*\n`;
-        caption += `┃ Aktifkan dengan *${p}track on*\n`;
+        caption += `⋄ Status : 🛑 NONAKTIF\n`;
+        caption += `⋄ Info : Aktifkan dengan *${p}track on*\n`;
     }
-    caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-    caption += `╭━━━〔 ⚙️ PENGATURAN TRACKING 〕━━━\n`;
-    caption += `┃ Perintah yang dapat digunakan:\n`;
-    caption += `┃\n`;
-    caption += `┃ 🔄 *Toggle*\n`;
-    caption += `┃ ⋄ *on* — aktifkan tracking\n`;
-    caption += `┃ ⋄ *off* — nonaktifkan & hapus data\n`;
-    caption += `┃\n`;
-    caption += `┃ 📊 *Data*\n`;
-    caption += `┃ ⋄ *status* — lihat status tracking\n`;
-    caption += `┃ ⋄ *stats* — leaderboard aktivitas\n`;
-    caption += `┃ ⋄ *report* — kirim laporan sider\n`;
-    caption += `┃ ⋄ *reset* — reset data tanpa report\n`;
-    caption += `┃ ⋄ *check* — cek jumlah pesan sendiri\n`;
-    caption += `┃\n`;
-    caption += `┃ ⚙️ *Konfigurasi*\n`;
-    caption += `┃ ⋄ *threshold <n>* — ubah batas pesan\n`;
-    caption += `┃ ⋄ *period <n>* — ubah periode hari\n`;
-    caption += `┃ ⋄ *exclude @user* — exclude dari tracking\n`;
-    caption += `┃ ⋄ *include @user* — include kembali\n`;
-    caption += `┃\n`;
-    caption += `┃ 💡 _Contoh: *${p}track threshold 15*_\n`;
-    caption += `╰━━━━━━━━━━━━━━━━━━━━`;
+    caption += `\n*⚙️ PENGATURAN TRACKING*\n`;
+    caption += `────────────────────────\n`;
+    caption += `Perintah yang dapat digunakan:\n\n`;
+    caption += `*🔄 Toggle*\n`;
+    caption += `⋄ *on* — aktifkan tracking\n`;
+    caption += `⋄ *off* — nonaktifkan & hapus data\n\n`;
+    caption += `*📊 Data*\n`;
+    caption += `⋄ *status* — lihat status tracking\n`;
+    caption += `⋄ *stats* — leaderboard aktivitas\n`;
+    caption += `⋄ *report* — kirim laporan sider\n`;
+    caption += `⋄ *reset* — reset data tanpa report\n`;
+    caption += `⋄ *check* — cek jumlah pesan sendiri\n\n`;
+    caption += `*⚙️ Konfigurasi*\n`;
+    caption += `⋄ *threshold <n>* — ubah batas pesan\n`;
+    caption += `⋄ *period <n>* — ubah periode hari\n`;
+    caption += `⋄ *exclude @user* — exclude dari tracking\n`;
+    caption += `⋄ *include @user* — include kembali\n\n`;
+    caption += `*ℹ️ Notes:* Contoh: *${p}track threshold 15*\n`;
+    caption += `────────────────────────`;
 
     await sock.sendMessage(chatId, { text: caption }, { quoted: message });
 }
@@ -148,13 +145,14 @@ async function handleOn(message, chatId, config, meta, sender, prefix) {
     saveGroupConfig(chatId, config);
 
     return message.reply(
-        `╭━━━〔 📊 SIDER TRACKING 〕━━━\n` +
-        `┃ ✅ Tracking berhasil diaktifkan!\n` +
-        `┃ ⋄ Periode   : ${meta.trackingPeriodDays} hari\n` +
-        `┃ ⋄ Threshold : < ${meta.trackingThreshold} pesan\n` +
-        `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `📊 *SIDER TRACKING*\n` +
+        `────────────────────────\n` +
+        `✅ Tracking berhasil diaktifkan!\n\n` +
+        `⋄ Periode : ${meta.trackingPeriodDays} hari\n` +
+        `⋄ Threshold : < ${meta.trackingThreshold} pesan\n\n` +
         `Bot akan mulai mencatat aktivitas pesan setiap member.\n` +
-        `Gunakan *${p}track report* untuk melihat laporan sider.`
+        `*ℹ️ Notes:* Gunakan *${p}track report* untuk melihat laporan sider.\n` +
+        `────────────────────────`
     );
 }
 
@@ -173,10 +171,11 @@ async function handleOff(message, chatId, config, meta) {
     saveGroupConfig(chatId, config);
 
     return message.reply(
-        `╭━━━〔 📊 SIDER TRACKING 〕━━━\n` +
-        `┃ 🛑 *Tracking dinonaktifkan.*\n` +
-        `┃ Semua data counter telah dihapus.\n` +
-        `╰━━━━━━━━━━━━━━━━━━━━`
+        `📊 *SIDER TRACKING*\n` +
+        `────────────────────────\n` +
+        `🛑 *Tracking dinonaktifkan.*\n` +
+        `Semua data counter telah dihapus.\n` +
+        `────────────────────────`
     );
 }
 
@@ -197,13 +196,14 @@ async function handleStatus(message, chatId, meta, prefix) {
     const allCounts = getGroupMsgCounts(chatId);
     const excluded = meta.trackingExcluded || [];
 
-    let text = `╭━━━〔 📊 STATUS TRACKING 〕━━━\n`;
-    text += `┃ 📅 Berjalan  : ${elapsed} / ${periodDays} hari\n`;
-    text += `┃ ⏳ Sisa      : ${remaining} hari\n`;
-    text += `┃ 🎯 Threshold : < ${threshold} pesan\n`;
-    text += `┃ 👥 Tercatat  : ${allCounts.length} member\n`;
-    text += `┃ 🚫 Excluded  : ${excluded.length} user\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━`;
+    let text = `📊 *STATUS TRACKING*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Berjalan : ${elapsed} / ${periodDays} hari\n`;
+    text += `⋄ Sisa : ${remaining} hari\n`;
+    text += `⋄ Threshold : < ${threshold} pesan\n`;
+    text += `⋄ Tercatat : ${allCounts.length} member\n`;
+    text += `⋄ Excluded : ${excluded.length} user\n`;
+    text += `────────────────────────`;
 
     return message.reply(text);
 }
@@ -221,33 +221,32 @@ async function handleStats(message, sock, chatId, meta, groupMetadata) {
     const threshold = meta.trackingThreshold || 10;
 
     // Build leaderboard (already sorted DESC by count from query)
-    let text = `╭━━━〔 📊 LEADERBOARD AKTIVITAS 〕━━━\n`;
-    text += `┃ 👥 Total tercatat: ${allCounts.length} member\n`;
-    text += `┃ 🎯 Threshold sider: < ${threshold} pesan\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `📊 *LEADERBOARD AKTIVITAS*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Total tercatat : ${allCounts.length} member\n`;
+    text += `⋄ Threshold sider : < ${threshold} pesan\n\n`;
 
     // Top 10 most active
     const top = allCounts.slice(0, 10);
-    text += `╭───「 🏆 Paling Aktif 」\n`;
+    text += `*🏆 Paling Aktif*\n`;
     const mentions = [];
     for (let i = 0; i < top.length; i++) {
         const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
         const baseId = top[i].user_id.split("@")[0];
-        text += `│ ${medal} @${baseId} — ${top[i].count} pesan\n`;
+        text += `⋄ ${medal} @${baseId} — ${top[i].count} pesan\n`;
         mentions.push(top[i].user_id);
     }
-    text += `╰──────────────\n\n`;
 
     // Bottom 5 least active (potential siders)
     const bottom = allCounts.slice(-5).reverse();
-    text += `╭───「 ⚠️ Paling Pasif 」\n`;
+    text += `\n*⚠️ Paling Pasif*\n`;
     for (const entry of bottom) {
         const baseId = entry.user_id.split("@")[0];
         const label = entry.count < threshold ? "⛔" : "⚠️";
-        text += `│ ${label} @${baseId} — ${entry.count} pesan\n`;
+        text += `⋄ ${label} @${baseId} — ${entry.count} pesan\n`;
         mentions.push(entry.user_id);
     }
-    text += `╰──────────────`;
+    text += `\n────────────────────────`;
 
     await sock.sendMessage(chatId, { text, mentions }, { quoted: message });
 }
@@ -340,16 +339,17 @@ async function handleExclude(message, sock, args, chatId, config, meta, prefix) 
             );
         }
 
-        let text = `╭───「 🚫 User yang Di-exclude 」\n`;
+        const p = prefix || "!";
+        let text = `🚫 *USER YANG DI-EXCLUDE*\n────────────────────────\n`;
         const mentions = [];
         for (const jid of excluded) {
             const baseId = jid.split("@")[0];
-            text += `│ ⋄ @${baseId}\n`;
+            text += `⋄ @${baseId}\n`;
             mentions.push(jid);
         }
-        text += `╰──────────────\n\n`;
-        text += `💡 _Gunakan \`${prefix}track exclude @user\` untuk menambah,\n`;
-        text += `   atau \`${prefix}track include @user\` untuk menghapus._`;
+        text += `\n*💡 Catatan:* Gunakan \`${p}track exclude @user\` untuk menambah,\n`;
+        text += `atau \`${p}track include @user\` untuk menghapus.\n`;
+        text += `────────────────────────`;
 
         return await sock.sendMessage(chatId, { text, mentions }, { quoted: message });
     }
@@ -396,16 +396,17 @@ async function handleInclude(message, sock, args, chatId, config, meta, prefix) 
             );
         }
 
-        let text = `╭───「 🚫 User yang Di-exclude 」\n`;
+        const p = prefix || "!";
+        let text = `🚫 *USER YANG DI-EXCLUDE*\n────────────────────────\n`;
         const mentions = [];
         for (const jid of excluded) {
             const baseId = jid.split("@")[0];
-            text += `│ ⋄ @${baseId}\n`;
+            text += `⋄ @${baseId}\n`;
             mentions.push(jid);
         }
-        text += `╰──────────────\n\n`;
-        text += `💡 _Tag user di atas untuk me-include mereka kembali:\n`;
-        text += `   \`${prefix}track include @user\`_`;
+        text += `\n*💡 Catatan:* Tag user di atas untuk me-include mereka kembali:\n`;
+        text += `\`${p}track include @user\`\n`;
+        text += `────────────────────────`;
 
         return await sock.sendMessage(chatId, { text, mentions }, { quoted: message });
     }
@@ -467,23 +468,25 @@ async function handleCheck(message, sock, args, sender, chatId, meta, prefix) {
 
     if (isSelf) {
         return message.reply(
-            `╭━━━〔 📊 STATUS AKTIVITAS 〕━━━\n` +
-            `┃ ⋄ Total Pesan : *${count} pesan*\n` +
-            `┃ ⋄ Threshold   : ${threshold} pesan\n` +
-            `┃ ⋄ Status      : ${status}\n` +
-            `╰━━━━━━━━━━━━━━━━━━━━`
+            `📊 *STATUS AKTIVITAS*\n` +
+            `────────────────────────\n` +
+            `⋄ Total Pesan : *${count} pesan*\n` +
+            `⋄ Threshold : ${threshold} pesan\n` +
+            `⋄ Status : ${status}\n` +
+            `────────────────────────`
         );
     }
 
     return await sock.sendMessage(
         chatId,
         {
-            text: `╭━━━〔 📊 STATUS AKTIVITAS 〕━━━\n` +
-                  `┃ ⋄ Pengguna    : @${baseId}\n` +
-                  `┃ ⋄ Total Pesan : *${count} pesan*\n` +
-                  `┃ ⋄ Threshold   : ${threshold} pesan\n` +
-                  `┃ ⋄ Status      : ${status}\n` +
-                  `╰━━━━━━━━━━━━━━━━━━━━`,
+            text: `📊 *STATUS AKTIVITAS*\n` +
+                  `────────────────────────\n` +
+                  `⋄ Pengguna : @${baseId}\n` +
+                  `⋄ Total Pesan : *${count} pesan*\n` +
+                  `⋄ Threshold : ${threshold} pesan\n` +
+                  `⋄ Status : ${status}\n` +
+                  `────────────────────────`,
             mentions: [targetJid],
         },
         { quoted: message }

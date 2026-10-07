@@ -96,9 +96,10 @@ export default {
             
             text = formattedLines.join('\n');
 
-            let replyText = `╭━━━〔 📖 KBBI SEARCH 〕━━━\n`;
-            replyText += `┃ 🔍 Kata : ${kataDasar.w.replace(/<[^>]+>/g, '')}\n`;
-            replyText += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+            let replyText = `📖 *KBBI SEARCH*\n`;
+            replyText += `────────────────────────\n`;
+            replyText += `⋄ Kata : *${kataDasar.w.replace(/<[^>]+>/g, '')}*\n`;
+            replyText += `────────────────────────\n\n`;
             replyText += text;
 
             await message.reply(replyText);

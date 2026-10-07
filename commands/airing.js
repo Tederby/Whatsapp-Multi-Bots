@@ -155,30 +155,31 @@ export default {
             const fmtStart = startDate.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
             const fmtEnd = endDate.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
 
-            let text = `╭━━━〔 📅 JADWAL AIRING 〕━━━\n`;
-            text += `┃ 📆 *${rangeLabel}* (${fmtStart} — ${fmtEnd})\n`;
-            text += `┃ 📊 *Total* : ${results.length} episode\n`;
-            if (!showAll) text += `┃ 🔍 *Filter* : Popularity ≥ ${MIN_POPULARITY.toLocaleString()}\n`;
-            text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n`;
+            let text = `📅 *JADWAL AIRING*\n`;
+            text += `────────────────────────\n`;
+            text += `⋄ Rentang : ${rangeLabel} (${fmtStart} — ${fmtEnd})\n`;
+            text += `⋄ Total : ${results.length} episode\n`;
+            if (!showAll) text += `⋄ Filter : Popularity ≥ ${MIN_POPULARITY.toLocaleString()}\n`;
 
             for (const dateKey of dayOrder) {
                 const entries = grouped[dateKey];
                 const dayLabel = getDayInfoWIB(entries[0].airingAt);
 
-                text += `\n╭───「 📅 ${dayLabel} 」\n`;
+                text += `\n*📅 ${dayLabel}*\n`;
                 for (const entry of entries) {
                     const time = formatTimeWIB(entry.airingAt);
                     const title = entry.media.title?.romaji || entry.media.title?.userPreferred || entry.media.title?.english || "N/A";
                     const ep = entry.episode ? `Ep ${entry.episode}` : "";
-                    text += `│ 🕐 ${time} — ${title} ${ep}\n`;
+                    text += `⋄ 🕐 ${time} — ${title} ${ep}\n`;
                 }
-                text += `╰──────────────\n`;
             }
 
-            text += `\n⏰ _Waktu ditampilkan dalam WIB (UTC+7)_`;
+            const p = prefix || "!";
+            text += `\n*ℹ️ Notes:* Waktu ditampilkan dalam WIB (UTC+7).\n`;
             if (!showAll) {
-                text += `\n💡 _Gunakan \`${prefix || "!"}airing all\` untuk semua anime_`;
+                text += `Gunakan \`${p}airing all\` untuk semua anime.\n`;
             }
+            text += `────────────────────────`;
 
             await sock.sendMessage(message.chat, { text: text.trim() }, { quoted: message });
 

@@ -14,9 +14,10 @@ export default {
         const t = message.messageTimestamp;
         const latency = Math.max(0, Date.now() - t * 1000);
         await message.reply(
-            `╭━━━〔 🏓 PONG 〕━━━\n` +
-            `┃ ⋄ Response : *${latency} ms*\n` +
-            `╰━━━━━━━━━━━━━━━━━━━━`
+            `🏓 *PONG*\n` +
+            `────────────────────────\n` +
+            `⋄ Response : *${latency} ms*\n` +
+            `────────────────────────`
         );
     }
 };

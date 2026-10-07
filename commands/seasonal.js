@@ -19,10 +19,10 @@ function generateListText(results, page, season, year) {
 
     const label = SEASON_LABELS[season] || season;
 
-    let text = `╭━━━〔 📺 SEASONAL ANIME 〕━━━\n`;
-    text += `┃ 📅 *Musim* : ${label} ${year}\n`;
-    text += `┃ 📊 *Total* : ${results.length} judul\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `📺 *SEASONAL ANIME*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Musim : ${label} ${year}\n`;
+    text += `⋄ Total : ${results.length} judul\n\n`;
 
     currentItems.forEach((anime, index) => {
         const title = anime.title?.romaji || anime.title?.userPreferred || anime.title?.english || "N/A";
@@ -37,16 +37,16 @@ function generateListText(results, page, season, year) {
             if (remaining) nextEp = ` ⏱️ Ep ${anime.nextAiringEpisode.episode} in ${remaining}`;
         }
 
-        text += `╭───「 ${start + index + 1}. ${title} 」\n`;
-        text += `│ 📺 *Tipe*    : ${format}\n`;
-        text += `│ ⭐ *Skor*    : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
-        text += `│ 🎬 *Episode* : ${eps}\n`;
-        text += `│ ⏳ *Status*  : ${status}${nextEp}\n`;
-        text += `╰──────────────\n\n`;
+        text += `*${start + index + 1}. ${title}*\n`;
+        text += `⋄ Tipe : ${format}\n`;
+        text += `⋄ Skor : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+        text += `⋄ Episode : ${eps}\n`;
+        text += `⋄ Status : ${status}${nextEp}\n\n`;
     });
 
     text += generatePaginator(page, totalPages) + "\n\n";
-    text += `💡 _Reply angka (1-${currentItems.length}) untuk detail. Ketik "n" next, "b" back._`;
+    text += `*ℹ️ Notes:* Reply angka (1-${currentItems.length}) untuk detail. Ketik "n" next, "b" back.\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -87,17 +87,18 @@ export default {
                     targetSeason = current.season;
                     targetYear = yearArg;
                 } else {
+                    const p = prefix || "!";
                     await message.reply(
-                        `╭━━━〔 📺 SEASONAL 〕━━━\n` +
-                        `┃ Melihat anime berdasarkan musim.\n` +
-                        `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
-                        `╭───「 📖 Penggunaan 」\n` +
-                        `│ ⋄ \`${prefix || "!"}seasonal\` (musim ini)\n` +
-                        `│ ⋄ \`${prefix || "!"}seasonal next\` (musim depan)\n` +
-                        `│ ⋄ \`${prefix || "!"}seasonal winter 2025\`\n` +
-                        `│ ⋄ \`${prefix || "!"}seasonal fall 2026\`\n` +
-                        `╰──────────────\n\n` +
-                        `📅 *Musim*: Winter (Jan-Mar), Spring (Apr-Jun), Summer (Jul-Sep), Fall (Oct-Dec)`
+                        `📺 *SEASONAL*\n` +
+                        `────────────────────────\n` +
+                        `Melihat anime berdasarkan musim.\n\n` +
+                        `*📖 Penggunaan*\n` +
+                        `⋄ \`${p}seasonal\` (musim ini)\n` +
+                        `⋄ \`${p}seasonal next\` (musim depan)\n` +
+                        `⋄ \`${p}seasonal winter 2025\`\n` +
+                        `⋄ \`${p}seasonal fall 2026\`\n\n` +
+                        `*ℹ️ Notes:* Musim: Winter (Jan-Mar), Spring (Apr-Jun), Summer (Jul-Sep), Fall (Oct-Dec)\n` +
+                        `────────────────────────`
                     );
                     return;
                 }
@@ -208,48 +209,48 @@ async function sendAnimeDetail(anime, message, sock) {
 
     const imageUrl = anime.coverImage?.extraLarge || anime.coverImage?.large || anime.coverImage?.medium || null;
 
-    let captionText = `╭━━━〔 🎌 ANIME DETAIL 〕━━━\n`;
-    captionText += `┃ 🏷️ *Judul*       : ${title}\n`;
+    let captionText = `🎌 *ANIME DETAIL*\n`;
+    captionText += `────────────────────────\n`;
+    captionText += `⋄ Judul : ${title}\n`;
     if (rawTitleEng) {
-        captionText += `┃ 🔤 *Inggris*     : ${rawTitleEng}\n`;
+        captionText += `⋄ Inggris : ${rawTitleEng}\n`;
     }
-    captionText += `┃ 📺 *Tipe*        : ${type}\n`;
-    captionText += `┃ ⭐ *Skor*        : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
-    captionText += `┃ 🎬 *Episode*     : ${episodes}\n`;
-    captionText += `┃ ⏱️ *Durasi*      : ${duration}\n`;
-    captionText += `┃ ⏳ *Status*      : ${status}\n`;
-    captionText += `┃ 📅 *Musim*       : ${seasonYear}\n`;
-    captionText += `┃ 🎥 *Studio*      : ${studios}\n`;
-    captionText += `┃ 📈 *Popularitas* : ${popularity}\n`;
-    captionText += `┃ 🎭 *Genre*       : ${genres}\n`;
+    captionText += `⋄ Tipe : ${type}\n`;
+    captionText += `⋄ Skor : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+    captionText += `⋄ Episode : ${episodes}\n`;
+    captionText += `⋄ Durasi : ${duration}\n`;
+    captionText += `⋄ Status : ${status}\n`;
+    captionText += `⋄ Musim : ${seasonYear}\n`;
+    captionText += `⋄ Studio : ${studios}\n`;
+    captionText += `⋄ Popularitas : ${popularity}\n`;
+    captionText += `⋄ Genre : ${genres}\n`;
     if (nextAiringText) {
-        captionText += `┃ ⏱️ *Next Ep*     : ${nextAiringText}\n`;
+        captionText += `⋄ Next Ep : ${nextAiringText}\n`;
     }
-    captionText += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-    captionText += `📝 *Sinopsis:*\n${synopsis}\n\n`;
+    captionText += `\n*📝 Sinopsis*\n${synopsis}\n`;
 
     // Recommendations
     const recs = anime.recommendations?.nodes?.filter(r => r.mediaRecommendation) || [];
     if (recs.length > 0) {
-        captionText += `╭───「 💡 Rekomendasi 」\n`;
+        captionText += `\n*💡 Rekomendasi*\n`;
         recs.forEach((rec, i) => {
             const recTitle = rec.mediaRecommendation.title?.romaji || "N/A";
             const recScore = formatScore(rec.mediaRecommendation.averageScore);
             const recFormat = rec.mediaRecommendation.format || "";
-            captionText += `│ ${i + 1}. ${recTitle}`;
+            captionText += `⋄ ${i + 1}. ${recTitle}`;
             if (recScore !== "N/A") captionText += ` (${recScore} / 10)`;
             if (recFormat) captionText += ` [${recFormat}]`;
             captionText += `\n`;
         });
-        captionText += `╰──────────────\n\n`;
     }
 
-    captionText += `🔗 *Tautan:*\n`;
-    captionText += `• AniList: ${anilistUrl}`;
+    captionText += `\n*🔗 Tautan*\n`;
+    captionText += `⋄ AniList : ${anilistUrl}`;
     if (malUrl) {
-        captionText += `\n• MyAnimeList: ${malUrl}`;
+        captionText += `\n⋄ MyAnimeList : ${malUrl}`;
     }
+    captionText += `\n────────────────────────`;
 
     if (imageUrl) {
         await sock.sendMessage(

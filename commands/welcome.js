@@ -44,27 +44,24 @@ export default {
                 return message.reply(`✅ Pesan selamat datang berhasil diperbarui dan fitur diaktifkan:\n\n${welcomeText}`);
 
             } else {
+                const p = prefix || "!";
                 return message.reply(
-                    `╭━━━〔 👋 WELCOME 〕━━━\n` +
-                    `┃\n` +
-                    `┃ Penggunaan:\n` +
-                    `┃ ⋄ \`${prefix}welcome on\` → Aktifkan\n` +
-                    `┃ ⋄ \`${prefix}welcome off\` → Nonaktifkan\n` +
-                    `┃ ⋄ \`${prefix}welcome set <teks>\` → Atur teks\n` +
-                    `┃\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
-                    `╭───「 💡 Tips Admin 」\n` +
-                    `│ Fitur ini *aktif secara default*.\n` +
-                    `│\n` +
-                    `│ Gunakan placeholder:\n` +
-                    `│ ⋄ *@user* → mention member baru\n` +
-                    `│ ⋄ *@group* → nama grup\n` +
-                    `│\n` +
-                    `│ Contoh set pesan custom:\n` +
-                    `│ \`${prefix}welcome set Halo @user! 👋\n` +
-                    `│ Selamat bergabung di *@group*.\n` +
-                    `│ Baca rules dulu ya!\`\n` +
-                    `╰──────────────`
+                    `👋 *WELCOME*\n` +
+                    `────────────────────────\n` +
+                    `*Penggunaan:*\n` +
+                    `⋄ \`${p}welcome on\` → Aktifkan\n` +
+                    `⋄ \`${p}welcome off\` → Nonaktifkan\n` +
+                    `⋄ \`${p}welcome set <teks>\` → Atur teks\n\n` +
+                    `*💡 Tips Admin*\n` +
+                    `Fitur ini *aktif secara default*.\n\n` +
+                    `Gunakan placeholder:\n` +
+                    `⋄ *@user* → mention member baru\n` +
+                    `⋄ *@group* → nama grup\n\n` +
+                    `Contoh set pesan custom:\n` +
+                    `\`${p}welcome set Halo @user! 👋\n` +
+                    `Selamat bergabung di *@group*.\n` +
+                    `Baca rules dulu ya!\`\n` +
+                    `────────────────────────`
                 );
             }
 

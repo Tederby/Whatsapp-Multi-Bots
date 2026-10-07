@@ -110,13 +110,13 @@ export default {
                 }
             } else {
                 return message.reply(
-                    `╭━━━〔 🖼️ SET PROFILE PFP 〕━━━\n` +
-                    `┃ Atur foto profil bot kustom.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}setpfp\` (balas / kirim gambar)\n` +
-                    `┃ ⋄ \`${prefix || "!"}setpfp <url_gambar>\`\n` +
-                    `┃ ⋄ \`${prefix || "!"}setpfp delete\` (hapus foto kustom)\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🖼️ *SET PROFILE PFP*\n` +
+                    `────────────────────────\n` +
+                    `Atur foto profil bot kustom.\n\n` +
+                    `⋄ \`${prefix || "!"}setpfp\` (balas / kirim gambar)\n` +
+                    `⋄ \`${prefix || "!"}setpfp <url_gambar>\`\n` +
+                    `⋄ \`${prefix || "!"}setpfp delete\` (hapus foto kustom)\n` +
+                    `────────────────────────`
                 );
             }
 

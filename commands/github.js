@@ -19,16 +19,17 @@ export default {
     async handler({ message, args, sock, prefix }) {
         try {
             if (args.length === 0) {
+                const p = prefix || "!";
                 await message.reply(
-                    "╭━━━〔 🐙 GITHUB SEARCH 〕━━━\n" +
-                    "┃ Mencari profil user atau repository GitHub.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}gh <user>\` — Profil user\n` +
-                    `│ ⋄ \`${prefix || "!"}gh <user>/<repo>\` — Info repository\n` +
-                    `│ ⋄ \`${prefix || "!"}gh <url>\` — Dari URL GitHub\n` +
-                    "╰──────────────\n\n" +
-                    "💡 _Link GitHub yang dikirim di chat juga akan otomatis terdeteksi._"
+                    "🐙 *GITHUB SEARCH*\n" +
+                    "────────────────────────\n" +
+                    "Mencari profil user atau repository GitHub.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}gh <user>\` — Profil user\n` +
+                    `⋄ \`${p}gh <user>/<repo>\` — Info repository\n` +
+                    `⋄ \`${p}gh <url>\` — Dari URL GitHub\n\n` +
+                    "*ℹ️ Notes:* Link GitHub yang dikirim di chat juga akan otomatis terdeteksi.\n" +
+                    "────────────────────────"
                 );
                 return;
             }

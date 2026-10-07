@@ -17,11 +17,11 @@ export default {
             const newName = args.join(" ");
             if (!newName) {
                 return message.reply(
-                    `╭━━━〔 🏷️ SET BOT NAME 〕━━━\n` +
-                    `┃ Harap masukkan nama baru bot.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}setname <nama baru>\`\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🏷️ *SET BOT NAME*\n` +
+                    `────────────────────────\n` +
+                    `Harap masukkan nama baru bot.\n\n` +
+                    `⋄ Format: \`${prefix || "!"}setname <nama baru>\`\n` +
+                    `────────────────────────`
                 );
             }
 

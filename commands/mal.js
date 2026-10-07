@@ -22,16 +22,17 @@ export default {
     async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
         try {
             if (args.length === 0 && (!flags || !flags.self)) {
+                const p = prefix || "!";
                 await message.reply(
-                    "╭━━━〔 📺 MYANIMELIST PROFILE 〕━━━\n" +
-                    "┃ Mencari informasi profil user MyAnimeList.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}mal <username>\`\n` +
-                    `│ ⋄ \`${prefix || "!"}mal -s\` (profil sendiri)\n` +
-                    `│ ⋄ \`${prefix || "!"}mal @user\` (tag user)\n` +
-                    "╰──────────────\n\n" +
-                    `💡 _Tautkan akun MAL kamu via \`${prefix || "!"}register mal <username>\`_`
+                    "📺 *MYANIMELIST PROFILE*\n" +
+                    "────────────────────────\n" +
+                    "Mencari informasi profil user MyAnimeList.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}mal <username>\`\n` +
+                    `⋄ \`${p}mal -s\` (profil sendiri)\n` +
+                    `⋄ \`${p}mal @user\` (tag user)\n\n` +
+                    `*ℹ️ Notes:* Tautkan akun MAL kamu via \`${p}register mal <username>\`\n` +
+                    "────────────────────────"
                 );
                 return;
             }

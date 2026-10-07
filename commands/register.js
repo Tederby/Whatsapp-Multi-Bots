@@ -196,39 +196,33 @@ export default {
             const displayMode = user.meta?.displayMode ?? "text";
             const displayModeLabel = displayMode === "ui" ? "UI Interaktif" : "Teks Biasa (Default)";
 
-            let caption = `╭━━━〔 📝 REGISTRASI 〕━━━\n`;
+            let caption = `📝 *REGISTRASI*\n`;
+            caption += `────────────────────────\n`;
             if (isNewUser) {
-                caption += `┃ ✅ *Registrasi Berhasil!*\n`;
-                caption += `┃ Selamat datang di database bot.\n`;
+                caption += `✅ *Registrasi Berhasil!*\nSelamat datang di database bot.\n\n`;
             } else {
-                caption += `┃ ℹ️ *Informasi Akun*\n`;
+                caption += `*ℹ️ Informasi Akun*\n`;
             }
-            caption += `┣━━━━━━━━━━━━━━━━━━━━\n`;
-            caption += `┃ 📛 Nama    : ${user.name || "Tidak diketahui"}\n`;
-            caption += `┃ 🖥️ Tampilan: ${displayModeLabel}\n`;
-            caption += `┃ 📅 Tanggal : ${regDate}\n`;
-            caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+            caption += `⋄ Nama : ${user.name || "Tidak diketahui"}\n`;
+            caption += `⋄ Tampilan : ${displayModeLabel}\n`;
+            caption += `⋄ Tanggal : ${regDate}\n\n`;
 
-            caption += `╭━━━〔 ⚙️ PENGATURAN 〕━━━\n`;
-            caption += `┃ Balas pesan ini, atau gunakan perintah langsung:\n`;
-            caption += `┃\n`;
-            caption += `┃ ⚙️ *Akun*\n`;
-            caption += `┃ ⋄ *name <nama baru>* — ganti nama\n`;
-            caption += `┃ ⋄ *unreg* — hapus registrasi\n`;
-            caption += `┃\n`;
-            caption += `┃ 🖥️ *Tampilan*\n`;
-            caption += `┃ ⋄ *mode ui* — tampilan interaktif\n`;
-            caption += `┃ ⋄ *mode text* — tampilan teks biasa\n`;
-            caption += `┃\n`;
-            caption += `┃ 🔗 *Link Akun*\n`;
-            caption += `┃ ⋄ *mal <username>* — tautkan MAL\n`;
-            caption += `┃ ⋄ *anilist <username>* — tautkan AniList\n`;
-            caption += `┃ ⋄ *steam <id>* — tautkan Steam\n`;
-            caption += `┃ ⋄ *unlink <mal/anilist/steam>* — lepas tautan\n`;
-            caption += `┃\n`;
-            caption += `┃ 💡 _Contoh langsung:_\n`;
-            caption += `┃ _*${p}register mode ui*_\n`;
-            caption += `╰━━━━━━━━━━━━━━━━━━━━`;
+            caption += `*⚙️ Pengaturan*\n`;
+            caption += `Balas pesan ini, atau gunakan perintah langsung:\n\n`;
+            caption += `*👤 Akun*\n`;
+            caption += `⋄ *name <nama baru>* — ganti nama\n`;
+            caption += `⋄ *unreg* — hapus registrasi\n\n`;
+            caption += `*🖥️ Tampilan*\n`;
+            caption += `⋄ *mode ui* — tampilan interaktif\n`;
+            caption += `⋄ *mode text* — tampilan teks biasa\n\n`;
+            caption += `*🔗 Link Akun*\n`;
+            caption += `⋄ *mal <username>* — tautkan MAL\n`;
+            caption += `⋄ *anilist <username>* — tautkan AniList\n`;
+            caption += `⋄ *steam <id>* — tautkan Steam\n`;
+            caption += `⋄ *unlink <mal/anilist/steam>* — lepas tautan\n\n`;
+            caption += `*💡 Contoh Langsung*\n`;
+            caption += `⋄ _*${p}register mode ui*_\n`;
+            caption += `────────────────────────`;
 
             const sentMsg = await sock.sendMessage(message.chat, { text: caption }, { quoted: message });
 
@@ -334,17 +328,18 @@ async function replyHandler({ message, sock, state }) {
 
     // ── Fallback: unrecognized command ─────────────────────────────────
     await message.reply(
-        `╭━━━〔 ⚙️ PENGATURAN REGISTRASI 〕━━━\n` +
-        `┃ ❌ Perintah tidak dikenali.\n` +
-        `┃\n` +
-        `┃ ⋄ *name <nama baru>* — ganti nama\n` +
-        `┃ ⋄ *mode <ui/text>* — preferensi tampilan\n` +
-        `┃ ⋄ *unreg* — hapus registrasi\n` +
-        `┃ ⋄ *mal <username>* — tautkan MAL\n` +
-        `┃ ⋄ *anilist <username>* — tautkan AniList\n` +
-        `┃ ⋄ *steam <id>* — tautkan Steam\n` +
-        `┃ ⋄ *unlink <mal/anilist/steam>* — lepas tautan\n` +
-        `╰━━━━━━━━━━━━━━━━━━━━`
+        `⚙️ *PENGATURAN REGISTRASI*\n` +
+        `────────────────────────\n` +
+        `❌ Perintah tidak dikenali.\n\n` +
+        `*📖 Opsi Tersedia*\n` +
+        `⋄ *name <nama baru>* — ganti nama\n` +
+        `⋄ *mode <ui/text>* — preferensi tampilan\n` +
+        `⋄ *unreg* — hapus registrasi\n` +
+        `⋄ *mal <username>* — tautkan MAL\n` +
+        `⋄ *anilist <username>* — tautkan AniList\n` +
+        `⋄ *steam <id>* — tautkan Steam\n` +
+        `⋄ *unlink <mal/anilist/steam>* — lepas tautan\n` +
+        `────────────────────────`
     );
 }
 

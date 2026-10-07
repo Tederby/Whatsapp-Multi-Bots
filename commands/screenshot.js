@@ -78,21 +78,20 @@ export default {
         const effectiveArgs = cleanArgs || args;
         if (args.length === 0 && effectiveArgs.length === 0) {
             await message.reply(
-                `╭━━━〔 📸 SCREENSHOT WEB 〕━━━\n` +
-                `┃ Mengambil screenshot tampilan website.\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
-                `╭───「 📖 Penggunaan 」\n` +
-                `│ ⋄ \`${prefix || "!"}ss google.com\`\n` +
-                `│ ⋄ \`${prefix || "!"}ss -m https://github.com\`\n` +
-                `│ ⋄ \`${prefix || "!"}ss reddit.com -mfd\`\n` +
-                `│ ⋄ \`${prefix || "!"}ss -w 5 reddit.com -fd\`\n` +
-                `╰──────────────\n\n` +
-                `╭───「 🏷️ Flags 」\n` +
-                `│ ⋄ -m, --mobile : Tampilan mobile\n` +
-                `│ ⋄ -f, --full   : Full-page (seluruh halaman)\n` +
-                `│ ⋄ -d, --dark   : Dark mode\n` +
-                `│ ⋄ -w, --wait   : Tunggu ekstra (detik, max 15s)\n` +
-                `╰──────────────`
+                `📸 *SCREENSHOT WEB*\n` +
+                `────────────────────────\n` +
+                `Mengambil screenshot tampilan website.\n\n` +
+                `*📖 Penggunaan*\n` +
+                `⋄ \`${prefix || "!"}ss google.com\`\n` +
+                `⋄ \`${prefix || "!"}ss -m https://github.com\`\n` +
+                `⋄ \`${prefix || "!"}ss reddit.com -mfd\`\n` +
+                `⋄ \`${prefix || "!"}ss -w 5 reddit.com -fd\`\n\n` +
+                `*🏷️ Flags*\n` +
+                `⋄ \`-m, --mobile\` : Tampilan mobile\n` +
+                `⋄ \`-f, --full\`   : Full-page (seluruh halaman)\n` +
+                `⋄ \`-d, --dark\`   : Dark mode\n` +
+                `⋄ \`-w, --wait\`   : Tunggu ekstra (detik, max 15s)\n` +
+                `────────────────────────`
             );
             return;
         }
@@ -135,7 +134,7 @@ export default {
         if (extraWaitMs !== DEFAULT_WAIT_MS) modeParts.push(`⏳ Wait ${extraWaitMs / 1000}s`);
         const modeLabel = modeParts.join(" • ");
 
-        const update = await message.replyUpdate(`⏳ Mengambil screenshot...\n┃ 🔗 ${url}\n┃ ${modeLabel}`);
+        const update = await message.replyUpdate(`⏳ Mengambil screenshot...\n⋄ 🔗 ${url}\n⋄ ${modeLabel}`);
 
         // ── Puppeteer with Concurrency Limiter ─────────────────────────
         await puppeteerQueue.run(async () => {
@@ -211,13 +210,14 @@ export default {
 
                 // ── Send Image ──────────────────────────────────────────────
 
-                let caption = `╭━━━〔 📸 SCREENSHOT 〕━━━\n`;
-                caption += `┃ 🔗 URL   : ${url}\n`;
-                caption += `┃ 📐 Mode  : ${modeLabel}\n`;
+                let caption = `📸 *SCREENSHOT*\n`;
+                caption += `────────────────────────\n`;
+                caption += `⋄ URL   : ${url}\n`;
+                caption += `⋄ Mode  : ${modeLabel}\n`;
                 if (pageTitle) {
-                    caption += `┃ 📄 Title : ${pageTitle}\n`;
+                    caption += `⋄ Title : ${pageTitle}\n`;
                 }
-                caption += `╰━━━━━━━━━━━━━━━━━━━━━━━`;
+                caption += `────────────────────────`;
 
                 await sock.sendMessage(message.chat, {
                     image: buffer,

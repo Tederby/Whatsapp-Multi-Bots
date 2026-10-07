@@ -27,14 +27,15 @@ export default {
             }
 
             if (!rawTarget) {
+                const p = prefix || "!";
                 return message.reply(
-                    "╭━━━〔 👢 KICK MEMBER 〕━━━\n" +
-                    "┃ Mengeluarkan member dari grup.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}kick @user\`\n` +
-                    `│ ⋄ \`${prefix || "!"}kick\` (reply pesan member)\n` +
-                    "╰──────────────"
+                    "👢 *KICK MEMBER*\n" +
+                    "────────────────────────\n" +
+                    "Mengeluarkan member dari grup.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}kick @user\`\n` +
+                    `⋄ \`${p}kick\` (reply pesan member)\n` +
+                    "────────────────────────"
                 );
             }
 

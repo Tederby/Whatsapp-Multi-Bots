@@ -586,44 +586,42 @@ export async function sendAnilistProfileDetail(input, message, sock, isAutoDetec
             ? (mangaStats.meanScore / 10).toFixed(1)
             : "0";
 
-        let text = `╭━━━〔 🌸 ANILIST PROFILE 〕━━━\n`;
-        text += `┃ 👤 *Username*  : ${user.name}\n`;
+        let text = `🌸 *ANILIST PROFILE*\n`;
+        text += `────────────────────────\n`;
+        text += `⋄ Username : ${user.name}\n`;
         if (user.createdAt) {
             const joinDate = new Date(user.createdAt * 1000).toLocaleDateString("id-ID", {
                 day: "numeric",
                 month: "long",
                 year: "numeric"
             });
-            text += `┃ 📅 *Bergabung* : ${joinDate}\n`;
+            text += `⋄ Bergabung : ${joinDate}\n`;
         }
-        text += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-        text += `╭───「 📺 Statistik Anime 」\n`;
-        text += `│ ⏱️ *Days Watched* : ${daysWatched}\n`;
-        text += `│ ⭐ *Mean Score*   : ${animeMeanScore} / 10\n`;
-        text += `│ 🎬 *Total Entry*  : ${animeStats.count || 0}\n`;
-        text += `│ 🟢 *Watching*     : ${getStatusCount(animeStats.statuses, "CURRENT")}\n`;
-        text += `│ 🔵 *Completed*    : ${getStatusCount(animeStats.statuses, "COMPLETED")}\n`;
-        text += `│ 🟡 *Paused*       : ${getStatusCount(animeStats.statuses, "PAUSED")}\n`;
-        text += `│ 🔴 *Dropped*      : ${getStatusCount(animeStats.statuses, "DROPPED")}\n`;
-        text += `│ ⚪ *Planning*     : ${getStatusCount(animeStats.statuses, "PLANNING")}\n`;
-        text += `╰──────────────\n\n`;
+        text += `\n*📺 Statistik Anime*\n`;
+        text += `⋄ Days Watched : ${daysWatched}\n`;
+        text += `⋄ Mean Score : ${animeMeanScore} / 10\n`;
+        text += `⋄ Total Entry : ${animeStats.count || 0}\n`;
+        text += `⋄ Watching : ${getStatusCount(animeStats.statuses, "CURRENT")}\n`;
+        text += `⋄ Completed : ${getStatusCount(animeStats.statuses, "COMPLETED")}\n`;
+        text += `⋄ Paused : ${getStatusCount(animeStats.statuses, "PAUSED")}\n`;
+        text += `⋄ Dropped : ${getStatusCount(animeStats.statuses, "DROPPED")}\n`;
+        text += `⋄ Planning : ${getStatusCount(animeStats.statuses, "PLANNING")}\n`;
 
-        text += `╭───「 📚 Statistik Manga 」\n`;
-        text += `│ 📖 *Chapters Read*: ${mangaStats.chaptersRead || 0}\n`;
-        text += `│ 📚 *Volumes Read* : ${mangaStats.volumesRead || 0}\n`;
-        text += `│ ⭐ *Mean Score*   : ${mangaMeanScore} / 10\n`;
-        text += `│ 📖 *Total Entry*  : ${mangaStats.count || 0}\n`;
-        text += `│ 🟢 *Reading*      : ${getStatusCount(mangaStats.statuses, "CURRENT")}\n`;
-        text += `│ 🔵 *Completed*    : ${getStatusCount(mangaStats.statuses, "COMPLETED")}\n`;
-        text += `│ 🟡 *Paused*       : ${getStatusCount(mangaStats.statuses, "PAUSED")}\n`;
-        text += `│ 🔴 *Dropped*      : ${getStatusCount(mangaStats.statuses, "DROPPED")}\n`;
-        text += `│ ⚪ *Planning*     : ${getStatusCount(mangaStats.statuses, "PLANNING")}\n`;
-        text += `╰──────────────\n\n`;
+        text += `\n*📚 Statistik Manga*\n`;
+        text += `⋄ Chapters Read : ${mangaStats.chaptersRead || 0}\n`;
+        text += `⋄ Volumes Read : ${mangaStats.volumesRead || 0}\n`;
+        text += `⋄ Mean Score : ${mangaMeanScore} / 10\n`;
+        text += `⋄ Total Entry : ${mangaStats.count || 0}\n`;
+        text += `⋄ Reading : ${getStatusCount(mangaStats.statuses, "CURRENT")}\n`;
+        text += `⋄ Completed : ${getStatusCount(mangaStats.statuses, "COMPLETED")}\n`;
+        text += `⋄ Paused : ${getStatusCount(mangaStats.statuses, "PAUSED")}\n`;
+        text += `⋄ Dropped : ${getStatusCount(mangaStats.statuses, "DROPPED")}\n`;
+        text += `⋄ Planning : ${getStatusCount(mangaStats.statuses, "PLANNING")}\n`;
 
-        text += `╭───「 🔗 Tautan 」\n`;
-        text += `│ 🌸 *AniList* : ${user.siteUrl}\n`;
-        text += `╰──────────────`;
+        text += `\n*🔗 Tautan*\n`;
+        text += `⋄ AniList : ${user.siteUrl}\n`;
+        text += `────────────────────────`;
 
         const avatarUrl = user.avatar?.large;
 

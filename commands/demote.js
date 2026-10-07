@@ -20,14 +20,15 @@ export default {
             const target = extractTarget(message, args);
 
             if (!target) {
+                const p = prefix || "!";
                 return message.reply(
-                    "╭━━━〔 🔽 DEMOTE ADMIN 〕━━━\n" +
-                    "┃ Menurunkan jabatan Admin menjadi anggota biasa.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}demote @user\`\n` +
-                    `│ ⋄ \`${prefix || "!"}demote <nomor>\`\n` +
-                    "╰──────────────"
+                    "🔽 *DEMOTE ADMIN*\n" +
+                    "────────────────────────\n" +
+                    "Menurunkan jabatan Admin menjadi anggota biasa.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}demote @user\`\n` +
+                    `⋄ \`${p}demote <nomor>\`\n` +
+                    "────────────────────────"
                 );
             }
 

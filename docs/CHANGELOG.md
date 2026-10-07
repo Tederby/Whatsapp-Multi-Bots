@@ -19,6 +19,25 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-07 — `[MINOR]` Modernize Text Output Formatting Across Entire Command Suite
+- **Aesthetic & Readability Modernization (`commands/*`, `lib/*`, `services/*`, `docs/*`)**:
+  - Replaced fragile multi-line box-drawing borders (`╭━━━`, `┃`, `╰━━━`, `│`, `╭───`, `╰───`, `┣━━━`) with clean, WhatsApp-native typography that prevents broken wrapping on small mobile screens.
+  - Standardized header format to bold uppercase text with emoji prefix (e.g. `🏷️ *TITLE OF THE COMMAND*`), followed by an exact 24-character divider line (`────────────────────────`).
+  - Standardized itemization with diamond bullets (`⋄ `, `\u22C4`) and key-value pairs (`⋄ Key : Value`), bold section headers (`*📦 Sub-section*`), and inline note callouts (`*ℹ️ Catatan:* ...`).
+  - Standardized dynamic prefix interpolation across all help cards via `const p = prefix || "!"`.
+- **Preserved System Invariants**:
+  - Maintained zero-width space protection (`\u200B`) against command loops in `commands/autoreply.js`.
+  - Preserved monospace terminal execution emulator blocks in `commands/bash.js` inside code fences.
+  - Preserved ASCII table columns in `commands/ytdlf.js` format selectors inside code fences.
+- **Modules Modernized (64 command files + 6 connected services/libraries)**:
+  - Documentation: `docs/COMMAND_DEVELOPMENT.md` (Section 7), `.agents/rules/whatsapp-bot.md` (Section 4).
+  - General & Information: `ping.js`, `info.js`, `menu.js`, `announce.js`, `feedback.js`, `report.js`, `kbbi.js`, `translate.js`.
+  - Profile, Registration & Reminder: `profile.js`, `register.js`, `setname.js`, `setpfp.js`, `remind.js`, `unremind.js`, `html.js`, `services/reminder.js`.
+  - Media & Downloader: `convert.js`, `download.js`, `sticker.js`, `watermark.js`, `brat.js`, `screenshot.js`, `ytdl.js`, `ytdlf.js`, `ytsearch.js`, `quote.js`, `markdown.js`.
+  - Anime, Manga & External APIs: `anilist.js`, `mal.js`, `anime.js`, `manga.js`, `character.js`, `airing.js`, `seasonal.js`, `trending.js`, `danbooru.js`, `danbooru-new.js`, `tag.js`, `steam.js`, `steamprofile.js`, `github.js`, `lib/danbooru.js`, `services/anilist.js`, `services/mal.js`, `services/steam.js`, `services/github.js`.
+  - Group Management & Sider Tracking: `lib/siderTracker.js`, `track.js`, `groupprofile.js`, `groupregister.js`, `add.js`, `kick.js`, `promote.js`, `demote.js`, `join.js`, `welcome.js`, `goodbye.js`, `autoreply.js`, `scanids.js`.
+  - Bot Admin, Owner & Maintenance: `ban.js`, `gban.js`, `addbotadmin.js`, `delbotadmin.js`, `owner.js`, `setbotpfp.js`, `bash.js`, `dbfix.js`, `wvtest.js`.
+
 ### 2026-10-06 — `[PATCH]` Autoreply Anti-Exploit Zero-Width Unicode Guard & Backward Compatibility
 - **Command Self-Execution Mitigation (`lib/autoDetect.js`)**: Eliminated exploit where auto-reply triggers configured with bot command prefixes (e.g. `!remind 10m yahaha` or `$ bash`) triggered self-execution when WhatsApp relayed the bot's response back into the socket (`fromMe: true` pipeline in `index.js`).
 - **Zero-Width Space (`\u200B`) Prefixing**:

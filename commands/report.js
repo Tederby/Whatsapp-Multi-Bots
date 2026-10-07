@@ -24,11 +24,12 @@ export default {
         const effectiveArgs = cleanArgs || args;
         if (args.length === 0 && effectiveArgs.length === 0) {
             return message.reply(
-                `╭━━━〔 🚨 REPORT 〕━━━\n` +
-                `┃ ❌ Harap sertakan pesan laporan atau detail masalah.\n` +
-                `┃ ⋄ Format: *${p}report <pesan>*\n` +
-                `┃ ⋄ Contoh: *${p}report Fitur download error saat memproses link*\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━`
+                `🚨 *REPORT*\n` +
+                `────────────────────────\n` +
+                `❌ Harap sertakan pesan laporan atau detail masalah.\n` +
+                `⋄ Format: *${p}report <pesan>*\n` +
+                `⋄ Contoh: *${p}report Fitur download error saat memproses link*\n` +
+                `────────────────────────`
             );
         }
 
@@ -41,21 +42,23 @@ export default {
                 return message.reply("✅ Belum ada laporan/bug yang masuk.");
             }
 
-            let reply = `╭━━━〔 🐛 DAFTAR LAPORAN BUG 〕━━━\n` +
-                `┃ Total : ${reports.length} laporan\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+            let reply = `🐛 *DAFTAR LAPORAN BUG*\n` +
+                `────────────────────────\n` +
+                `⋄ Total : ${reports.length} laporan\n\n`;
             reports.forEach((rep) => {
                 const date = new Date(rep.timestamp).toLocaleString("id-ID");
-                reply += `╭───「 📋 ID: ${rep.id} 」\n`;
-                reply += `│ ⋄ Pelapor : ${rep.pushname} (@${rep.sender.split("@")[0]})\n`;
-                if (rep.isGroup) reply += `│ ⋄ Grup : ${rep.groupName}\n`;
-                reply += `│ ⋄ Waktu : ${date}\n`;
-                reply += `│ ⋄ Masalah : ${rep.text}\n`;
-                if (rep.replied) reply += `│ ⋄ Status : ✅ Telah Dibalas\n`;
-                reply += `╰──────────────\n\n`;
+                reply += `*📋 ID: ${rep.id}*\n`;
+                reply += `⋄ Pelapor : ${rep.pushname} (@${rep.sender.split("@")[0]})\n`;
+                if (rep.isGroup) reply += `⋄ Grup : ${rep.groupName}\n`;
+                reply += `⋄ Waktu : ${date}\n`;
+                reply += `⋄ Masalah : ${rep.text}\n`;
+                if (rep.replied) reply += `⋄ Status : ✅ Telah Dibalas\n`;
+                reply += `\n`;
             });
-            reply += `💡 Hapus: *${p}report -d <id>*\n`;
-            reply += `💡 Balas: *${p}report -r <id> <pesan>*`;
+            reply += `*💡 Panduan*\n`;
+            reply += `⋄ Hapus: *${p}report -d <id>*\n`;
+            reply += `⋄ Balas: *${p}report -r <id> <pesan>*\n`;
+            reply += `────────────────────────`;
 
             return message.reply(reply);
         }
@@ -90,11 +93,12 @@ export default {
                 return message.reply(`❌ Laporan dengan ID ${id} tidak ditemukan.`);
             }
 
-            const replyText = `╭━━━〔 📩 BALASAN OWNER 〕━━━\n` +
-                `┃ ⋄ ID Laporan : ${id}\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
+            const replyText = `📩 *BALASAN OWNER*\n` +
+                `────────────────────────\n` +
+                `⋄ ID Laporan : ${id}\n\n` +
                 `"${replyMsg}"\n\n` +
-                `_Laporan aslimu:_\n_${item.text}_`;
+                `*Laporan aslimu:*\n_${item.text}_\n` +
+                `────────────────────────`;
 
             try {
                 // Scenario 1: Reply directly to the original message in the original chat
@@ -138,16 +142,16 @@ export default {
         // Notify Owners
         const ownerJids = setting.owner.map(num => num.includes("@s.whatsapp.net") ? num : num + "@s.whatsapp.net");
         
-        let notificationMsg = `╭━━━〔 🚨 LAPORAN BUG BARU 〕━━━\n` +
-            `┃ ⋄ ID : ${newItem.id}\n` +
-            `┃ ⋄ Pelapor : ${pushname} (@${sender.split("@")[0]})\n`;
-        if (isGroup) notificationMsg += `┃ ⋄ Grup : ${groupName}\n`;
-        notificationMsg += `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
-            `╭───「 💬 Masalah 」\n` +
-            `│ ${text}\n` +
-            `╰──────────────\n\n` +
-            `💡 Hapus: *${p}report -d ${newItem.id}*\n` +
-            `💡 Balas: *${p}report -r ${newItem.id} <pesan>*`;
+        let notificationMsg = `🚨 *LAPORAN BUG BARU*\n` +
+            `────────────────────────\n` +
+            `⋄ ID : ${newItem.id}\n` +
+            `⋄ Pelapor : ${pushname} (@${sender.split("@")[0]})\n`;
+        if (isGroup) notificationMsg += `⋄ Grup : ${groupName}\n`;
+        notificationMsg += `\n*💬 Masalah*\n${text}\n\n` +
+            `*💡 Panduan*\n` +
+            `⋄ Hapus: *${p}report -d ${newItem.id}*\n` +
+            `⋄ Balas: *${p}report -r ${newItem.id} <pesan>*\n` +
+            `────────────────────────`;
 
         let notifyCount = 0;
         for (const ownerJid of ownerJids) {

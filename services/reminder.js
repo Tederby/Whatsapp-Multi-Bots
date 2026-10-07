@@ -92,12 +92,13 @@ async function _triggerReminder(reminder) {
         ...textMentionJids
     ])).filter(Boolean);
 
-    // Format notification text using heavy box-drawing cards
+    // Format notification text using clean native WhatsApp card
     const cardLines = [
-        "╭━━━〔 ⏰ PENGINGAT 〕━━━",
-        `┃ 👤 Pengingat untuk @${creatorBase}`,
-        `┃ 💬 Catatan : ${message}`,
-        "╰━━━━━━━━━━━━━━━━━━━━━"
+        "⏰ *PENGINGAT*",
+        "────────────────────────",
+        `⋄ Pengingat untuk : @${creatorBase}`,
+        `⋄ Catatan : ${message}`,
+        "────────────────────────"
     ];
 
     try {

@@ -104,24 +104,19 @@ export default {
 
 async function showUsage(sock, message, p) {
     let usage = "";
-    usage += `╭━━━〔 📢 ANNOUNCE 〕━━━\n`;
-    usage += `┃\n`;
-    usage += `┃ Kirim pengumuman ke WhatsApp Channel.\n`;
-    usage += `┃\n`;
-    usage += `┣━━━━━━━━━━━━━━━━━━━━\n`;
-    usage += `┃\n`;
-    usage += `┃ *Penggunaan:*\n`;
-    usage += `┃ ⋄ ${p}announce text <teks>\n`;
-    usage += `┃ ⋄ ${p}announce changelog [N]\n`;
-    usage += `┃ ⋄ ${p}announce resolve <url>\n`;
-    usage += `┃ ⋄ ${p}announce status\n`;
-    usage += `┃ ⋄ ${p}announce on / off [-g]\n`;
-    usage += `┃\n`;
-    usage += `┃ *Flag:*\n`;
-    usage += `┃ ⋄ -p / --preview : Preview tanpa kirim\n`;
-    usage += `┃ ⋄ -g / --global  : Toggle untuk semua bot\n`;
-    usage += `┃\n`;
-    usage += `╰━━━━━━━━━━━━━━━━━━━━`;
+    usage += `📢 *ANNOUNCE*\n`;
+    usage += `────────────────────────\n`;
+    usage += `Kirim pengumuman ke WhatsApp Channel.\n\n`;
+    usage += `*📖 Penggunaan*\n`;
+    usage += `⋄ ${p}announce text <teks>\n`;
+    usage += `⋄ ${p}announce changelog [N]\n`;
+    usage += `⋄ ${p}announce resolve <url>\n`;
+    usage += `⋄ ${p}announce status\n`;
+    usage += `⋄ ${p}announce on / off [-g]\n\n`;
+    usage += `*⚙️ Flag*\n`;
+    usage += `⋄ -p / --preview : Preview tanpa kirim\n`;
+    usage += `⋄ -g / --global  : Toggle untuk semua bot\n`;
+    usage += `────────────────────────`;
     return message.reply(usage);
 }
 
@@ -133,15 +128,14 @@ async function handleStatus(sock, message) {
     const channelUrl = setting.branding?.channelUrl || "(not set)";
 
     let text = "";
-    text += `╭━━━〔 📡 CHANNEL STATUS 〕━━━\n`;
-    text += `┃\n`;
-    text += `┃ ⋄ URL      : ${channelUrl}\n`;
-    text += `┃ ⋄ JID      : ${channelJid || "❌ Not resolved"}\n`;
-    text += `┃ ⋄ Name     : ${channelName || "N/A"}\n`;
-    text += `┃ ⋄ Channel  : ${channelJid ? "✅ Connected" : "⚠️ Not connected"}\n`;
-    text += `┃ ⋄ Enabled  : ${isEnabled() ? "✅ Active" : "🔴 Disabled"}\n`;
-    text += `┃\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━`;
+    text += `📡 *CHANNEL STATUS*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ URL : ${channelUrl}\n`;
+    text += `⋄ JID : ${channelJid || "❌ Not resolved"}\n`;
+    text += `⋄ Name : ${channelName || "N/A"}\n`;
+    text += `⋄ Channel : ${channelJid ? "✅ Connected" : "⚠️ Not connected"}\n`;
+    text += `⋄ Enabled : ${isEnabled() ? "✅ Active" : "🔴 Disabled"}\n`;
+    text += `────────────────────────`;
 
     return message.reply(text);
 }
@@ -175,15 +169,14 @@ async function handleResolve(sock, message, url, p) {
     }
 
     let text = "";
-    text += `╭━━━〔 🔗 CHANNEL RESOLVED 〕━━━\n`;
-    text += `┃\n`;
-    text += `┃ ⋄ Name : ${result.name || "N/A"}\n`;
-    text += `┃ ⋄ JID  : ${result.jid}\n`;
+    text += `🔗 *CHANNEL RESOLVED*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Name : ${result.name || "N/A"}\n`;
+    text += `⋄ JID : ${result.jid}\n`;
     if (result.description) {
-        text += `┃ ⋄ Desc : ${result.description.substring(0, 100)}\n`;
+        text += `⋄ Desc : ${result.description.substring(0, 100)}\n`;
     }
-    text += `┃\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━`;
+    text += `────────────────────────`;
 
     return sock.sendMessage(chatId, { text, edit: sent.key });
 }

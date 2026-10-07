@@ -22,17 +22,18 @@ export default {
     async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
         try {
             if (args.length === 0 && (!flags || !flags.self)) {
+                const p = prefix || "!";
                 await message.reply(
-                    "╭━━━〔 🎮 STEAM PROFILE 〕━━━\n" +
-                    "┃ Mencari informasi profil user Steam.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}sp <customURL/SteamID64>\`\n` +
-                    `│ ⋄ \`${prefix || "!"}sp -s\` (profil sendiri)\n` +
-                    `│ ⋄ \`${prefix || "!"}sp @user\` (tag user)\n` +
-                    "╰──────────────\n\n" +
+                    "🎮 *STEAM PROFILE*\n" +
+                    "────────────────────────\n" +
+                    "Mencari informasi profil user Steam.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}sp <customURL/SteamID64>\`\n` +
+                    `⋄ \`${p}sp -s\` (profil sendiri)\n` +
+                    `⋄ \`${p}sp @user\` (tag user)\n\n` +
                     "⚠️ *Pencarian bersifat exact match* — harus sama persis dengan custom URL atau SteamID64.\n" +
-                    `💡 _Tautkan akun Steam via \`${prefix || "!"}register steam <id>\`_`
+                    `*ℹ️ Notes:* Tautkan akun Steam via \`${p}register steam <id>\`\n` +
+                    "────────────────────────"
                 );
                 return;
             }

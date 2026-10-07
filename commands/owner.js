@@ -16,20 +16,17 @@ export default {
     description: "Menampilkan informasi kontak owner dan admin bot",
     usage: "!owner",
     async handler({ message, sock, ownerNumbers }) {
-        let text = `╭━━━〔 👑 Owner Info 〕━━━\n`;
-        text += `┃ Kontak pembuat/pemilik bot ini.\n`;
-        text += `┃ Hubungi untuk bug/saran fitur!\n`;
-        text += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+        let text = `👑 *OWNER INFO*\n`;
+        text += `────────────────────────\n`;
+        text += `Kontak pembuat/pemilik bot ini.\n`;
+        text += `Hubungi untuk bug/saran fitur!\n\n`;
 
         setting.owner.forEach((num, index) => {
-            text += `╭───「 👤 Owner ${setting.owner.length > 1 ? index + 1 : ""} 」\n`;
-            text += `│ ⋄ WhatsApp : wa.me/${num}\n`;
-            text += `│ ⋄ Mention  : @${num}\n`;
-            text += `╰──────────────\n\n`;
+            const label = setting.owner.length > 1 ? `Owner ${index + 1}` : "Owner";
+            text += `*👤 ${label}*\n`;
+            text += `⋄ WhatsApp : wa.me/${num}\n`;
+            text += `⋄ Mention : @${num}\n\n`;
         });
-
-        // Clean up "Owner  " to "Owner " if there's only 1 owner
-        text = text.replace(/Owner  /g, "Owner ");
 
         const rawAdmins = getAllBotAdmins();
         const adminMentions = [];
@@ -49,21 +46,22 @@ export default {
         });
 
         if (uniqueAdmins.size > 0) {
-            adminText += `╭━━━〔 🛡️ Bot Admins 〕━━━\n`;
-            adminText += `┃ Admin yang bertugas moderasi bot.\n`;
+            adminText += `*🛡️ Bot Admins*\n`;
+            adminText += `Admin yang bertugas moderasi bot.\n\n`;
 
             let adminIndex = 1;
             uniqueAdmins.forEach((jid) => {
                 const num = jid.split("@")[0];
                 adminMentions.push(jid);
 
-                adminText += `┃ ⋄ Admin ${adminIndex}  : @${num}\n`;
+                adminText += `⋄ Admin ${adminIndex} : @${num}\n`;
                 adminIndex++;
             });
-            adminText += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+            adminText += `\n`;
         }
 
         text += adminText;
+        text += `────────────────────────`;
         text = text.trim();
 
         // Remove duplicates between owner and admins just in case

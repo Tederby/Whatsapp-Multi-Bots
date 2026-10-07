@@ -42,7 +42,8 @@ export default {
                     return message.reply("✅ Tidak ada user yang di-global-ban.");
                 }
 
-                let reply = `╭━━━〔 🚫 GLOBAL BAN LIST 〕━━━\n┃ Total : ${banned.length} user\n╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+                const p = prefix || "!";
+                let reply = `🚫 *GLOBAL BAN LIST*\n────────────────────────\n⋄ Total : ${banned.length} user\n\n`;
                 const mentions = [];
 
                 banned.forEach(({ userId, data }, i) => {
@@ -53,7 +54,7 @@ export default {
                     mentions.push(userId);
                 });
 
-                reply += `\n_Gunakan \`${prefix || "!"}gunban @user\` untuk unban._`;
+                reply += `\n*ℹ️ Catatan:* Gunakan \`${p}gunban @user\` untuk unban.\n────────────────────────`;
 
                 return sock.sendMessage(message.chat, { text: reply, mentions }, { quoted: message });
             }
@@ -82,14 +83,16 @@ export default {
                 const target = extractTarget(message, args?.length > 0 && !args[0].includes("@g.us") ? args : []);
 
                 if (!target) {
+                    const p = prefix || "!";
                     return message.reply(
-                        `╭━━━〔 🚫 GLOBAL BAN USER 〕━━━\n` +
-                        `┃ Masukkan target user untuk di-ban global.\n` +
-                        `┃\n` +
-                        `┃ ⋄ \`${prefix || "!"}gban @user [alasan]\` — Ban user global\n` +
-                        `┃ ⋄ \`${prefix || "!"}gunban @user\` — Unban user global\n` +
-                        `┃ ⋄ \`${prefix || "!"}gbanlist\` — Lihat daftar global ban\n` +
-                        `╰━━━━━━━━━━━━━━━━━━━━`
+                        `🚫 *GLOBAL BAN USER*\n` +
+                        `────────────────────────\n` +
+                        `Masukkan target user untuk di-ban global.\n\n` +
+                        `*📖 Penggunaan*\n` +
+                        `⋄ \`${p}gban @user [alasan]\` — Ban user global\n` +
+                        `⋄ \`${p}gunban @user\` — Unban user global\n` +
+                        `⋄ \`${p}gbanlist\` — Lihat daftar global ban\n` +
+                        `────────────────────────`
                     );
                 }
 
@@ -146,7 +149,8 @@ export default {
                     return message.reply("✅ Tidak ada grup yang di-ban.");
                 }
 
-                let reply = `╭━━━〔 🚫 BANNED GROUPS 〕━━━\n┃ Total : ${banned.length} grup\n╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+                const p = prefix || "!";
+                let reply = `🚫 *BANNED GROUPS*\n────────────────────────\n⋄ Total : ${banned.length} grup\n\n`;
 
                 banned.forEach(({ chatId, data }, i) => {
                     reply += `${i + 1}. \`${chatId}\``;
@@ -154,7 +158,7 @@ export default {
                     reply += `\n`;
                 });
 
-                reply += `\n_Gunakan \`${prefix || "!"}unbangrup <groupId>\` untuk unban._`;
+                reply += `\n*ℹ️ Catatan:* Gunakan \`${p}unbangrup <groupId>\` untuk unban.\n────────────────────────`;
 
                 return message.reply(reply);
             }
@@ -194,15 +198,17 @@ export default {
                 }
 
                 if (!targetGroup) {
+                    const p = prefix || "!";
                     return message.reply(
-                        `╭━━━〔 🚫 GLOBAL GROUP BAN 〕━━━\n` +
-                        `┃ Masukkan Group ID atau gunakan di grup.\n` +
-                        `┃\n` +
-                        `┃ ⋄ \`${prefix || "!"}bangrup\` — Ban grup saat ini\n` +
-                        `┃ ⋄ \`${prefix || "!"}bangrup <groupId>\` — Ban grup remote\n` +
-                        `┃ ⋄ \`${prefix || "!"}unbangrup <groupId>\` — Unban grup\n` +
-                        `┃ ⋄ \`${prefix || "!"}bangruplist\` — Lihat semua grup yang di-ban\n` +
-                        `╰━━━━━━━━━━━━━━━━━━━━`
+                        `🚫 *GLOBAL GROUP BAN*\n` +
+                        `────────────────────────\n` +
+                        `Masukkan Group ID atau gunakan di grup.\n\n` +
+                        `*📖 Penggunaan*\n` +
+                        `⋄ \`${p}bangrup\` — Ban grup saat ini\n` +
+                        `⋄ \`${p}bangrup <groupId>\` — Ban grup remote\n` +
+                        `⋄ \`${p}unbangrup <groupId>\` — Unban grup\n` +
+                        `⋄ \`${p}bangruplist\` — Lihat semua grup yang di-ban\n` +
+                        `────────────────────────`
                     );
                 }
 
@@ -218,20 +224,20 @@ export default {
             }
 
             // Fallback usage
+            const p = prefix || "!";
             return message.reply(
-                `╭━━━〔 🚫 GLOBAL BAN MENU 〕━━━\n` +
-                `┃ Menu manajemen ban user & grup\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
-                `╭───「 👤 User 」\n` +
-                `│ ⋄ \`${prefix || "!"}gban @user [alasan]\` — Ban user global\n` +
-                `│ ⋄ \`${prefix || "!"}gunban @user\` — Unban user global\n` +
-                `│ ⋄ \`${prefix || "!"}gbanlist\` — Lihat daftar ban user\n` +
-                `╰──────────────\n\n` +
-                `╭───「 👥 Grup 」\n` +
-                `│ ⋄ \`${prefix || "!"}bangrup [groupId]\` — Ban grup\n` +
-                `│ ⋄ \`${prefix || "!"}unbangrup <groupId>\` — Unban grup\n` +
-                `│ ⋄ \`${prefix || "!"}bangruplist\` — Lihat daftar ban grup\n` +
-                `╰──────────────`
+                `🚫 *GLOBAL BAN MENU*\n` +
+                `────────────────────────\n` +
+                `Menu manajemen ban user & grup\n\n` +
+                `*👤 User*\n` +
+                `⋄ \`${p}gban @user [alasan]\` — Ban user global\n` +
+                `⋄ \`${p}gunban @user\` — Unban user global\n` +
+                `⋄ \`${p}gbanlist\` — Lihat daftar ban user\n\n` +
+                `*👥 Grup*\n` +
+                `⋄ \`${p}bangrup [groupId]\` — Ban grup\n` +
+                `⋄ \`${p}unbangrup <groupId>\` — Unban grup\n` +
+                `⋄ \`${p}bangruplist\` — Lihat daftar ban grup\n` +
+                `────────────────────────`
             );
 
         } catch (error) {

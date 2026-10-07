@@ -350,33 +350,36 @@ await message.reply(captionText);
 
 ---
 
-## 7. Text Output Standardization & Shared Utilities
+## 7. Text Output Typography & Formatting Standard
 
-To maintain visual cohesion across all 64 command modules, WhatsApp text output adheres to a unified box-drawing system.
+To maintain visual cohesion across all command modules while ensuring durability against mobile viewport text-wrapping, WhatsApp text output adheres to a clean, borderless typography standard.
 
-### Visual Box-Drawing Standard
+### Typography & Structure Standard
 
 ```
-╭━━━〔 🏷️ TITLE 〕━━━
-┃ ⋄ Label : Value
-┃ ⋄ Status : Active
-┣━━━━━━━━━━━━━━━━━━━━
-┃ Section Notes
-╰━━━━━━━━━━━━━━━━━━━━
+🏷️ *TITLE OF THE COMMAND*
+────────────────────────
+⋄ Label : Value
+⋄ Status : ✅ Active
 
-╭───「 📦 Sub-section 」
-│ ⋄ Key 1 : Value
-│ ⋄ Key 2 : Value
-╰──────────────
+*📦 Sub-section*
+⋄ Key 1 : Value
+⋄ Key 2 : Value
+
+*ℹ️ Notes:* Teks panjang mengalir bebas tanpa terdistorsi oleh text-wrap.
+────────────────────────
 ```
 
-- **Primary Box Headers**: Heavy horizontal borders `╭━━━〔 EMOJI TITLE 〕━━━`, vertical `┃`, divider `┣━━━━━━━━━━━━━━━━━━━━`, footer `╰━━━━━━━━━━━━━━━━━━━━`.
-- **Sub-sections & Groups**: Light line container `╭───「 Title 」`, vertical `│`, footer `╰──────────────`.
-- **Item Bullets**: Standardize on `⋄` (diamond bullet).
+- **Header**: Emoji followed by bold uppercase command title (`🏷️ *TITLE*`).
+- **Dividers**: Exactly 24 light horizontal characters (`────────────────────────`, `\u2500` x 24). Placed directly under the header and at the very bottom of the card.
+- **Key-Value Items**: Standardize on `⋄` (diamond bullet, `\u22C4`). Clean spacing `⋄ Label : Value`. Sub-items indented with 2 spaces (`  └ ` or `  ◦ `).
+- **Sub-sections**: Preceded by an empty line, bold title with emoji (`*📦 Sub-section*`), followed immediately by key-value rows.
+- **Notes / Free Text**: Preceded by an empty line (`*ℹ️ Notes:* ...` or `*💡 Tip:* ...`). Paragraf mengalir alami tanpa pembatas vertikal kiri (`┃` / `│`), sehingga aman dari kerusakan akibat *line wrapping* di layar smartphone.
 - **Status Emoji Indicators**:
   - `✅` Success / Registered / Enabled
   - `⚠️` Warning / Sub-optimal / Missing Permissions
   - `❌` Error / Validation Failure / Unregistered
+  - `ℹ️` Information / Notice
 
 ### Dynamic Prefix Handling
 
@@ -387,10 +390,11 @@ async handler({ message, prefix, ... }) {
     const p = prefix || "!";
     if (!args.length) {
         return message.reply(
-            `╭━━━〔 ℹ️ USAGE 〕━━━\n` +
-            `┃ ❌ Parameter tidak lengkap.\n` +
-            `┃ ⋄ Format: *${p}command <query>*\n` +
-            `╰━━━━━━━━━━━━━━━━━━━━`
+            `ℹ️ *USAGE*\n` +
+            `────────────────────────\n` +
+            `❌ Parameter tidak lengkap.\n` +
+            `⋄ Format: *${p}command <query>*\n` +
+            `────────────────────────`
         );
     }
 }

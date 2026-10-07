@@ -69,13 +69,15 @@ export default {
                     }
                 }
             } else {
+                const p = prefix || "!";
                 return message.reply(
-                    `╭━━━〔 💬 QUOTE GENERATOR 〕━━━\n` +
-                    `┃ Ketik teks atau balas pesan teks.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}quote <teks>\`\n` +
-                    `┃ ⋄ \`${prefix || "!"}quote\` (balas pesan)\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `💬 *QUOTE GENERATOR*\n` +
+                    `────────────────────────\n` +
+                    `Ketik teks atau balas pesan teks.\n\n` +
+                    `*Format:*\n` +
+                    `⋄ \`${p}quote <teks>\`\n` +
+                    `⋄ \`${p}quote\` (balas pesan)\n` +
+                    `────────────────────────`
                 );
             }
 

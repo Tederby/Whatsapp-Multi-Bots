@@ -78,14 +78,15 @@ export default {
                 : null;
 
             // ── 5. Build profile display ────────────────────────────
-            let caption = `╭━━━〔 👤 PROFILE INFO 〕━━━\n`;
+            let caption = `👤 *PROFILE INFO*\n`;
+            caption += `────────────────────────\n`;
 
             if (targetName) {
-                caption += `┃ 📛 Nama  : ${targetName}\n`;
+                caption += `⋄ Nama : ${targetName}\n`;
             } else if (userData.name) {
-                caption += `┃ 📛 Nama  : ${userData.name}\n`;
+                caption += `⋄ Nama : ${userData.name}\n`;
             } else {
-                caption += `┃ 📛 Nama  : -\n`;
+                caption += `⋄ Nama : -\n`;
             }
 
             // Check bot admin from PN (resolved) and original LID (for legacy data)
@@ -101,61 +102,60 @@ export default {
 
             if (roles.length === 0) roles.push("👤 Member");
 
-            caption += `┃ 🏷️ User  : @${targetBaseId}\n`;
-            caption += `┃ 🎖️ Role  : ${roles.join(", ")}\n`;
+            caption += `⋄ User : @${targetBaseId}\n`;
+            caption += `⋄ Role : ${roles.join(", ")}\n`;
             const displayMode = userData.meta?.displayMode ?? "text";
             const displayModeLabel = displayMode === "ui" ? "UI Interaktif" : "Teks Biasa";
-            caption += `┃ 🖥️ Mode  : ${displayModeLabel}\n`;
-            caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+            caption += `⋄ Mode : ${displayModeLabel}\n\n`;
 
             // Registration status
-            caption += `╭───「 📝 Registrasi 」\n`;
+            caption += `*📝 Registrasi*\n`;
 
             const isSelf = normalizedTarget === sender;
 
             if (userData.registered) {
-                caption += `│ ⋄ Status : ✅ Terdaftar\n`;
-                if (regDate) caption += `│ ⋄ Sejak  : ${regDate}\n`;
+                caption += `⋄ Status : ✅ Terdaftar\n`;
+                if (regDate) caption += `⋄ Sejak : ${regDate}\n`;
                 if (isSelf) {
-                    caption += `│   └ _Ketik \`${p}register\` untuk pengaturan_\n`;
+                    caption += `  └ _Ketik \`${p}register\` untuk pengaturan_\n`;
                 }
             } else {
-                caption += `│ ⋄ Status : ❌ Belum terdaftar\n`;
+                caption += `⋄ Status : ❌ Belum terdaftar\n`;
                 if (isSelf) {
-                    caption += `│   └ _Ketik \`${p}register\` untuk mendaftar_\n`;
+                    caption += `  └ _Ketik \`${p}register\` untuk mendaftar_\n`;
                 }
             }
-            caption += `╰──────────────\n\n`;
+            caption += `\n`;
 
             // Linked accounts
             const hasMal = !!userData.meta?.malUsername;
             const hasSteam = !!userData.meta?.steamId;
             const hasAnilist = !!userData.meta?.anilistUsername;
             if (hasMal || hasSteam || hasAnilist) {
-                caption += `╭───「 🔗 Linked Accounts 」\n`;
-                if (hasSteam) caption += `│ ⋄ Steam   : https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
-                if (hasMal) caption += `│ ⋄ MAL     : https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
-                if (hasAnilist) caption += `│ ⋄ AniList : https://anilist.co/user/${userData.meta.anilistUsername}\n`;
-                caption += `╰──────────────\n\n`;
+                caption += `*🔗 Linked Accounts*\n`;
+                if (hasSteam) caption += `⋄ Steam : https://steamcommunity.com/profiles/${userData.meta.steamId}\n`;
+                if (hasMal) caption += `⋄ MAL : https://myanimelist.net/profile/${userData.meta.malUsername}\n`;
+                if (hasAnilist) caption += `⋄ AniList : https://anilist.co/user/${userData.meta.anilistUsername}\n`;
+                caption += `\n`;
             }
 
             // Ban status
-            caption += `╭───「 🚫 Status Ban 」\n`;
+            caption += `*🚫 Status Ban*\n`;
             if (isTargetBanned) {
-                caption += `│ ⋄ Global : ⛔ Ya\n`;
-                if (userData.banReason) caption += `│   └ Alasan: _${userData.banReason}_\n`;
+                caption += `⋄ Global : ⛔ Ya\n`;
+                if (userData.banReason) caption += `  └ Alasan: _${userData.banReason}_\n`;
             } else {
-                caption += `│ ⋄ Global : Tidak\n`;
+                caption += `⋄ Global : Tidak\n`;
             }
 
             if (isGroup) {
                 if (isTargetGroupBanned) {
-                    caption += `│ ⋄ Grup   : ⛔ Ya\n`;
+                    caption += `⋄ Grup : ⛔ Ya\n`;
                 } else {
-                    caption += `│ ⋄ Grup   : Tidak\n`;
+                    caption += `⋄ Grup : Tidak\n`;
                 }
             }
-            caption += `╰──────────────`;
+            caption += `────────────────────────`;
 
             // ── 6. Send ─────────────────────────────────────────────
             const placeholderImageUrl = "https://i.imgur.com/ckO9GJN.png";

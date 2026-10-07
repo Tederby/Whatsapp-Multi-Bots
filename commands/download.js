@@ -16,11 +16,12 @@ export default {
         if (!args.length) {
             const p = prefix || "!";
             return await message.reply(
-                `╭━━━〔 📥 DOWNLOAD 〕━━━\n` +
-                `┃ ❌ Harap berikan URL yang ingin didownload.\n` +
-                `┃ ⋄ Format: *${p}download <url>*\n` +
-                `┃ ⋄ Contoh: *${p}download https://example.com/file.pdf*\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━`
+                `📥 *DOWNLOAD*\n` +
+                `────────────────────────\n` +
+                `❌ Harap berikan URL yang ingin didownload.\n` +
+                `⋄ Format: *${p}download <url>*\n` +
+                `⋄ Contoh: *${p}download https://example.com/file.pdf*\n` +
+                `────────────────────────`
             );
         }
 
@@ -81,11 +82,12 @@ export default {
         }
 
         await update(
-            `╭━━━〔 📥 DOWNLOAD 〕━━━\n` +
-            `┃ ⋄ Nama : *${fileName}*\n` +
-            `┃ ⋄ Ukuran : *${contentLength ? (contentLength / 1024 / 1024).toFixed(2) + ' MB' : 'Tidak diketahui'}*\n` +
-            `┃ ⋄ Status : Mengunduh & mengirim...\n` +
-            `╰━━━━━━━━━━━━━━━━━━━━`
+            `📥 *DOWNLOAD*\n` +
+            `────────────────────────\n` +
+            `⋄ Nama : *${fileName}*\n` +
+            `⋄ Ukuran : *${contentLength ? (contentLength / 1024 / 1024).toFixed(2) + ' MB' : 'Tidak diketahui'}*\n` +
+            `⋄ Status : ⏳ Mengunduh & mengirim...\n` +
+            `────────────────────────`
         );
 
         try {

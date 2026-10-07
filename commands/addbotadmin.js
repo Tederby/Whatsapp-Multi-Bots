@@ -27,14 +27,15 @@ export default {
             }
 
             if (!target) {
+                const p = prefix || "!";
                 return message.reply(
-                    "╭━━━〔 🛡️ ADD BOT ADMIN 〕━━━\n" +
-                    "┃ Mengangkat user menjadi Bot Admin.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}addbotadmin @user\`\n` +
-                    `│ ⋄ \`${prefix || "!"}addbotadmin <nomor>\`\n` +
-                    "╰──────────────"
+                    "🛡️ *ADD BOT ADMIN*\n" +
+                    "────────────────────────\n" +
+                    "Mengangkat user menjadi Bot Admin.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}addbotadmin @user\`\n` +
+                    `⋄ \`${p}addbotadmin <nomor>\`\n` +
+                    "────────────────────────"
                 );
             }
 

@@ -30,36 +30,36 @@ export default {
             const report = repairDatabase();
             const elapsed = Date.now() - startTime;
 
-            let text = `╭━━━〔 🔧 Database Repair 〕━━━\n`;
-            text += `┃ Selesai dalam ${elapsed}ms\n`;
-            text += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+            let text = `🔧 *DATABASE REPAIR*\n`;
+            text += `────────────────────────\n`;
+            text += `⋄ Waktu : ${elapsed}ms\n\n`;
 
             // Integrity
-            text += `╭───「 🛡️ Integrity Check 」\n`;
-            text += `│ ⋄ Status : ${report.integrityOk ? "✅ OK" : "❌ CORRUPT"}\n`;
-            text += `╰──────────────\n\n`;
+            text += `*🛡️ Integrity Check*\n`;
+            text += `⋄ Status : ${report.integrityOk ? "✅ OK" : "❌ CORRUPT"}\n\n`;
 
             // Cleanup stats
             const totalCleaned = report.orphanGroupBans + report.staleClaims + report.staleRegistry + report.emptyUsers + report.pfpOrphans + report.pfpMissing;
 
-            text += `╭───「 🧹 Pembersihan 」\n`;
-            text += `│ ⋄ Orphan group bans : ${report.orphanGroupBans}\n`;
-            text += `│ ⋄ Stale claims      : ${report.staleClaims}\n`;
-            text += `│ ⋄ Stale bot registry : ${report.staleRegistry}\n`;
-            text += `│ ⋄ Empty user records : ${report.emptyUsers}\n`;
-            text += `│ ⋄ PFP file orphans  : ${report.pfpOrphans}\n`;
-            text += `│ ⋄ PFP missing refs  : ${report.pfpMissing}\n`;
-            text += `╰──────────────\n\n`;
+            text += `*🧹 Pembersihan*\n`;
+            text += `⋄ Orphan group bans : ${report.orphanGroupBans}\n`;
+            text += `⋄ Stale claims : ${report.staleClaims}\n`;
+            text += `⋄ Stale bot registry : ${report.staleRegistry}\n`;
+            text += `⋄ Empty user records : ${report.emptyUsers}\n`;
+            text += `⋄ PFP file orphans : ${report.pfpOrphans}\n`;
+            text += `⋄ PFP missing refs : ${report.pfpMissing}\n\n`;
 
             if (totalCleaned > 0) {
-                text += `✅ Total ${totalCleaned} record berhasil dibersihkan.`;
+                text += `✅ Total ${totalCleaned} record berhasil dibersihkan.\n`;
             } else {
-                text += `✅ Database bersih, tidak ada yang perlu diperbaiki.`;
+                text += `✅ Database bersih, tidak ada yang perlu diperbaiki.\n`;
             }
 
             if (!report.integrityOk) {
-                text += `\n\n⚠️ *WARNING*: Database memiliki masalah integritas!\nDisarankan untuk backup file \`database.db\` segera.`;
+                text += `\n⚠️ *WARNING*: Database memiliki masalah integritas!\nDisarankan untuk backup file \`database.db\` segera.\n`;
             }
+
+            text += `────────────────────────`;
 
             await update(text);
         } catch (error) {

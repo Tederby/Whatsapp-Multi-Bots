@@ -35,12 +35,13 @@ export default {
                         return;
                     }
 
-                    let resultMsg = `╭━━━〔 🏷️ KAMUS TAG DANBOORU 〕━━━\n┃ Query : ${query}\n╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+                    const p = prefix || "!";
+                    let resultMsg = `🏷️ *KAMUS TAG DANBOORU*\n────────────────────────\n⋄ Query : ${query}\n\n`;
                     response.data.forEach((tag, index) => {
                         const postCount = tag.post_count.toLocaleString('id-ID');
                         resultMsg += `${index + 1}. \`${tag.name}\` (${postCount} post)\n`;
                     });
-                    resultMsg += `\n💡 Gunakan \`${prefix || "!"}d <tag>\` untuk mencari gambar.`;
+                    resultMsg += `\n*ℹ️ Notes:* Gunakan \`${p}d <tag>\` untuk mencari gambar.\n────────────────────────`;
 
                     await sock.sendMessage(message.chat, { text: resultMsg, edit: sentMsg.key });
                 } catch (err) {
@@ -50,13 +51,15 @@ export default {
             }
 
             if (!message.quoted) {
+                const p = prefix || "!";
                 await message.reply(
-                    `╭━━━〔 🏷️ DANBOORU TAGS 〕━━━\n` +
-                    `┃ Cari kamus tag atau reply post Danbooru.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}tag <query>\` — Cari kamus tag\n` +
-                    `┃ ⋄ \`${prefix || "!"}tag\` (balas gambar Danbooru)\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🏷️ *DANBOORU TAGS*\n` +
+                    `────────────────────────\n` +
+                    `Cari kamus tag atau reply post Danbooru.\n\n` +
+                    `*Format:*\n` +
+                    `⋄ \`${p}tag <query>\` — Cari kamus tag\n` +
+                    `⋄ \`${p}tag\` (balas gambar Danbooru)\n` +
+                    `────────────────────────`
                 );
                 return;
             }
@@ -77,15 +80,16 @@ export default {
                 const postData = await fetchDanbooruPost(postId);
                 
                 const tags = [
-                    `╭━━━〔 🏷️ DANBOORU TAGS 〕━━━`,
-                    `┃ Post ID : ${postId}`,
-                    `╰━━━━━━━━━━━━━━━━━━━━\n`,
-                    `╭───「 📋 Metadata 」`,
-                    `│ ⋄ Character : ${postData.tag_string_character || 'N/A'}`,
-                    `│ ⋄ Copyright : ${postData.tag_string_copyright || 'N/A'}`,
-                    `│ ⋄ Artist    : ${postData.tag_string_artist || 'N/A'}`,
-                    `│ ⋄ General   : ${postData.tag_string_general || 'N/A'}`,
-                    `╰──────────────`
+                    `🏷️ *DANBOORU TAGS*`,
+                    `────────────────────────`,
+                    `⋄ Post ID : ${postId}`,
+                    ``,
+                    `*📋 Metadata*`,
+                    `⋄ Character : ${postData.tag_string_character || 'N/A'}`,
+                    `⋄ Copyright : ${postData.tag_string_copyright || 'N/A'}`,
+                    `⋄ Artist : ${postData.tag_string_artist || 'Unknown'}`,
+                    `⋄ General : ${postData.tag_string_general || 'N/A'}`,
+                    `────────────────────────`
                 ].join("\n");
                 
                 await message.reply(tags);

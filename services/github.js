@@ -108,38 +108,38 @@ function buildUserProfileText(user) {
     const typeEmoji = isOrg ? "🏢" : "👤";
     const typeLabel = isOrg ? "Organization" : "User";
 
-    let text = `╭━━━〔 🐙 GITHUB PROFILE 〕━━━\n`;
-    text += `┃ ${typeEmoji} *Nama*     : ${name}\n`;
-    text += `┃ 🏷️ *Username* : ${user.login}\n`;
+    let text = `🐙 *GITHUB PROFILE*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ ${typeEmoji} Nama : ${name}\n`;
+    text += `⋄ Username : ${user.login}\n`;
     if (user.bio) {
-        text += `┃ 📝 *Bio*      : ${user.bio}\n`;
+        text += `⋄ Bio : ${user.bio}\n`;
     }
-    text += `┃ 🔖 *Tipe*     : ${typeLabel}\n`;
+    text += `⋄ Tipe : ${typeLabel}\n`;
     if (user.company) {
-        text += `┃ 🏢 *Company*  : ${user.company}\n`;
+        text += `⋄ Company : ${user.company}\n`;
     }
     if (user.location) {
-        text += `┃ 📍 *Lokasi*   : ${user.location}\n`;
+        text += `⋄ Lokasi : ${user.location}\n`;
     }
     if (user.blog) {
         const blogUrl = user.blog.startsWith("http") ? user.blog : `https://${user.blog}`;
-        text += `┃ 🌐 *Website*  : ${blogUrl}\n`;
+        text += `⋄ Website : ${blogUrl}\n`;
     }
     if (user.twitter_username) {
-        text += `┃ 🐦 *Twitter*  : @${user.twitter_username}\n`;
+        text += `⋄ Twitter : @${user.twitter_username}\n`;
     }
-    text += `┃ 📅 *Bergabung* : ${formatDate(user.created_at)}\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    text += `⋄ Bergabung : ${formatDate(user.created_at)}\n`;
 
     // Stats section
-    text += `╭───「 📊 Statistik 」\n`;
-    text += `│ ⋄ Repos     : ${formatNumber(user.public_repos)}\n`;
-    text += `│ ⋄ Gists     : ${formatNumber(user.public_gists)}\n`;
-    text += `│ ⋄ Followers : ${formatNumber(user.followers)}\n`;
-    text += `│ ⋄ Following : ${formatNumber(user.following)}\n`;
-    text += `╰──────────────\n`;
+    text += `\n*📊 Statistik*\n`;
+    text += `⋄ Repos : ${formatNumber(user.public_repos)}\n`;
+    text += `⋄ Gists : ${formatNumber(user.public_gists)}\n`;
+    text += `⋄ Followers : ${formatNumber(user.followers)}\n`;
+    text += `⋄ Following : ${formatNumber(user.following)}\n\n`;
 
-    text += `\n🔗 *Profil:* https://github.com/${user.login}`;
+    text += `⋄ Profil : https://github.com/${user.login}\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -213,48 +213,46 @@ function buildRepoText(repo) {
     if (repo.private) badges.push("🔒 Private");
     if (repo.is_template) badges.push("📋 Template");
 
-    let text = `╭━━━〔 📦 GITHUB REPO 〕━━━\n`;
-    text += `┃ 📦 *Repo*     : ${fullName}\n`;
-    text += `┃ 📝 *Desc*     : ${desc}\n`;
-    text += `┃ 💻 *Bahasa*   : ${language}\n`;
-    text += `┃ 📜 *Lisensi*  : ${license}\n`;
-    text += `┃ 🌿 *Branch*   : ${repo.default_branch}\n`;
+    let text = `📦 *GITHUB REPO*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Repo : ${fullName}\n`;
+    text += `⋄ Desc : ${desc}\n`;
+    text += `⋄ Bahasa : ${language}\n`;
+    text += `⋄ Lisensi : ${license}\n`;
+    text += `⋄ Branch : ${repo.default_branch}\n`;
     if (badges.length > 0) {
-        text += `┃ 🔖 *Status*   : ${badges.join(" | ")}\n`;
+        text += `⋄ Status : ${badges.join(" | ")}\n`;
     }
-    text += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     // Stats section
-    text += `╭───「 📊 Statistik 」\n`;
-    text += `│ ⋄ Stars       : ⭐ ${formatNumber(repo.stargazers_count)}\n`;
-    text += `│ ⋄ Forks       : 🍴 ${formatNumber(repo.forks_count)}\n`;
-    text += `│ ⋄ Watchers    : 👁️ ${formatNumber(repo.watchers_count)}\n`;
-    text += `│ ⋄ Open Issues : ⚠️ ${formatNumber(repo.open_issues_count)}\n`;
-    text += `│ ⋄ Ukuran      : 💾 ${formatSize(repo.size)}\n`;
-    text += `╰──────────────\n`;
+    text += `\n*📊 Statistik*\n`;
+    text += `⋄ Stars : ⭐ ${formatNumber(repo.stargazers_count)}\n`;
+    text += `⋄ Forks : 🍴 ${formatNumber(repo.forks_count)}\n`;
+    text += `⋄ Watchers : 👁️ ${formatNumber(repo.watchers_count)}\n`;
+    text += `⋄ Open Issues : ⚠️ ${formatNumber(repo.open_issues_count)}\n`;
+    text += `⋄ Ukuran : 💾 ${formatSize(repo.size)}\n`;
 
     // Topics
     if (repo.topics && repo.topics.length > 0) {
-        text += `\n╭───「 🏷️ Topics 」\n`;
-        text += `│ ${repo.topics.join(", ")}\n`;
-        text += `╰──────────────\n`;
+        text += `\n*🏷️ Topics*\n`;
+        text += `⋄ ${repo.topics.join(", ")}\n`;
     }
 
     // Dates
-    text += `\n╭───「 📅 Tanggal 」\n`;
-    text += `│ ⋄ Dibuat  : ${formatDate(repo.created_at)}\n`;
-    text += `│ ⋄ Update  : ${formatDate(repo.updated_at)} _(${timeAgo(repo.updated_at)})_\n`;
+    text += `\n*📅 Tanggal*\n`;
+    text += `⋄ Dibuat : ${formatDate(repo.created_at)}\n`;
+    text += `⋄ Update : ${formatDate(repo.updated_at)} _(${timeAgo(repo.updated_at)})_\n`;
     if (repo.pushed_at) {
-        text += `│ ⋄ Push    : ${formatDate(repo.pushed_at)} _(${timeAgo(repo.pushed_at)})_\n`;
+        text += `⋄ Push : ${formatDate(repo.pushed_at)} _(${timeAgo(repo.pushed_at)})_\n`;
     }
-    text += `╰──────────────\n`;
 
     // Owner
     if (repo.parent) {
         text += `\n💡 _Forked dari: ${repo.parent.full_name}_\n`;
     }
 
-    text += `\n🔗 *Repository:* https://github.com/${fullName}`;
+    text += `\n⋄ Repository : https://github.com/${fullName}\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }

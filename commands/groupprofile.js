@@ -34,44 +34,42 @@ export default {
             const regByResolved = config.registeredBy ? resolveTarget(config.registeredBy) : null;
             const regByBaseId = regByResolved?.baseId || null;
 
-            // Build display
-            let caption = `╭━━━〔 👥 Group Info 〕━━━\n`;
-            caption += `┃ 📛 Nama   : ${groupName}\n`;
-            caption += `┃ 👥 Member : ${totalMembers}\n`;
-            caption += `┃ 🛡️ Admin  : ${totalAdmins}\n`;
-            caption += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+            const p = prefix || "!";
+            let caption = `👥 *GROUP INFO*\n`;
+            caption += `────────────────────────\n`;
+            caption += `⋄ Nama : ${groupName}\n`;
+            caption += `⋄ Member : ${totalMembers}\n`;
+            caption += `⋄ Admin : ${totalAdmins}\n\n`;
 
-            caption += `╭───「 📝 Registrasi 」\n`;
+            caption += `*📝 Registrasi*\n`;
             if (isRegistered) {
-                caption += `│ ⋄ Status : ✅ Terdaftar\n`;
-                if (regDate) caption += `│ ⋄ Sejak  : ${regDate}\n`;
-                if (regByBaseId) caption += `│ ⋄ Oleh   : @${regByBaseId}\n`;
+                caption += `⋄ Status : ✅ Terdaftar\n`;
+                if (regDate) caption += `⋄ Sejak : ${regDate}\n`;
+                if (regByBaseId) caption += `⋄ Oleh : @${regByBaseId}\n`;
             } else {
-                caption += `│ ⋄ Status : ❌ Belum terdaftar\n`;
-                caption += `│   └ _Ketik \`${prefix}gregister\` untuk mendaftar_\n`;
+                caption += `⋄ Status : ❌ Belum terdaftar\n`;
+                caption += `  _Ketik \`${p}gregister\` untuk mendaftar_\n`;
             }
-            caption += `╰──────────────\n\n`;
 
-            caption += `╭───「 ⚙️ Fitur 」\n`;
-            caption += `│ ⋄ Welcome : ${config.welcome ? "✅ Aktif" : "❌ Nonaktif"}\n`;
-            caption += `│ ⋄ Goodbye : ${config.goodbye ? "✅ Aktif" : "❌ Nonaktif"}\n`;
-            caption += `│ ⋄ Banned  : ${bannedUsers.length} Users\n`;
+            caption += `\n*⚙️ Fitur*\n`;
+            caption += `⋄ Welcome : ${config.welcome ? "✅ Aktif" : "❌ Nonaktif"}\n`;
+            caption += `⋄ Goodbye : ${config.goodbye ? "✅ Aktif" : "❌ Nonaktif"}\n`;
+            caption += `⋄ Banned : ${bannedUsers.length} Users\n`;
 
             // Sider Tracking info
             if (config.meta?.trackingEnabled) {
                 const elapsed = Math.floor((Date.now() - config.meta.trackingStartedAt) / 86400000);
                 const period = config.meta.trackingPeriodDays || 30;
-                caption += `│ ⋄ Tracking: ✅ Aktif (hari ke-${elapsed}/${period})\n`;
+                caption += `⋄ Tracking : ✅ Aktif (hari ke-${elapsed}/${period})\n`;
             } else {
-                caption += `│ ⋄ Tracking: ❌ Nonaktif\n`;
+                caption += `⋄ Tracking : ❌ Nonaktif\n`;
             }
 
             if (config.banned) {
-                caption += `│ \n`;
-                caption += `│ ⚠️ *GRUP INI DI-BAN SECARA GLOBAL*\n`;
-                if (config.banReason) caption += `│ └ Alasan: _${config.banReason}_\n`;
+                caption += `\n⚠️ *GRUP INI DI-BAN SECARA GLOBAL*\n`;
+                if (config.banReason) caption += `Alasan: _${config.banReason}_\n`;
             }
-            caption += `╰──────────────`;
+            caption += `────────────────────────`;
 
             // Collect mentions
             const mentions = [];

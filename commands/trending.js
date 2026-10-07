@@ -17,9 +17,9 @@ function generateListText(results, page, mode, mediaType) {
     const typeLabel = isAnime ? "ANIME" : "MANGA";
     const emoji = mode === "trending" ? "🔥" : "👑";
 
-    let text = `╭━━━〔 ${emoji} ${modeLabel} ${typeLabel} 〕━━━\n`;
-    text += `┃ 📊 *Mode* : ${mode === "trending" ? "Trending Now" : "All-Time Popular"}\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `${emoji} *${modeLabel} ${typeLabel}*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Mode : ${mode === "trending" ? "Trending Now" : "All-Time Popular"}\n\n`;
 
     currentItems.forEach((media, index) => {
         const title = media.title?.romaji || media.title?.userPreferred || media.title?.english || "N/A";
@@ -31,22 +31,22 @@ function generateListText(results, page, mode, mediaType) {
         if (isAnime) {
             const eps = media.episodes ? `${media.episodes} Eps` : "? Eps";
             const year = media.seasonYear || media.startDate?.year || "N/A";
-            extra = `│ 🎬 *Episode* : ${eps}\n│ 📅 *Tahun*   : ${year}`;
+            extra = `⋄ Episode : ${eps}\n⋄ Tahun : ${year}`;
         } else {
             const chaps = media.chapters ? `${media.chapters} Chaps` : "? Chaps";
             const year = media.startDate?.year || "N/A";
-            extra = `│ 📝 *Chapter* : ${chaps}\n│ 📅 *Tahun*   : ${year}`;
+            extra = `⋄ Chapter : ${chaps}\n⋄ Tahun : ${year}`;
         }
 
-        text += `╭───「 ${rank}. ${title} 」\n`;
-        text += `│ 📺 *Tipe*    : ${format}\n`;
-        text += `│ ⭐ *Skor*    : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
-        text += `${extra}\n`;
-        text += `╰──────────────\n\n`;
+        text += `*${rank}. ${title}*\n`;
+        text += `⋄ Tipe : ${format}\n`;
+        text += `⋄ Skor : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+        text += `${extra}\n\n`;
     });
 
     text += generatePaginator(page, totalPages) + "\n\n";
-    text += `💡 _Reply angka (1-${currentItems.length}) untuk detail. Ketik "n" next, "b" back._`;
+    text += `*ℹ️ Notes:* Reply angka (1-${currentItems.length}) untuk detail. Ketik "n" next, "b" back.\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -181,13 +181,14 @@ async function sendMediaDetail(media, mediaType, message, sock) {
     const detailEmoji = isAnime ? "🎌" : "📚";
     const detailLabel = isAnime ? "ANIME DETAIL" : "MANGA DETAIL";
 
-    let captionText = `╭━━━〔 ${detailEmoji} ${detailLabel} 〕━━━\n`;
-    captionText += `┃ 🏷️ *Judul*       : ${title}\n`;
+    let captionText = `${detailEmoji} *${detailLabel}*\n`;
+    captionText += `────────────────────────\n`;
+    captionText += `⋄ Judul : ${title}\n`;
     if (rawTitleEng) {
-        captionText += `┃ 🔤 *Inggris*     : ${rawTitleEng}\n`;
+        captionText += `⋄ Inggris : ${rawTitleEng}\n`;
     }
-    captionText += `┃ 📺 *Tipe*        : ${format}\n`;
-    captionText += `┃ ⭐ *Skor*        : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+    captionText += `⋄ Tipe : ${format}\n`;
+    captionText += `⋄ Skor : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
 
     if (isAnime) {
         const episodes = media.episodes || "Unknown";
@@ -199,11 +200,11 @@ async function sendMediaDetail(media, mediaType, message, sock) {
             ? media.studios.nodes.map(s => s.name).join(", ")
             : "N/A";
 
-        captionText += `┃ 🎬 *Episode*     : ${episodes}\n`;
-        captionText += `┃ ⏱️ *Durasi*      : ${duration}\n`;
-        captionText += `┃ ⏳ *Status*      : ${status}\n`;
-        captionText += `┃ 📅 *Musim*       : ${seasonYear}\n`;
-        captionText += `┃ 🎥 *Studio*      : ${studios}\n`;
+        captionText += `⋄ Episode : ${episodes}\n`;
+        captionText += `⋄ Durasi : ${duration}\n`;
+        captionText += `⋄ Status : ${status}\n`;
+        captionText += `⋄ Musim : ${seasonYear}\n`;
+        captionText += `⋄ Studio : ${studios}\n`;
     } else {
         const chapters = media.chapters || "Unknown";
         const volumes = media.volumes || "Unknown";
@@ -212,46 +213,45 @@ async function sendMediaDetail(media, mediaType, message, sock) {
             authors = media.staff.edges.map(e => `${e.node.name.full} (${e.role})`).join(", ");
         }
 
-        captionText += `┃ 📝 *Chapter*     : ${chapters}\n`;
-        captionText += `┃ 📚 *Volume*      : ${volumes}\n`;
-        captionText += `┃ ⏳ *Status*      : ${status}\n`;
-        captionText += `┃ ✍️ *Author*      : ${authors}\n`;
+        captionText += `⋄ Chapter : ${chapters}\n`;
+        captionText += `⋄ Volume : ${volumes}\n`;
+        captionText += `⋄ Status : ${status}\n`;
+        captionText += `⋄ Author : ${authors}\n`;
     }
 
-    captionText += `┃ 📈 *Popularitas* : ${popularity}\n`;
-    captionText += `┃ 🎭 *Genre*       : ${genres}\n`;
+    captionText += `⋄ Popularitas : ${popularity}\n`;
+    captionText += `⋄ Genre : ${genres}\n`;
 
     if (isAnime && media.nextAiringEpisode) {
         const remaining = formatAiringTime(media.nextAiringEpisode.timeUntilAiring);
         if (remaining) {
-            captionText += `┃ ⏱️ *Next Ep*     : Ep ${media.nextAiringEpisode.episode} rilis dalam ${remaining}\n`;
+            captionText += `⋄ Next Ep : Ep ${media.nextAiringEpisode.episode} rilis dalam ${remaining}\n`;
         }
     }
-    captionText += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-    captionText += `📝 *Sinopsis:*\n${synopsis}\n\n`;
+    captionText += `\n*📝 Sinopsis*\n${synopsis}\n`;
 
     // Recommendations
     const recs = media.recommendations?.nodes?.filter(r => r.mediaRecommendation) || [];
     if (recs.length > 0) {
-        captionText += `╭───「 💡 Rekomendasi 」\n`;
+        captionText += `\n*💡 Rekomendasi*\n`;
         recs.forEach((rec, i) => {
             const recTitle = rec.mediaRecommendation.title?.romaji || "N/A";
             const recScore = formatScore(rec.mediaRecommendation.averageScore);
             const recFormat = rec.mediaRecommendation.format || "";
-            captionText += `│ ${i + 1}. ${recTitle}`;
+            captionText += `⋄ ${i + 1}. ${recTitle}`;
             if (recScore !== "N/A") captionText += ` (${recScore} / 10)`;
             if (recFormat) captionText += ` [${recFormat}]`;
             captionText += `\n`;
         });
-        captionText += `╰──────────────\n\n`;
     }
 
-    captionText += `🔗 *Tautan:*\n`;
-    captionText += `• AniList: ${anilistUrl}`;
+    captionText += `\n*🔗 Tautan*\n`;
+    captionText += `⋄ AniList : ${anilistUrl}`;
     if (malUrl) {
-        captionText += `\n• MyAnimeList: ${malUrl}`;
+        captionText += `\n⋄ MyAnimeList : ${malUrl}`;
     }
+    captionText += `\n────────────────────────`;
 
     if (imageUrl) {
         await sock.sendMessage(

@@ -63,13 +63,15 @@ export default {
                 buffer = Buffer.concat(chunks);
 
             } else {
+                const p = prefix || "!";
                 return message.reply(
-                    `╭━━━〔 🖼️ SET BOT PFP 〕━━━\n` +
-                    `┃ Kirim gambar dengan caption:\n` +
-                    `┃ ⋄ \`${prefix || "!"}setbotpfp\`\n` +
-                    `┃ Atau reply ke gambar dengan:\n` +
-                    `┃ ⋄ \`${prefix || "!"}setbotpfp\`\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🖼️ *SET BOT PFP*\n` +
+                    `────────────────────────\n` +
+                    `Kirim gambar dengan caption:\n` +
+                    `⋄ \`${p}setbotpfp\`\n\n` +
+                    `Atau reply ke gambar dengan:\n` +
+                    `⋄ \`${p}setbotpfp\`\n` +
+                    `────────────────────────`
                 );
             }
 
@@ -106,11 +108,12 @@ export default {
             });
 
             return message.reply(
-                `╭━━━〔 🖼️ SET BOT PFP 〕━━━\n` +
-                `┃ Status : ✅ Berhasil diperbarui\n` +
-                `┃ Ukuran : ${imgWidth}×${imgHeight}px\n` +
-                `┃ Info   : Gambar di-upload tanpa di-crop.\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━`
+                `🖼️ *SET BOT PFP*\n` +
+                `────────────────────────\n` +
+                `⋄ Status : ✅ Berhasil diperbarui\n` +
+                `⋄ Ukuran : ${imgWidth}×${imgHeight}px\n\n` +
+                `*ℹ️ Catatan:* Gambar di-upload tanpa di-crop.\n` +
+                `────────────────────────`
             );
 
         } catch (error) {

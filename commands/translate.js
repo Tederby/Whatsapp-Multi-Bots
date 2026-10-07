@@ -171,12 +171,13 @@ export default {
 
         if (args.length === 0) {
             return message.reply(
-                `╭━━━〔 🌐 TRANSLATE 〕━━━\n` +
-                `┃ ❌ Sertakan kode bahasa tujuan.\n` +
-                `┃ ⋄ Format: *${p}translate <kode> <teks>*\n` +
-                `┃ ⋄ Contoh: *${p}translate id Hello world*\n` +
-                `┃ ⋄ Atau reply: *${p}translate en*\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━`
+                `🌐 *TRANSLATE*\n` +
+                `────────────────────────\n` +
+                `❌ Sertakan kode bahasa tujuan.\n` +
+                `⋄ Format: *${p}translate <kode> <teks>*\n` +
+                `⋄ Contoh: *${p}translate id Hello world*\n` +
+                `⋄ Atau reply: *${p}translate en*\n` +
+                `────────────────────────`
             );
         }
 
@@ -206,11 +207,12 @@ export default {
 
         if (!sourceText) {
             return message.reply(
-                `╭━━━〔 🌐 TRANSLATE 〕━━━\n` +
-                `┃ ❌ Tidak ada teks untuk diterjemahkan.\n` +
-                `┃ ⋄ Gunakan: *${p}translate <kode> <teks>*\n` +
-                `┃ ⋄ Atau reply pesan dengan: *${p}translate <kode>*\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━`
+                `🌐 *TRANSLATE*\n` +
+                `────────────────────────\n` +
+                `❌ Tidak ada teks untuk diterjemahkan.\n` +
+                `⋄ Gunakan: *${p}translate <kode> <teks>*\n` +
+                `⋄ Atau reply pesan dengan: *${p}translate <kode>*\n` +
+                `────────────────────────`
             );
         }
 

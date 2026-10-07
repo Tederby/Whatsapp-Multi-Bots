@@ -326,16 +326,16 @@ export default {
         // ── Validate input ──────────────────────────────────────────
         if (!rawArgs || !rawArgs.trim()) {
             return message.reply(
-                "╭━━━〔 🖥 Terminal VPS 〕━━━\n" +
-                "┃ Shell bash via WhatsApp\n" +
-                "┃ Session stateful (cd/export)\n" +
-                "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                "╭───「 📖 Penggunaan 」\n" +
-                "│ ⋄ $ ls -la\n" +
-                "│ ⋄ $ cd /etc && ls\n" +
-                "│ ⋄ $ export FOO=bar\n" +
-                "│ ⋄ $ reset\n" +
-                "╰──────────────"
+                "🖥️ *TERMINAL VPS*\n" +
+                "────────────────────────\n" +
+                "Shell bash via WhatsApp\n" +
+                "Session stateful (cd/export)\n\n" +
+                "*📖 Penggunaan*\n" +
+                "⋄ $ ls -la\n" +
+                "⋄ $ cd /etc && ls\n" +
+                "⋄ $ export FOO=bar\n" +
+                "⋄ $ reset\n" +
+                "────────────────────────"
             );
         }
 

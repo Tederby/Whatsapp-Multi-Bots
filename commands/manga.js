@@ -12,9 +12,9 @@ function generateListText(results, page, query) {
     const end = start + ITEMS_PER_PAGE;
     const currentItems = results.slice(start, end);
 
-    let text = `╭━━━〔 📖 MANGA SEARCH 〕━━━\n`;
-    text += `┃ 🔍 *Query* : ${query}\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `📖 *MANGA SEARCH*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Query : ${query}\n\n`;
 
     currentItems.forEach((manga, index) => {
         const title = manga.title?.romaji || manga.title?.userPreferred || manga.title?.english || "N/A";
@@ -23,16 +23,16 @@ function generateListText(results, page, query) {
         const format = manga.format || manga.type || "N/A";
         const chaps = manga.chapters ? `${manga.chapters} Chaps` : "? Chaps";
 
-        text += `╭───「 ${start + index + 1}. ${title} 」\n`;
-        text += `│ 📖 *Format*  : ${format}\n`;
-        text += `│ ⭐ *Skor*    : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
-        text += `│ 📝 *Chapter* : ${chaps}\n`;
-        text += `│ 📅 *Tahun*   : ${year}\n`;
-        text += `╰──────────────\n\n`;
+        text += `*${start + index + 1}. ${title}*\n`;
+        text += `⋄ Format : ${format}\n`;
+        text += `⋄ Skor : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+        text += `⋄ Chapter : ${chaps}\n`;
+        text += `⋄ Tahun : ${year}\n\n`;
     });
 
     text += generatePaginator(page, totalPages) + "\n\n";
-    text += `💡 _Reply angka (1-${currentItems.length}) untuk memilih. Ketik "n" next, "b" back._`;
+    text += `*ℹ️ Notes:* Reply angka (1-${currentItems.length}) untuk memilih. Ketik "n" next, "b" back.\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -51,14 +51,15 @@ export default {
     async handler({ message, args, cleanArgs, flags, sock, sender, prefix }) {
         const effectiveArgs = cleanArgs || args;
         if (args.length === 0 && effectiveArgs.length === 0) {
+            const p = prefix || "!";
             await message.reply(
-                "╭━━━〔 📖 MANGA SEARCH 〕━━━\n" +
-                "┃ Mencari manga/manhwa/novel dari AniList.\n" +
-                "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                "╭───「 📖 Penggunaan 」\n" +
-                `│ ⋄ \`${prefix || "!"}manga <judul>\`\n` +
-                `│ ⋄ \`${prefix || "!"}manga <judul> -t\` (hasil teratas)\n` +
-                "╰──────────────"
+                "📖 *MANGA SEARCH*\n" +
+                "────────────────────────\n" +
+                "Mencari manga/manhwa/novel dari AniList.\n\n" +
+                "*📖 Penggunaan*\n" +
+                `⋄ \`${p}manga <judul>\`\n` +
+                `⋄ \`${p}manga <judul> -t\` (hasil teratas)\n` +
+                "────────────────────────"
             );
             return;
         }
@@ -176,44 +177,44 @@ async function sendMangaDetail(manga, message, sock) {
 
     const imageUrl = manga.coverImage?.extraLarge || manga.coverImage?.large || manga.coverImage?.medium || null;
 
-    let captionText = `╭━━━〔 📚 MANGA DETAIL 〕━━━\n`;
-    captionText += `┃ 🏷️ *Judul*       : ${title}\n`;
+    let captionText = `📚 *MANGA DETAIL*\n`;
+    captionText += `────────────────────────\n`;
+    captionText += `⋄ Judul : ${title}\n`;
     if (rawTitleEng) {
-        captionText += `┃ 🔤 *Inggris*     : ${rawTitleEng}\n`;
+        captionText += `⋄ Inggris : ${rawTitleEng}\n`;
     }
-    captionText += `┃ 📖 *Format*      : ${format}\n`;
-    captionText += `┃ ⭐ *Skor*        : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
-    captionText += `┃ 📝 *Chapter*     : ${chapters}\n`;
-    captionText += `┃ 📚 *Volume*      : ${volumes}\n`;
-    captionText += `┃ ⏳ *Status*      : ${status}\n`;
-    captionText += `┃ ✍️ *Author*      : ${authors}\n`;
-    captionText += `┃ 📈 *Popularitas* : ${popularity}\n`;
-    captionText += `┃ 🎭 *Genre*       : ${genres}\n`;
-    captionText += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    captionText += `⋄ Format : ${format}\n`;
+    captionText += `⋄ Skor : ${score !== "N/A" ? score + " / 10" : "N/A"}\n`;
+    captionText += `⋄ Chapter : ${chapters}\n`;
+    captionText += `⋄ Volume : ${volumes}\n`;
+    captionText += `⋄ Status : ${status}\n`;
+    captionText += `⋄ Author : ${authors}\n`;
+    captionText += `⋄ Popularitas : ${popularity}\n`;
+    captionText += `⋄ Genre : ${genres}\n`;
 
-    captionText += `📝 *Sinopsis:*\n${synopsis}\n\n`;
+    captionText += `\n*📝 Sinopsis*\n${synopsis}\n`;
 
     // Recommendations section
     const recs = manga.recommendations?.nodes?.filter(r => r.mediaRecommendation) || [];
     if (recs.length > 0) {
-        captionText += `╭───「 💡 Rekomendasi 」\n`;
+        captionText += `\n*💡 Rekomendasi*\n`;
         recs.forEach((rec, i) => {
             const recTitle = rec.mediaRecommendation.title?.romaji || "N/A";
             const recScore = formatScore(rec.mediaRecommendation.averageScore);
             const recFormat = rec.mediaRecommendation.format || "";
-            captionText += `│ ${i + 1}. ${recTitle}`;
+            captionText += `⋄ ${i + 1}. ${recTitle}`;
             if (recScore !== "N/A") captionText += ` (${recScore} / 10)`;
             if (recFormat) captionText += ` [${recFormat}]`;
             captionText += `\n`;
         });
-        captionText += `╰──────────────\n\n`;
     }
 
-    captionText += `🔗 *Tautan:*\n`;
-    captionText += `• AniList: ${anilistUrl}`;
+    captionText += `\n*🔗 Tautan*\n`;
+    captionText += `⋄ AniList : ${anilistUrl}`;
     if (malUrl) {
-        captionText += `\n• MyAnimeList: ${malUrl}`;
+        captionText += `\n⋄ MyAnimeList : ${malUrl}`;
     }
+    captionText += `\n────────────────────────`;
 
     if (imageUrl) {
         await sock.sendMessage(

@@ -69,35 +69,34 @@ export async function sendMalProfileDetail(input, message, sock, isAutoDetect = 
         const stats = user.statistics?.anime || {};
         const mangaStats = user.statistics?.manga || {};
 
-        let text = `╭━━━〔 🎌 MAL PROFILE 〕━━━\n`;
-        text += `┃ 👤 *Username* : ${user.username}\n`;
-        if (user.location) text += `┃ 📍 *Lokasi*   : ${user.location}\n`;
+        let text = `🎌 *MAL PROFILE*\n`;
+        text += `────────────────────────\n`;
+        text += `⋄ Username : ${user.username}\n`;
+        if (user.location) text += `⋄ Lokasi : ${user.location}\n`;
         if (user.joined) {
             const joinedDate = new Date(user.joined).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-            text += `┃ 📅 *Join*     : ${joinedDate}\n`;
+            text += `⋄ Join : ${joinedDate}\n`;
         }
-        text += `╰━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-        text += `╭───「 📺 Anime Stats 」\n`;
-        text += `│ ⏱️ *Days Watched* : ${stats.days_watched || 0}\n`;
-        text += `│ ⭐ *Mean Score*   : ${stats.mean_score || 0}\n`;
-        text += `│ 🎬 *Total Entry*  : ${stats.total_entries || 0}\n`;
-        text += `│ 🟢 *Watching*     : ${stats.watching || 0}\n`;
-        text += `│ 🔵 *Completed*    : ${stats.completed || 0}\n`;
-        text += `│ 🟡 *On Hold*      : ${stats.on_hold || 0}\n`;
-        text += `│ 🔴 *Dropped*      : ${stats.dropped || 0}\n`;
-        text += `│ ⚪ *Plan to Watch*: ${stats.plan_to_watch || 0}\n`;
-        text += `╰──────────────\n\n`;
+        text += `\n*📺 Anime Stats*\n`;
+        text += `⋄ Days Watched : ${stats.days_watched || 0}\n`;
+        text += `⋄ Mean Score : ${stats.mean_score || 0}\n`;
+        text += `⋄ Total Entry : ${stats.total_entries || 0}\n`;
+        text += `⋄ Watching : ${stats.watching || 0}\n`;
+        text += `⋄ Completed : ${stats.completed || 0}\n`;
+        text += `⋄ On Hold : ${stats.on_hold || 0}\n`;
+        text += `⋄ Dropped : ${stats.dropped || 0}\n`;
+        text += `⋄ Plan to Watch : ${stats.plan_to_watch || 0}\n`;
 
-        text += `╭───「 📚 Manga Stats 」\n`;
-        text += `│ ⏱️ *Days Read*    : ${mangaStats.days_read || 0}\n`;
-        text += `│ ⭐ *Mean Score*   : ${mangaStats.mean_score || 0}\n`;
-        text += `│ 📖 *Total Entry*  : ${mangaStats.total_entries || 0}\n`;
-        text += `│ 🟢 *Reading*      : ${mangaStats.reading || 0}\n`;
-        text += `│ 🔵 *Completed*    : ${mangaStats.completed || 0}\n`;
-        text += `╰──────────────\n\n`;
+        text += `\n*📚 Manga Stats*\n`;
+        text += `⋄ Days Read : ${mangaStats.days_read || 0}\n`;
+        text += `⋄ Mean Score : ${mangaStats.mean_score || 0}\n`;
+        text += `⋄ Total Entry : ${mangaStats.total_entries || 0}\n`;
+        text += `⋄ Reading : ${mangaStats.reading || 0}\n`;
+        text += `⋄ Completed : ${mangaStats.completed || 0}\n\n`;
 
-        text += `🔗 *Profil:* ${user.url}`;
+        text += `⋄ Profil : ${user.url}\n`;
+        text += `────────────────────────`;
 
         const imageUrl = user.images?.jpg?.image_url;
 

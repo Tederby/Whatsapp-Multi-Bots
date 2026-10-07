@@ -49,11 +49,13 @@ export default {
                 // Resolve registeredBy untuk display (bisa LID di data lama)
                 const { baseId: regByBaseId } = resolveTarget(config.registeredBy || "");
 
-                let infoText = `╭━━━〔 ⚠️ GRUP TERDAFTAR 〕━━━\n`;
-                infoText += `┃ 📅 Sejak : ${regDate}\n`;
-                infoText += `┃ 📝 Oleh  : @${regByBaseId || "unknown"}\n`;
-                infoText += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
-                infoText += `_Gunakan \`${prefix}gunregister\` untuk menghapus registrasi._`;
+                const p = prefix || "!";
+                let infoText = `⚠️ *GRUP TERDAFTAR*\n`;
+                infoText += `────────────────────────\n`;
+                infoText += `⋄ Sejak : ${regDate}\n`;
+                infoText += `⋄ Oleh : @${regByBaseId || "unknown"}\n\n`;
+                infoText += `*ℹ️ Notes:* Gunakan \`${p}gunregister\` untuk menghapus registrasi.\n`;
+                infoText += `────────────────────────`;
                 return message.reply(infoText);
             }
 
@@ -61,11 +63,13 @@ export default {
             const { jid: resolvedSender } = resolveTarget(sender);
             registerGroup(chatId, resolvedSender);
 
-            let regSuccess = `╭━━━〔 ✅ REGISTRASI GRUP 〕━━━\n`;
-            regSuccess += `┃ Status : Berhasil Terdaftar\n`;
-            regSuccess += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+            const p = prefix || "!";
+            let regSuccess = `✅ *REGISTRASI GRUP*\n`;
+            regSuccess += `────────────────────────\n`;
+            regSuccess += `⋄ Status : Berhasil Terdaftar\n\n`;
             regSuccess += `Grup ini sekarang terdaftar di database bot.\n`;
-            regSuccess += `Ketik \`${prefix}groupprofile\` untuk melihat info grup.`;
+            regSuccess += `*ℹ️ Notes:* Ketik \`${p}groupprofile\` untuk melihat info grup.\n`;
+            regSuccess += `────────────────────────`;
             return message.reply(regSuccess);
 
         } catch (error) {

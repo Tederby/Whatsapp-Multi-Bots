@@ -19,14 +19,15 @@ export default {
             const target = extractTarget(message, args);
 
             if (!target) {
+                const p = prefix || "!";
                 return message.reply(
-                    "╭━━━〔 🔼 PROMOTE ADMIN 〕━━━\n" +
-                    "┃ Menaikkan jabatan anggota menjadi Admin grup.\n" +
-                    "╰━━━━━━━━━━━━━━━━━━━━\n\n" +
-                    "╭───「 📖 Penggunaan 」\n" +
-                    `│ ⋄ \`${prefix || "!"}promote @user\`\n` +
-                    `│ ⋄ \`${prefix || "!"}promote <nomor>\`\n` +
-                    "╰──────────────"
+                    "🔼 *PROMOTE ADMIN*\n" +
+                    "────────────────────────\n" +
+                    "Menaikkan jabatan anggota menjadi Admin grup.\n\n" +
+                    "*📖 Penggunaan*\n" +
+                    `⋄ \`${p}promote @user\`\n` +
+                    `⋄ \`${p}promote <nomor>\`\n` +
+                    "────────────────────────"
                 );
             }
 

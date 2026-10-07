@@ -23,12 +23,12 @@ export default {
 
             if (!targetMsg) {
                 return await message.reply(
-                    `╭━━━〔 🏷️ WATERMARK STIKER 〕━━━\n` +
-                    `┃ Balas (reply) stiker yang ingin diganti watermarknya.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n` +
-                    `┃ Contoh: \`${prefix || "!"}wm Anime|Tederby\`\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🏷️ *WATERMARK STIKER*\n` +
+                    `────────────────────────\n` +
+                    `Balas (reply) stiker yang ingin diganti watermarknya.\n\n` +
+                    `⋄ Format: \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n` +
+                    `⋄ Contoh: \`${prefix || "!"}wm Anime|Tederby\`\n` +
+                    `────────────────────────`
                 );
             }
 
@@ -56,12 +56,12 @@ export default {
                 }
             } else {
                 return await message.reply(
-                    `╭━━━〔 🏷️ WATERMARK STIKER 〕━━━\n` +
-                    `┃ Masukkan nama pack & author watermark baru.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n` +
-                    `┃ Contoh: \`${prefix || "!"}wm Anime|Tederby\`\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🏷️ *WATERMARK STIKER*\n` +
+                    `────────────────────────\n` +
+                    `Masukkan nama pack & author watermark baru.\n\n` +
+                    `⋄ Format: \`${prefix || "!"}wm NamaPack|NamaAuthor\`\n` +
+                    `⋄ Contoh: \`${prefix || "!"}wm Anime|Tederby\`\n` +
+                    `────────────────────────`
                 );
             }
 

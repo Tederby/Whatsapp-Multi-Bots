@@ -24,9 +24,10 @@ export default {
 
             if (isRemoved) {
                 const lines = [
-                    "╭━━━〔 ✅ PENGINGAT DIBATALKAN 〕━━━",
-                    "┃ Pengingat aktifmu di obrolan ini telah berhasil dihapus.",
-                    "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                    "✅ *PENGINGAT DIBATALKAN*",
+                    "────────────────────────",
+                    "Pengingat aktifmu di obrolan ini telah berhasil dihapus.",
+                    "────────────────────────"
                 ];
                 await message.reply(lines.join("\n"));
             } else {

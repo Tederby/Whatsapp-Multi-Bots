@@ -168,31 +168,28 @@ export default {
         // 2. If no media is found, show full usage guide card
         if (!found) {
             return await message.reply(
-                `╭━━━〔 🔄 MEDIA CONVERTER 〕━━━\n` +
-                `┃ Konversi berbagai format media dengan mudah.\n` +
-                `┃\n` +
-                `┃ 📌 *Cara Penggunaan:*\n` +
-                `┃ ⋄ Kirim media dengan caption \`${p}convert [format]\`\n` +
-                `┃ ⋄ Atau balas (reply) media/stiker/dokumen dengan \`${p}convert [format]\`\n` +
-                `┃\n` +
-                `┃ 🎯 *Format yang Didukung:*\n` +
-                `┃ ⋄ *Video*  : \`mp4\`, \`webm\`, \`gif\`, \`ptv\`\n` +
-                `┃ ⋄ *Audio*  : \`mp3\`, \`ogg\`, \`wav\`, \`m4a\`, \`flac\`, \`ptt\` (VN)\n` +
-                `┃ ⋄ *Gambar* : \`jpg\`, \`png\`, \`webp\`\n` +
-                `┃\n` +
-                `┃ ⚙️ *Pilihan Flag:*\n` +
-                `┃ ⋄ \`-d\`, \`--doc\` : Kirim hasil sebagai Dokumen\n` +
-                `┃ ⋄ \`-c\`, \`--compress\` : Kompresi video/audio lebih hemat\n` +
-                `┃ ⋄ \`-p\`, \`--ptt\` : Kirim audio sebagai Voice Note\n` +
-                `┃ ⋄ \`-v\`, \`--ptv\` : Kirim video sebagai Video Note\n` +
-                `┃\n` +
-                `┃ 💡 *Alur Default (Tanpa Format):*\n` +
-                `┃ ⋄ Video ➔ MP4 (Re-encode & kompres)\n` +
-                `┃ ⋄ Audio / VN ➔ MP3\n` +
-                `┃ ⋄ Stiker Statis ➔ Gambar JPG\n` +
-                `┃ ⋄ Stiker Animasi ➔ Video MP4\n` +
-                `┃ ⋄ Gambar WebP ➔ Gambar JPG\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━`
+                `🔄 *MEDIA CONVERTER*\n` +
+                `────────────────────────\n` +
+                `Konversi berbagai format media dengan mudah.\n\n` +
+                `*📌 Cara Penggunaan*\n` +
+                `⋄ Kirim media dengan caption \`${p}convert [format]\`\n` +
+                `⋄ Atau balas (reply) media/stiker/dokumen dengan \`${p}convert [format]\`\n\n` +
+                `*🎯 Format yang Didukung*\n` +
+                `⋄ Video  : \`mp4\`, \`webm\`, \`gif\`, \`ptv\`\n` +
+                `⋄ Audio  : \`mp3\`, \`ogg\`, \`wav\`, \`m4a\`, \`flac\`, \`ptt\` (VN)\n` +
+                `⋄ Gambar : \`jpg\`, \`png\`, \`webp\`\n\n` +
+                `*⚙️ Pilihan Flag*\n` +
+                `⋄ \`-d\`, \`--doc\` : Kirim hasil sebagai Dokumen\n` +
+                `⋄ \`-c\`, \`--compress\` : Kompresi video/audio lebih hemat\n` +
+                `⋄ \`-p\`, \`--ptt\` : Kirim audio sebagai Voice Note\n` +
+                `⋄ \`-v\`, \`--ptv\` : Kirim video sebagai Video Note\n\n` +
+                `*💡 Alur Default (Tanpa Format)*\n` +
+                `⋄ Video ➔ MP4 (Re-encode & kompres)\n` +
+                `⋄ Audio / VN ➔ MP3\n` +
+                `⋄ Stiker Statis ➔ Gambar JPG\n` +
+                `⋄ Stiker Animasi ➔ Video MP4\n` +
+                `⋄ Gambar WebP ➔ Gambar JPG\n` +
+                `────────────────────────`
             );
         }
 

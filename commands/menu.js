@@ -47,13 +47,13 @@ function getOrderedCategories(groups) {
 }
 
 function getHeader(timeoutSec) {
-    let text = `╭━━━〔 👾 ${setting.name || "Bot Menu"} 👾 〕━━━\n`;
-    text += `┃ 💻 Prefix : [ ${setting.prefixes.join(" / ")} ]\n`;
-    text += `┃ ⏱️ Uptime : ${formatUptime(process.uptime(), { short: true })}\n`;
+    let text = `👾 *${(setting.name || "BOT MENU").toUpperCase()}*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Prefix : [ ${setting.prefixes.join(" / ")} ]\n`;
+    text += `⋄ Uptime : ${formatUptime(process.uptime(), { short: true })}\n`;
     if (timeoutSec > 0) {
-        text += `┃ ⚠️ Menu akan timeout dalam ${timeoutSec} detik\n`;
+        text += `⋄ Timeout : ${timeoutSec} detik\n`;
     }
-    text += `╰━━━━━━━━━━━━━━━━━━━━\n\n`;
     return text;
 }
 
@@ -62,16 +62,15 @@ function generateCategoryList(timeoutSec = 90) {
     const allKeys = getOrderedCategories(groups);
 
     let text = getHeader(timeoutSec);
-    text += `╭───「 📂 Kategori Menu 」\n`;
+    text += `\n*📂 Kategori Menu*\n`;
     
     for (const cat of allKeys) {
         const label = CATEGORY_LABELS[cat] || DEFAULT_CATEGORY;
         const total = groups.get(cat).length;
-        text += `│ ⋄ *${cat}* (${total} cmd)\n`;
+        text += `⋄ *${cat}* (${total} cmd)\n`;
     }
-    text += `╰──────────────\n\n`;
-    text += `💡 _Balas pesan ini dengan nama kategori (misal: 'anime' atau 'tools') untuk melihat daftar perintahnya._\n`;
-    text += `_Atau ketik \`!menu all\` untuk melihat semua command._`;
+    text += `\n*ℹ️ Notes:* Balas pesan ini dengan nama kategori (misal: 'anime' atau 'tools') untuk melihat daftar perintahnya, atau ketik \`!menu all\` untuk melihat semua command.\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -92,21 +91,20 @@ function generateCategoryCommands(category, timeoutSec = 60) {
     const label = CATEGORY_LABELS[actualCategory] || DEFAULT_CATEGORY;
     const cmds = groups.get(actualCategory);
 
-    text += `╭───「 ${label} 」\n`;
+    text += `\n*${label}*\n`;
     for (const cmd of cmds) {
         let cmdNames = [`*${cmd.name}*`];
         if (cmd.aliases && cmd.aliases.length > 0) {
             cmdNames.push(...cmd.aliases.map(a => `*${a}*`));
         }
-        text += `│ ⋄ ${cmdNames.join(" / ")}\n`;
+        text += `⋄ ${cmdNames.join(" / ")}\n`;
         if (cmd.description) {
-            text += `│   └ ${cmd.description}\n`;
+            text += `  └ ${cmd.description}\n`;
         } else {
-            text += `│   └ (No description)\n`;
+            text += `  └ (No description)\n`;
         }
     }
-    text += `╰──────────────\n\n`;
-    text += `⚙️ _Powered by Baileys & Node.js_`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -119,23 +117,22 @@ function generateAllCommands(timeoutSec = 60) {
     for (const cat of allKeys) {
         const label = CATEGORY_LABELS[cat] || DEFAULT_CATEGORY;
         const cmds = groups.get(cat);
-        text += `╭───「 ${label} 」\n`;
+        text += `\n*${label}*\n`;
 
         for (const cmd of cmds) {
             let cmdNames = [`*${cmd.name}*`];
             if (cmd.aliases && cmd.aliases.length > 0) {
                 cmdNames.push(...cmd.aliases.map(a => `*${a}*`));
             }
-            text += `│ ⋄ ${cmdNames.join(" / ")}\n`;
+            text += `⋄ ${cmdNames.join(" / ")}\n`;
             if (cmd.description) {
-                text += `│   └ ${cmd.description}\n`;
+                text += `  └ ${cmd.description}\n`;
             } else {
-                text += `│   └ (No description)\n`;
+                text += `  └ (No description)\n`;
             }
         }
-        text += `╰──────────────\n\n`;
     }
-    text += `⚙️ _Powered by Baileys & Node.js_`;
+    text += `────────────────────────`;
 
     return text.trim();
 }

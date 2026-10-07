@@ -15,9 +15,9 @@ function generateListText(results, page, query) {
     const end = start + ITEMS_PER_PAGE;
     const currentItems = results.slice(start, end);
 
-    let text = `╭━━━〔 🎮 STEAM SEARCH 〕━━━\n`;
-    text += `┃ 🔍 Query : ${query}\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `🎮 *STEAM SEARCH*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Query : ${query}\n\n`;
 
     currentItems.forEach((game, index) => {
         let priceText = "Gratis / Tidak Tersedia";
@@ -38,13 +38,15 @@ function generateListText(results, page, query) {
         let platText = platforms.length > 0 ? platforms.join(", ") : "N/A";
         let metaText = game.metascore ? game.metascore : "N/A";
 
-        text += `╭───「 ${start + index + 1}. ${game.name} 」\n`;
-        text += `│ 💰 ${priceText} | 💻 ${platText} | 🌟 ${metaText}\n`;
-        text += `╰──────────────\n\n`;
+        text += `*${start + index + 1}. ${game.name}*\n`;
+        text += `⋄ Harga : ${priceText}\n`;
+        text += `⋄ Platform : ${platText}\n`;
+        text += `⋄ Metascore : ${metaText}\n\n`;
     });
 
     text += generatePaginator(page, totalPages) + "\n\n";
-    text += `💡 _Reply angka (1-${currentItems.length}) untuk memilih. Ketik "n" next, "b" back._`;
+    text += `*ℹ️ Notes:* Reply angka (1-${currentItems.length}) untuk memilih. Ketik "n" next, "b" back.\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -322,12 +324,18 @@ export default {
 
     async handler({ message, args, cleanArgs, flags, sock, sender, prefix = "!" }) {
         if (args.length === 0 && (!cleanArgs || cleanArgs.length === 0)) {
+            const p = prefix || "!";
             await message.reply(
-                "❌ Berikan judul game yang ingin dicari.\nContoh: `!steam stardew valley`\n\n" +
-                "💡 *Tip:* Tambahkan `-t`, `-1`, atau `--top` untuk langsung mendapatkan hasil paling relevan tanpa memilih list.\n" +
-                "💡 *Mode:* Tambahkan `-u` / `--ui` untuk paksa UI interaktif atau `-x` / `--text` untuk teks biasa.\n" +
-                "💡 *Kombinasi:* Bisa digabung seperti `!steam stardew valley -tu` (langsung hasil pertama + mode UI).\n" +
-                `💡 _Cari profil user? Gunakan \`${prefix}steamprofile <username>\`_`
+                "🎮 *STEAM SEARCH*\n" +
+                "────────────────────────\n" +
+                "Mencari game di Steam beserta informasi harganya.\n\n" +
+                "*📖 Penggunaan*\n" +
+                `⋄ \`${p}steam <judul game>\`\n` +
+                `⋄ \`${p}steam <judul game> -t\` (hasil teratas)\n` +
+                `⋄ \`${p}steam <judul game> -u\` (mode webview UI)\n` +
+                `⋄ \`${p}steam <judul game> -tu\` (kombinasi flag)\n\n` +
+                `*ℹ️ Notes:* Cari profil user? Gunakan \`${p}sp <username>\`\n` +
+                "────────────────────────"
             );
             return;
         }

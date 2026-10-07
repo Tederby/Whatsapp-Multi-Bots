@@ -237,16 +237,18 @@ export async function sendSteamGameDetail(appId, message, sock, isAutoDetect = f
             }
         }
 
-        let captionText = `🎮 *${name}*\n\n`;
-        captionText += `🔗 *Link Steam:* https://store.steampowered.com/app/${appId}\n\n`;
-        captionText += `🏷️ *Genre:* ${genres}\n`;
-        captionText += `📅 *Rilis:* ${releaseDate}\n`;
-        captionText += `🛠️ *Developer:* ${developers}\n`;
-        captionText += `🏢 *Publisher:* ${publishers}\n`;
-        captionText += `🌟 *Metacritic:* ${metacritic}\n\n`;
-        captionText += `💰 *Harga:* ${priceText}\n\n`;
-        captionText += `📝 *Deskripsi:*\n${shortDesc}\n\n`;
-        captionText += `🌐 *Bahasa didukung:*\n${supportedLanguages}`;
+        let captionText = `🎮 *${name.toUpperCase()}*\n`;
+        captionText += `────────────────────────\n`;
+        captionText += `⋄ Link Steam : https://store.steampowered.com/app/${appId}\n`;
+        captionText += `⋄ Genre : ${genres}\n`;
+        captionText += `⋄ Rilis : ${releaseDate}\n`;
+        captionText += `⋄ Developer : ${developers}\n`;
+        captionText += `⋄ Publisher : ${publishers}\n`;
+        captionText += `⋄ Metacritic : ${metacritic}\n`;
+        captionText += `⋄ Harga : ${priceText}\n\n`;
+        captionText += `*📝 Deskripsi*\n${shortDesc}\n\n`;
+        captionText += `*🌐 Bahasa didukung*\n${supportedLanguages}\n`;
+        captionText += `────────────────────────`;
 
         if (headerImage) {
             await sock.sendMessage(
@@ -374,28 +376,27 @@ function buildProfileText(steamId, player, games, recent, level) {
     const created = player.timecreated ? new Date(player.timecreated * 1000) : null;
     const customUrl = extractCustomUrl(player.profileurl);
 
-    let text = `╭━━━〔 🎮 STEAM PROFILE 〕━━━\n`;
-    text += `┃ 👤 *Nama*     : ${name}\n`;
-    if (realName) text += `┃ 📛 *Nama Asli* : ${realName}\n`;
-    text += `┃ 🆔 *SteamID*  : \`${steamId}\`\n`;
+    let text = `🎮 *STEAM PROFILE*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Nama : ${name}\n`;
+    if (realName) text += `⋄ Nama Asli : ${realName}\n`;
+    text += `⋄ SteamID : \`${steamId}\`\n`;
     if (customUrl) {
-        text += `┃ 🏷️ *Custom ID* : ${customUrl}\n`;
+        text += `⋄ Custom ID : ${customUrl}\n`;
     } else {
-        text += `┃ 🏷️ *Custom ID* : _Belum diatur_\n`;
+        text += `⋄ Custom ID : _Belum diatur_\n`;
     }
-    text += `┃ 🌐 *Status*   : ${getStatusText(player)}\n`;
-    if (country) text += `┃ 🏳️ *Negara*   : ${getCountryFlag(country)} ${country}\n`;
+    text += `⋄ Status : ${getStatusText(player)}\n`;
+    if (country) text += `⋄ Negara : ${getCountryFlag(country)} ${country}\n`;
     if (created) {
         const dateStr = created.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-        text += `┃ 📅 *Dibuat*   : ${dateStr}\n`;
+        text += `⋄ Dibuat : ${dateStr}\n`;
     }
-    if (level !== null) text += `┃ ⭐ *Level*    : ${level}\n`;
+    if (level !== null) text += `⋄ Level : ${level}\n`;
 
     if (!isPublic) {
-        text += `┃ 🔒 *Visibilitas* : Private\n`;
+        text += `⋄ Visibilitas : Private\n`;
     }
-
-    text += `╰━━━━━━━━━━━━━━━━━━━━━\n`;
 
     // ── Games section ──
     if (!isPublic) {
@@ -403,18 +404,17 @@ function buildProfileText(steamId, player, games, recent, level) {
     } else if (games && games.response && games.response.game_count > 0) {
         const totalGames = games.response.game_count;
         const totalPlaytime = games.response.games.reduce((sum, g) => sum + (g.playtime_forever || 0), 0);
-        text += `\n┃ 🎮 *Total Game* : ${totalGames.toLocaleString("id-ID")} game (${formatPlaytime(totalPlaytime)} total)\n\n`;
+        text += `\n⋄ Total Game : ${totalGames.toLocaleString("id-ID")} game (${formatPlaytime(totalPlaytime)} total)\n\n`;
 
         const top5 = [...games.response.games]
             .sort((a, b) => (b.playtime_forever || 0) - (a.playtime_forever || 0))
             .slice(0, 5);
 
         if (top5.length > 0 && top5[0].playtime_forever > 0) {
-            text += `╭───「 🏆 Top Games (by Playtime) 」\n`;
+            text += `*🏆 Top Games (by Playtime)*\n`;
             top5.forEach((g, i) => {
-                text += `│ ${i + 1}. ${g.name} — *${formatPlaytime(g.playtime_forever)}*\n`;
+                text += `⋄ ${i + 1}. ${g.name} — *${formatPlaytime(g.playtime_forever)}*\n`;
             });
-            text += `╰──────────────\n`;
         }
     } else if (games && games.response) {
         if (typeof games.response.game_count === "number") {
@@ -430,11 +430,10 @@ function buildProfileText(steamId, player, games, recent, level) {
     if (!isPublic) {
         // Already shown the private notice above
     } else if (recent && recent.response && recent.response.total_count > 0) {
-        text += `\n╭───「 📅 Aktivitas 2 Minggu Terakhir 」\n`;
+        text += `\n*📅 Aktivitas 2 Minggu Terakhir*\n`;
         recent.response.games.forEach(g => {
-            text += `│ • ${g.name} — *${formatPlaytime(g.playtime_2weeks)}*\n`;
+            text += `⋄ ${g.name} — *${formatPlaytime(g.playtime_2weeks)}*\n`;
         });
-        text += `╰──────────────\n`;
     } else if (isPublic) {
         text += `\n_Tidak ada aktivitas dalam 2 minggu terakhir._\n`;
     }
@@ -444,7 +443,8 @@ function buildProfileText(steamId, player, games, recent, level) {
         text += `\n💡 _Ini profil kamu? Setup custom URL di:_\n_Steam > Edit Profile > Custom URL_\n`;
     }
 
-    text += `\n🔗 *Profil:* https://steamcommunity.com/profiles/${steamId}`;
+    text += `\n⋄ Profil : https://steamcommunity.com/profiles/${steamId}\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }

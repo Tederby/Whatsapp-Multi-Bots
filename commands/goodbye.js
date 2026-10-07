@@ -43,27 +43,23 @@ export default {
 
                 return message.reply(`✅ Pesan perpisahan berhasil diperbarui dan fitur diaktifkan:\n\n${goodbyeText}`);
 
-            } else {
+                const p = prefix || "!";
                 return message.reply(
-                    `╭━━━〔 👋 GOODBYE 〕━━━\n` +
-                    `┃\n` +
-                    `┃ Penggunaan:\n` +
-                    `┃ ⋄ \`${prefix}goodbye on\` → Aktifkan\n` +
-                    `┃ ⋄ \`${prefix}goodbye off\` → Nonaktifkan\n` +
-                    `┃ ⋄ \`${prefix}goodbye set <teks>\` → Atur teks\n` +
-                    `┃\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
-                    `╭───「 💡 Tips Admin 」\n` +
-                    `│ Fitur ini *aktif secara default*.\n` +
-                    `│\n` +
-                    `│ Gunakan placeholder:\n` +
-                    `│ ⋄ *@user* → mention member yg keluar\n` +
-                    `│ ⋄ *@group* → nama grup\n` +
-                    `│\n` +
-                    `│ Contoh set pesan custom:\n` +
-                    `│ \`${prefix}goodbye set Bye @user! 😢\n` +
-                    `│ Semoga bisa kembali lagi ke *@group*.\`\n` +
-                    `╰──────────────`
+                    `👋 *GOODBYE*\n` +
+                    `────────────────────────\n` +
+                    `*Penggunaan:*\n` +
+                    `⋄ \`${p}goodbye on\` → Aktifkan\n` +
+                    `⋄ \`${p}goodbye off\` → Nonaktifkan\n` +
+                    `⋄ \`${p}goodbye set <teks>\` → Atur teks\n\n` +
+                    `*💡 Tips Admin*\n` +
+                    `Fitur ini *aktif secara default*.\n\n` +
+                    `Gunakan placeholder:\n` +
+                    `⋄ *@user* → mention member yg keluar\n` +
+                    `⋄ *@group* → nama grup\n\n` +
+                    `Contoh set pesan custom:\n` +
+                    `\`${p}goodbye set Bye @user! 😢\n` +
+                    `Semoga bisa kembali lagi ke *@group*.\`\n` +
+                    `────────────────────────`
                 );
             }
 

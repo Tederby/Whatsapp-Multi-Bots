@@ -18,18 +18,18 @@ function generateListText(results, page, query) {
     const end = start + ITEMS_PER_PAGE;
     const currentItems = results.slice(start, end);
 
-    let text = `╭━━━〔 🟥 YOUTUBE SEARCH 〕━━━\n`;
-    text += `┃ 🔍 Query : ${query}\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    let text = `🟥 *YOUTUBE SEARCH*\n`;
+    text += `────────────────────────\n`;
+    text += `⋄ Query : *${query}*\n\n`;
 
     currentItems.forEach((video, index) => {
-        text += `╭───「 ${start + index + 1}. ${video.title} 」\n`;
-        text += `│ 👤 ${video.channelTitle} | ⏱️ ${video.duration}\n`;
-        text += `╰──────────────\n\n`;
+        text += `*${start + index + 1}. ${video.title}*\n`;
+        text += `⋄ 👤 ${video.channelTitle} | ⏱️ ${video.duration}\n\n`;
     });
 
     text += generatePaginator(page, totalPages) + "\n\n";
-    text += `💡 _Reply angka (1-${currentItems.length}) untuk memilih. Ketik "n" next, "b" back._`;
+    text += `*ℹ️ Notes:* Reply angka (1-${currentItems.length}) untuk memilih. Ketik "n" next, "b" back.\n`;
+    text += `────────────────────────`;
 
     return text.trim();
 }
@@ -110,12 +110,13 @@ async function listReplyHandler({ message, sock, state }) {
         await sock.sendMessage(message.chat, { text: `>> *${video.title}*`, edit: messageKey });
 
         // Kirim detail video baru (tanpa thumbnail agar lebih imersif dan cepat)
-        let detailText = `🎬 *${video.title}*\n\n`;
-        detailText += `👤 *Creator:* ${video.channelTitle}\n`;
-        detailText += `⏱️ *Durasi:* ${video.duration}\n`;
-        detailText += `🔗 *URL:* ${video.url}\n\n`;
-        detailText += `💡 _Balas pesan ini dengan \`mp4\` atau \`mp3\` *TANPA PREFIX* untuk mendownload._\n`;
-        detailText += `_(Tambahkan \`-docs\` untuk mengirim via dokumen)_`;
+        let detailText = `🎬 *${video.title}*\n`;
+        detailText += `────────────────────────\n`;
+        detailText += `⋄ Creator : ${video.channelTitle}\n`;
+        detailText += `⋄ Durasi : ${video.duration}\n`;
+        detailText += `⋄ URL : ${video.url}\n\n`;
+        detailText += `*ℹ️ Notes:* Balas pesan ini dengan \`mp4\` atau \`mp3\` untuk mendownload (tambahkan \`-docs\` untuk dokumen).\n`;
+        detailText += `────────────────────────`;
 
         const detailMsg = await sock.sendMessage(message.chat, { text: detailText }, { quoted: message });
 

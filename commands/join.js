@@ -16,12 +16,14 @@ export default {
         try {
             const link = args[0];
             if (!link) {
+                const p = prefix || "!";
                 return message.reply(
-                    `╭━━━〔 🚪 JOIN GROUP 〕━━━\n` +
-                    `┃ Harap masukkan link grup WhatsApp.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}join <link grup>\`\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🚪 *JOIN GROUP*\n` +
+                    `────────────────────────\n` +
+                    `Harap masukkan link grup WhatsApp.\n\n` +
+                    `*Format:*\n` +
+                    `⋄ \`${p}join <link grup>\`\n` +
+                    `────────────────────────`
                 );
             }
 

@@ -78,22 +78,21 @@ export default {
 
                 scheduleDeletion(sent);
 
+                const p = prefix || "!";
                 return await message.reply(
-                    `╭━━━〔 🔬 *WEBVIEW DIAGNOSTIC SUITE* 〕━━━\n` +
-                    `┃ ✅ Diagnostic Webview berhasil di-relay!\n` +
-                    `┃\n` +
-                    `┃ 📱 *Langkah Pengujian:* Buka pesan webview di atas.\n` +
-                    `┃ Test runner otomatis akan mengaudit 50+ kapabilitas browser:\n` +
-                    `┃ ⋄ IndexedDB Real Read/Write Transaction\n` +
-                    `┃ ⋄ WebAssembly Real Bytecode Execution\n` +
-                    `┃ ⋄ Outbound Fetch (CORS & Localhost) & WebSocket Handshake\n` +
-                    `┃ ⋄ Deep Window Host Bridge Inspection\n` +
-                    `┃ ⋄ HTML5 Video & FontFace API Sandbox\n` +
-                    `┃\n` +
-                    `┃ 📋 Gunakan tombol *'Salin Ringkasan'* di webview untuk\n` +
-                    `┃ mendokumentasikan temuan ke chat ini.\n` +
-                    `┃ ⏱️ _${keepFlag ? "Pesan dipertahankan (--keep aktif)" : "Otomatis dihapus dalam 3 menit" }_\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                    `🔬 *WEBVIEW DIAGNOSTIC SUITE*\n` +
+                    `────────────────────────\n` +
+                    `✅ Diagnostic Webview berhasil di-relay!\n\n` +
+                    `*📱 Langkah Pengujian:* Buka pesan webview di atas.\n` +
+                    `Test runner otomatis akan mengaudit 50+ kapabilitas browser:\n` +
+                    `⋄ IndexedDB Real Read/Write Transaction\n` +
+                    `⋄ WebAssembly Real Bytecode Execution\n` +
+                    `⋄ Outbound Fetch (CORS & Localhost) & WebSocket Handshake\n` +
+                    `⋄ Deep Window Host Bridge Inspection\n` +
+                    `⋄ HTML5 Video & FontFace API Sandbox\n\n` +
+                    `*📋 Catatan:* Gunakan tombol *'Salin Ringkasan'* di webview untuk mendokumentasikan temuan ke chat ini.\n` +
+                    `⏱️ _${keepFlag ? "Pesan dipertahankan (--keep aktif)" : "Otomatis dihapus dalam 3 menit"}_\n` +
+                    `────────────────────────`
                 );
             } catch (err) {
                 console.error("[WVTEST]", err);
@@ -133,29 +132,28 @@ export default {
                 }
 
                 return await update(
-                    `╭━━━〔 🔬 RANGE PROBE SELESAI 〕━━━\n` +
-                    `┃ ${rangeSizesKb.length} stansa probe terkalibrasi telah dikirim:\n` +
-                    rangeSizesKb.map(k => `┃ ⋄ ${k >= 1024 ? "🔴" : "🟡"} ${k} KB (${(k * 1024).toLocaleString()} Bytes)`).join("\n") + "\n" +
-                    `┃\n` +
-                    `┃ 💡 *Cara Membaca Hasil:* Nomor probe tertinggi yang\n` +
-                    `┃ muncul di layar Anda adalah titik batas eksak (drop ceiling)\n` +
-                    `┃ sebelum WhatsApp Router membuang stansa.\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                    `🔬 *RANGE PROBE SELESAI*\n` +
+                    `────────────────────────\n` +
+                    `${rangeSizesKb.length} stansa probe terkalibrasi telah dikirim:\n` +
+                    rangeSizesKb.map(k => `⋄ ${k >= 1024 ? "🔴" : "🟡"} ${k} KB (${(k * 1024).toLocaleString()} Bytes)`).join("\n") + "\n\n" +
+                    `*💡 Cara Membaca Hasil:* Nomor probe tertinggi yang muncul di layar Anda adalah titik batas eksak (drop ceiling) sebelum WhatsApp Router membuang stansa.\n` +
+                    `────────────────────────`
                 );
             }
 
             // Single custom size probe (e.g. !wvtest probe 1024)
             const targetKb = parseInt(probeParam, 10);
             if (isNaN(targetKb) || targetKb < 10 || targetKb > 5000) {
+                const p = prefix || "!";
                 return message.reply(
-                    `╭━━━〔 🔬 *STANZA SIZE PROBE* 〕━━━\n` +
-                    `┃ Gunakan untuk menguji batas ukuran payload stansa:\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix}wvtest probe <angka_kb>\` (Contoh: \`${prefix}wvtest probe 1024\`)\n` +
-                    `┃ ⋄ \`${prefix}wvtest probe range\` (Kirim stansa 950KB - 1300KB)\n` +
-                    `┃\n` +
-                    `┃ Tambahkan \`--keep\` agar kartu probe tidak otomatis terhapus.\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                    `🔬 *STANZA SIZE PROBE*\n` +
+                    `────────────────────────\n` +
+                    `Gunakan untuk menguji batas ukuran payload stansa:\n\n` +
+                    `*📖 Penggunaan*\n` +
+                    `⋄ \`${p}wvtest probe <angka_kb>\` (Contoh: \`${p}wvtest probe 1024\`)\n` +
+                    `⋄ \`${p}wvtest probe range\` (Kirim stansa 950KB - 1300KB)\n\n` +
+                    `*💡 Catatan:* Tambahkan \`--keep\` agar kartu probe tidak otomatis terhapus.\n` +
+                    `────────────────────────`
                 );
             }
 
@@ -182,23 +180,24 @@ export default {
             const protoCase = (args[1] || "").toLowerCase();
 
             if (!protoCase || !["botjid", "multisection", "trusted", "context", "quoted", "expiration"].includes(protoCase)) {
+                const p = prefix || "!";
                 return message.reply(
-                    `╭━━━〔 🔬 *PROTOBUF ENVELOPE MUTATION* 〕━━━\n` +
-                    `┃ Uji toleransi router WhatsApp terhadap modifikasi struktur:\n` +
-                    `┃\n` +
-                    `┃ 1. \`${prefix}wvtest proto botjid\`\n` +
-                    `┃    Mengirim dengan botJid nomor bot sendiri (bukan universal Meta AI).\n` +
-                    `┃ 2. \`${prefix}wvtest proto multisection\`\n` +
-                    `┃    Mengirim array 2 layout sections (uji dukungan multi-card / carousel).\n` +
-                    `┃ 3. \`${prefix}wvtest proto trusted\`\n` +
-                    `┃    Menguji array trusted_sources untuk memuat external image.\n` +
-                    `┃ 4. \`${prefix}wvtest proto context\`\n` +
-                    `┃    Menguji variasi forwardOrigin: 1 & forwardingScore: 0.\n` +
-                    `┃ 5. \`${prefix}wvtest proto quoted\`\n` +
-                    `┃    Menguji pelampiran quotedMessage (reply kartu webview terhadap chat).\n` +
-                    `┃ 6. \`${prefix}wvtest proto expiration\`\n` +
-                    `┃    Menguji native disappearing message timer (contextInfo.expiration).\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                    `🔬 *PROTOBUF ENVELOPE MUTATION*\n` +
+                    `────────────────────────\n` +
+                    `Uji toleransi router WhatsApp terhadap modifikasi struktur:\n\n` +
+                    `1. \`${p}wvtest proto botjid\`\n` +
+                    `   Mengirim dengan botJid nomor bot sendiri (bukan universal Meta AI).\n` +
+                    `2. \`${p}wvtest proto multisection\`\n` +
+                    `   Mengirim array 2 layout sections (uji dukungan multi-card / carousel).\n` +
+                    `3. \`${p}wvtest proto trusted\`\n` +
+                    `   Menguji array trusted_sources untuk memuat external image.\n` +
+                    `4. \`${p}wvtest proto context\`\n` +
+                    `   Menguji variasi forwardOrigin: 1 & forwardingScore: 0.\n` +
+                    `5. \`${p}wvtest proto quoted\`\n` +
+                    `   Menguji pelampiran quotedMessage (reply kartu webview terhadap chat).\n` +
+                    `6. \`${p}wvtest proto expiration\`\n` +
+                    `   Menguji native disappearing message timer (contextInfo.expiration).\n` +
+                    `────────────────────────`
                 );
             }
 
@@ -400,18 +399,16 @@ export default {
                 });
                 scheduleDeletion(sent);
                 return message.reply(
-                    `╭━━━〔 📝 *FORM & VIEWPORT AUDIT* 〕━━━\n` +
-                    `┃ ✅ Kartu form & input controls berhasil dikirim!\n` +
-                    `┃\n` +
-                    `┃ 📱 *Pengujian yang dapat dilakukan:* \n` +
-                    `┃ 1. Ketuk text input untuk memicu soft keyboard Android.\n` +
-                    `┃    Amati perubahan Live Visual Viewport Watcher di atas.\n` +
-                    `┃ 2. Uji dropdown <select>, date picker, color picker, dan slider.\n` +
-                    `┃ 3. Ketuk <input type="file"> untuk melihat apakah dialog\n` +
-                    `┃    pemilih berkas / kamera Android muncul.\n` +
-                    `┃\n` +
-                    `┃ ⏱️ _${keepFlag ? "Pesan dipertahankan (--keep aktif)" : "Otomatis dihapus dalam 3 menit" }_\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                    `📝 *FORM & VIEWPORT AUDIT*\n` +
+                    `────────────────────────\n` +
+                    `✅ Kartu form & input controls berhasil dikirim!\n\n` +
+                    `*📱 Pengujian yang dapat dilakukan:*\n` +
+                    `1. Ketuk text input untuk memicu soft keyboard Android.\n` +
+                    `   Amati perubahan Live Visual Viewport Watcher di atas.\n` +
+                    `2. Uji dropdown <select>, date picker, color picker, dan slider.\n` +
+                    `3. Ketuk <input type="file"> untuk melihat apakah dialog pemilih berkas / kamera Android muncul.\n\n` +
+                    `⏱️ _${keepFlag ? "Pesan dipertahankan (--keep aktif)" : "Otomatis dihapus dalam 3 menit"}_\n` +
+                    `────────────────────────`
                 );
             } catch (err) {
                 console.error("[WVTEST]", err);
@@ -468,30 +465,30 @@ export default {
         }
 
         // ── DEFAULT FALLBACK: Help Menu ─────────────────────────────────────
+        const p = prefix || "!";
         return message.reply(
-            `╭━━━〔 🔬 *WEBVIEW TESTING COMMAND* 〕━━━\n` +
-            `┃ *Penggunaan:* \`${prefix}wvtest <subcommand> [--keep]\`\n` +
-            `┃\n` +
-            `┃ *Daftar Subcommand:* \n` +
-            `┃ 1. \`${prefix}wvtest suite\`\n` +
-            `┃    Jalankan automated test matrix (50+ browser & async probes)\n` +
-            `┃ 2. \`${prefix}wvtest probe <kb>\`\n` +
-            `┃    Uji stansa presisi (misal: \`${prefix}wvtest probe 1024\`)\n` +
-            `┃ 3. \`${prefix}wvtest probe range\`\n` +
-            `┃    Kirim probe range kalibrasi (950KB - 1300KB)\n` +
-            `┃ 4. \`${prefix}wvtest proto <case>\`\n` +
-            `┃    Mutasi protobuf (\`botjid\`, \`multisection\`, \`trusted\`, \`context\`, \`quoted\`, \`expiration\`)\n` +
-            `┃ 5. \`${prefix}wvtest form\`\n` +
-            `┃    Uji form controls, soft keyboard viewport, dan file picker\n` +
-            `┃ 6. \`${prefix}wvtest audio\`\n` +
-            `┃    Uji mendalam Web Audio API vs HTML5 audio\n` +
-            `┃ 7. \`${prefix}wvtest links\`\n` +
-            `┃    Uji klik berbagai URI schemes (\`whatsapp://\`, \`tel:\`, dll)\n` +
-            `┃ 8. \`${prefix}wvtest lifecycle\`\n` +
-            `┃    Uji persistensi state saat scroll atau minimize\n` +
-            `┃\n` +
-            `┃ 💡 _Tambahkan flag \`--keep\` agar kartu tidak otomatis dihapus._\n` +
-            `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+            `🔬 *WEBVIEW TESTING COMMAND*\n` +
+            `────────────────────────\n` +
+            `*Penggunaan:* \`${p}wvtest <subcommand> [--keep]\`\n\n` +
+            `*Daftar Subcommand:*\n` +
+            `1. \`${p}wvtest suite\`\n` +
+            `   Jalankan automated test matrix (50+ browser & async probes)\n` +
+            `2. \`${p}wvtest probe <kb>\`\n` +
+            `   Uji stansa presisi (misal: \`${p}wvtest probe 1024\`)\n` +
+            `3. \`${p}wvtest probe range\`\n` +
+            `   Kirim probe range kalibrasi (950KB - 1300KB)\n` +
+            `4. \`${p}wvtest proto <case>\`\n` +
+            `   Mutasi protobuf (\`botjid\`, \`multisection\`, \`trusted\`, \`context\`, \`quoted\`, \`expiration\`)\n` +
+            `5. \`${p}wvtest form\`\n` +
+            `   Uji form controls, soft keyboard viewport, dan file picker\n` +
+            `6. \`${p}wvtest audio\`\n` +
+            `   Uji mendalam Web Audio API vs HTML5 audio\n` +
+            `7. \`${p}wvtest links\`\n` +
+            `   Uji klik berbagai URI schemes (\`whatsapp://\`, \`tel:\`, dll)\n` +
+            `8. \`${p}wvtest lifecycle\`\n` +
+            `   Uji persistensi state saat scroll atau minimize\n\n` +
+            `*💡 Catatan:* Tambahkan flag \`--keep\` agar kartu tidak otomatis dihapus.\n` +
+            `────────────────────────`
         );
     },
 };

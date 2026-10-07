@@ -36,7 +36,8 @@ export default {
                     return message.reply("✅ Tidak ada user yang di-ban di grup ini.");
                 }
 
-                let text = `╭━━━〔 🚫 DAFTAR BAN GRUP 〕━━━\n┃ Total : ${banned.length} user\n╰━━━━━━━━━━━━━━━━━━━━\n\n`;
+                const p = prefix || "!";
+                let text = `🚫 *DAFTAR BAN GRUP*\n────────────────────────\n⋄ Total : ${banned.length} user\n\n`;
                 const mentions = [];
 
                 banned.forEach((userId, i) => {
@@ -45,7 +46,7 @@ export default {
                     mentions.push(userId);
                 });
 
-                text += `\n_Gunakan \`${prefix || "!"}unban @user\` untuk membatalkan ban._`;
+                text += `\n*ℹ️ Catatan:* Gunakan \`${p}unban @user\` untuk membatalkan ban.\n────────────────────────`;
 
                 return sock.sendMessage(chatId, { text, mentions }, { quoted: message });
             }
@@ -74,14 +75,16 @@ export default {
             const target = extractTarget(message, args);
 
             if (!target) {
+                const p = prefix || "!";
                 return message.reply(
-                    `╭━━━〔 🚫 GROUP BAN 〕━━━\n` +
-                    `┃ Tag atau reply pesan user target.\n` +
-                    `┃\n` +
-                    `┃ ⋄ \`${prefix || "!"}ban @user\` — Ban user di grup ini\n` +
-                    `┃ ⋄ \`${prefix || "!"}unban @user\` — Unban user\n` +
-                    `┃ ⋄ \`${prefix || "!"}banlist\` — Lihat daftar ban\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━`
+                    `🚫 *GROUP BAN*\n` +
+                    `────────────────────────\n` +
+                    `Tag atau reply pesan user target.\n\n` +
+                    `*📖 Penggunaan*\n` +
+                    `⋄ \`${p}ban @user\` — Ban user di grup ini\n` +
+                    `⋄ \`${p}unban @user\` — Unban user\n` +
+                    `⋄ \`${p}banlist\` — Lihat daftar ban\n` +
+                    `────────────────────────`
                 );
             }
 

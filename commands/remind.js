@@ -154,13 +154,14 @@ export default {
             const remainingSec = Math.max(0, Math.floor((activeReminder.trigger_time - Date.now()) / 1000));
             const remainingStr = formatUptime(remainingSec);
             const cardLines = [
-                "╭━━━〔 ⏰ PENGINGAT AKTIF 〕━━━",
-                `┃ ⏰ Waktu   : ${formatTime(activeReminder.trigger_time)}`,
-                `┃ ⏳ Sisa    : ${remainingStr}`,
-                `┃ 💬 Catatan : ${activeReminder.message}`,
-                "┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-                `┃ Ketik *${p}unremind* untuk membatalkan`,
-                "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                "⏰ *PENGINGAT AKTIF*",
+                "────────────────────────",
+                `⋄ Waktu : ${formatTime(activeReminder.trigger_time)}`,
+                `⋄ Sisa : ${remainingStr}`,
+                `⋄ Catatan : ${activeReminder.message}`,
+                "",
+                `*ℹ️ Catatan:* Ketik *${p}unremind* untuk membatalkan`,
+                "────────────────────────"
             ];
             return message.reply(cardLines.join("\n"));
         }
@@ -185,33 +186,31 @@ export default {
                 const remainingSec = Math.max(0, Math.floor((activeReminder.trigger_time - Date.now()) / 1000));
                 const remainingStr = formatUptime(remainingSec);
                 return message.reply(
-                    `╭━━━〔 ⏰ PENGINGAT AKTIF 〕━━━\n` +
-                    `┃ ⏰ Waktu   : ${formatTime(activeReminder.trigger_time)}\n` +
-                    `┃ ⏳ Sisa    : ${remainingStr}\n` +
-                    `┃ 💬 Catatan : ${activeReminder.message}\n` +
-                    `┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                    `┃ Ketik *${p}unremind* untuk membatalkan\n` +
-                    `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                    `⏰ *PENGINGAT AKTIF*\n` +
+                    `────────────────────────\n` +
+                    `⋄ Waktu : ${formatTime(activeReminder.trigger_time)}\n` +
+                    `⋄ Sisa : ${remainingStr}\n` +
+                    `⋄ Catatan : ${activeReminder.message}\n\n` +
+                    `*ℹ️ Notes:* Ketik *${p}unremind* untuk membatalkan\n` +
+                    `────────────────────────`
                 );
             }
 
             return message.reply(
-                `╭━━━〔 ⏰ SET REMINDER 〕━━━\n` +
-                `┃ Buat pengingat waktu relatif atau spesifik.\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━\n\n` +
-                `╭───「 ⏳ Durasi Relatif 」\n` +
-                `│ ⋄ \`${p}remind 10m Cek oven\`\n` +
-                `│ ⋄ \`${p}remind 1 jam 30 menit Rapat\`\n` +
-                `│ ⋄ \`${p}remind 1d 12h Bayar tagihan\`\n` +
-                `╰──────────────\n\n` +
-                `╭───「 📅 Waktu Spesifik (WIB) 」\n` +
-                `│ ⋄ \`${p}remind 20:30 Nonton bola @user\`\n` +
-                `│ ⋄ \`${p}remind 31/12/2026 23:59 Tahun Baru\`\n` +
-                `╰──────────────\n\n` +
-                `╭───「 ⚙️ Opsi Lain 」\n` +
-                `│ ⋄ \`${p}remind list\` : Cek pengingat aktif\n` +
-                `│ ⋄ \`${p}unremind\`    : Batalkan pengingat\n` +
-                `╰──────────────`
+                `⏰ *SET REMINDER*\n` +
+                `────────────────────────\n` +
+                `Buat pengingat waktu relatif atau spesifik.\n\n` +
+                `*⏳ Durasi Relatif*\n` +
+                `⋄ \`${p}remind 10m Cek oven\`\n` +
+                `⋄ \`${p}remind 1 jam 30 menit Rapat\`\n` +
+                `⋄ \`${p}remind 1d 12h Bayar tagihan\`\n\n` +
+                `*📅 Waktu Spesifik (WIB)*\n` +
+                `⋄ \`${p}remind 20:30 Nonton bola @user\`\n` +
+                `⋄ \`${p}remind 31/12/2026 23:59 Tahun Baru\`\n\n` +
+                `*⚙️ Opsi Lain*\n` +
+                `⋄ \`${p}remind list\` : Cek pengingat aktif\n` +
+                `⋄ \`${p}unremind\` : Batalkan pengingat\n` +
+                `────────────────────────`
             );
         }
 
@@ -280,11 +279,12 @@ export default {
             const remainingStr = formatUptime(Math.max(0, Math.floor((triggerTime - Date.now()) / 1000)));
 
             const successLines = [
-                "╭━━━〔 ✅ PENGINGAT DISIMPAN 〕━━━",
-                `┃ ⏰ Waktu   : ${formatTime(triggerTime)}`,
-                `┃ ⏳ Sisa    : ${remainingStr}`,
-                `┃ 💬 Catatan : ${messageStr}`,
-                "╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                "⏰ *PENGINGAT DISIMPAN*",
+                "────────────────────────",
+                `⋄ Waktu : ${formatTime(triggerTime)}`,
+                `⋄ Sisa : ${remainingStr}`,
+                `⋄ Catatan : ${messageStr}`,
+                "────────────────────────"
             ];
             message.reply(successLines.join("\n"));
         } catch (error) {

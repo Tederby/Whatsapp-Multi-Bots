@@ -226,17 +226,17 @@ export default {
 
         if (!code) {
             return message.reply(
-                `╭━━━〔 🌐 *HTML RENDERER* 〕━━━\n` +
-                `┃ *Format:* \`${prefix}html <kode_html>\`\n` +
-                `┃ *Atau:* Balas pesan berisi kode HTML dengan \`${prefix}html\`\n` +
-                `┃\n` +
-                `┃ *Contoh:* \`${prefix}html -k <h1>Halo Dunia</h1>\`\n` +
-                `┃\n` +
-                `┃ *Flag:*\n` +
-                `┃ \`-k, --keep\` — Webview permanen (tidak auto-hapus)\n` +
-                `┃\n` +
-                `┃ _Tampilan interaktif otomatis dihapus dalam 2 menit jika tanpa flag -k._\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━━`
+                `🌐 *HTML RENDERER*\n` +
+                `────────────────────────\n` +
+                `*📖 Format*\n` +
+                `⋄ \`${prefix}html <kode_html>\`\n` +
+                `⋄ Balas pesan berisi kode HTML dengan \`${prefix}html\`\n\n` +
+                `*💡 Contoh*\n` +
+                `⋄ \`${prefix}html -k <h1>Halo Dunia</h1>\`\n\n` +
+                `*⚙️ Flag*\n` +
+                `⋄ \`-k, --keep\` — Webview permanen (tidak auto-hapus)\n\n` +
+                `*ℹ️ Notes:* Tampilan interaktif otomatis dihapus dalam 2 menit jika tanpa flag -k.\n` +
+                `────────────────────────`
             );
         }
 
@@ -250,13 +250,12 @@ export default {
         const validation = validateHtml(code);
         if (!validation.valid) {
             return message.reply(
-                `╭━━━〔 ❌ *KODE HTML TIDAK VALID* 〕━━━\n` +
-                `┃ Kode tidak dapat dirender karena terdeteksi kesalahan:\n` +
-                `┃\n` +
-                `┃ ⚠️ *Error:* ${validation.error}\n` +
-                `┃\n` +
-                `┃ _Silakan periksa dan perbaiki sintaks kode Anda._\n` +
-                `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                `❌ *KODE HTML TIDAK VALID*\n` +
+                `────────────────────────\n` +
+                `Kode tidak dapat dirender karena terdeteksi kesalahan:\n\n` +
+                `⚠️ *Error:* ${validation.error}\n\n` +
+                `_Silakan periksa dan perbaiki sintaks kode Anda._\n` +
+                `────────────────────────`
             );
         }
 
