@@ -274,12 +274,15 @@ If `CHANNEL_URL` is empty, invalid, or resolution fails, the announcer silently 
 1. Resolves the channel JID (if not already cached)
 2. Reads the shutdown timestamp from `sessions/shutdown_<botId>.json`
 3. Calculates downtime duration
-4. Sends a formatted status message to the channel
-5. Deletes the shutdown file
+4. Evaluates downtime threshold (default: 12s, configured via `STATUS_THRESHOLD`) — skips notification if downtime was < 12s (transient network hiccups)
+5. Sends a formatted status message to the channel if threshold is satisfied
+6. Deletes the shutdown file
 
 **Shutdown Persistence**: On graceful shutdown (`SIGTERM`/`SIGINT`) and on `connection: "close"` events, the bot writes the current timestamp and disconnect reason to `sessions/shutdown_<botId>.json`.
 
-**Debounce**: Startup notifications are suppressed if the last one was sent less than 60 seconds ago, preventing spam during rapid restart cycles.
+**Debounce & Hiccup Threshold**:
+- **Debounce (60s)**: Startup notifications are suppressed if the last one was sent less than 60 seconds ago, preventing spam during rapid restart cycles.
+- **Downtime Threshold (12s)**: Startup notifications are suppressed if the calculated downtime is less than `STATUS_THRESHOLD` (default: 12 seconds). Prevents channel spam when transient network blips (~7s disconnects) recover quickly.
 
 ### Manual Announcements (`!announce`)
 

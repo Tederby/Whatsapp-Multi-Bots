@@ -19,6 +19,18 @@ Because this bot operates on a **continuous delivery / rolling release model** r
 
 ## Continuous Rolling Release Changelog
 
+### 2026-10-14 — `[PATCH]` Channel Announcer Anti-Hiccup Downtime Threshold Filter
+- **Transient Network Hiccup Suppression (`lib/announcer.js`)**:
+  - Implemented configurable minimum downtime threshold filter (`STATUS_THRESHOLD_MS`, default: 12 seconds).
+  - Automatically suppresses automated `🟢 BOT ONLINE` status broadcasts to WhatsApp Channels when disconnect duration is less than the threshold (e.g. transient 5–7 second network blips or `connectionClosed` flaps), eliminating spam in multi-bot setups.
+  - Preserved legitimate notifications for cold starts (`first_startup`) and genuine outages where downtime >= threshold.
+  - Consumes and purges transient shutdown records upon reconnect to prevent stale downtime calculation on future startups.
+- **Configurability & Diagnostics (`setting.js`, `.env.example`, `commands/announce.js`)**:
+  - Added `statusThreshold` in `setting.js` with fallback to `process.env.STATUS_THRESHOLD` (default: 12 seconds; set to 0 to disable).
+  - Exposed `getStatusThreshold()` in `lib/announcer.js`.
+  - Displayed current threshold setting under `!announce status` card (`⋄ Threshold : 12s (anti-hiccup)`).
+- **Documentation Synchronization**: Updated `docs/ARCHITECTURE.md` §7 and `docs/CONFIGURATION_DEPLOYMENT.md` §1.
+
 ### 2026-10-07 — `[MINOR]` Modernize Text Output Formatting Across Entire Command Suite
 - **Aesthetic & Readability Modernization (`commands/*`, `lib/*`, `services/*`, `docs/*`)**:
   - Replaced fragile multi-line box-drawing borders (`╭━━━`, `┃`, `╰━━━`, `│`, `╭───`, `╰───`, `┣━━━`) with clean, WhatsApp-native typography that prevents broken wrapping on small mobile screens.

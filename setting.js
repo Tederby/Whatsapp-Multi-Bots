@@ -60,6 +60,10 @@ const setting = {
 
     // ── Spam Filter ─────────────────────────────────────────────────────
     spamDelay: Number(process.env.SPAM_DELAY) || 3000, // ms cooldown per chat
+
+    // ── Status Notification Threshold ──────────────────────────────────
+    // Minimal downtime dalam detik sebelum bot mengirim notifikasi status ke channel
+    statusThreshold: Number(process.env.STATUS_THRESHOLD) || 12,
 };
 
 export default setting;

@@ -21,6 +21,7 @@ import setting from "../setting.js";
 import {
     getChannelJid,
     getChannelName,
+    getStatusThreshold,
     sendAnnouncement,
     sendChangelog,
     parseChangelog,
@@ -135,6 +136,7 @@ async function handleStatus(sock, message) {
     text += `⋄ Name : ${channelName || "N/A"}\n`;
     text += `⋄ Channel : ${channelJid ? "✅ Connected" : "⚠️ Not connected"}\n`;
     text += `⋄ Enabled : ${isEnabled() ? "✅ Active" : "🔴 Disabled"}\n`;
+    text += `⋄ Threshold : ${getStatusThreshold()}s (anti-hiccup)\n`;
     text += `────────────────────────`;
 
     return message.reply(text);

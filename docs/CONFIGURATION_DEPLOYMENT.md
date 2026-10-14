@@ -42,10 +42,12 @@ SSH_USER=deploy
 > ```ini
 > OWNER_IMAGE=https://example.com/owner.jpg
 > CHANNEL_URL=https://whatsapp.com/channel/xxxx
+> STATUS_THRESHOLD=12
 > STICKER_PACK=WhatsApp Multi-Bots
 > STICKER_AUTHOR=Tederby
 > ```
 > `CHANNEL_URL` serves dual purpose: displayed in `!info` output AND used by the Channel Announcer (`lib/announcer.js`) for automated bot status notifications and manual `!announce` broadcasts.
+> `STATUS_THRESHOLD` defines the minimum downtime in seconds (default: 12) required before a status notification is sent to the channel, preventing spam from transient (~7s) network hiccups. Set to `0` to disable.
 
 ---
 
